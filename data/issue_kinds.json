@@ -1,0 +1,171 @@
+{
+  "_about": "Destination of every let-through recorded by scripts/issues.py. route: code / todo:<file> / human / check / ledger. gate: hard (must not happen), soft (report only), none (deliberate). A kind that is not here cannot be recorded: issues.record raises. See GAPS.md sections 3 and 4.",
+  "version": 1,
+  "kinds": {
+    "drop:footnote": {
+      "route": "human",
+      "gate": "soft",
+      "about": "\\footnote content is deleted (D1). Strategy undecided: keep as its own unit or drop. Size is the character count removed."
+    },
+    "drop:float": {
+      "route": "code",
+      "gate": "soft",
+      "about": "a float (tabular/minipage/longtable/table/figure) is dropped wholesale (D2). tabular and minipage should keep their content."
+    },
+    "drop:empty_sentence": {
+      "route": "ledger",
+      "gate": "soft",
+      "about": "a split sentence with fewer than two letters is discarded (D7). The item number can be lost with it."
+    },
+    "conditional:iffalse": {
+      "route": "code",
+      "gate": "hard",
+      "about": "\\iffalse takes its first branch, so commented-out draft returns to the text (D6)."
+    },
+    "conditional:unknown": {
+      "route": "todo:conditional_todo.json",
+      "gate": "soft",
+      "about": "an \\ifX whose condition cannot be read takes the first branch (J1). Evidence: both branch texts."
+    },
+    "name:outside_vocabulary": {
+      "route": "todo:names_todo.json",
+      "gate": "soft",
+      "about": "a control word neither TeX nor the paper defines appears in the prose (R1). It belongs in the name question, which used to read only the formulas."
+    },
+    "env:unknown": {
+      "route": "code",
+      "gate": "soft",
+      "about": "an environment that is in no class table and has no declaration (R3). See ENV-HANDLING.md."
+    },
+    "check:C1": {
+      "route": "check",
+      "gate": "hard",
+      "about": "an orphan display whose previous sentence does not end with . ! ? : -- the lead-in sentence was cut (M1)."
+    },
+    "check:C2": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a control word inside a sentence, outside a placeholder (M2)."
+    },
+    "check:C3": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a bare { or } inside a sentence (M10)."
+    },
+    "check:C4": {
+      "route": "check",
+      "gate": "soft",
+      "about": "a sentence of at most two tokens with no terminal punctuation (D7)."
+    },
+    "check:C5": {
+      "route": "check",
+      "gate": "soft",
+      "about": "a sentence starting with a placeholder whose predecessor has no terminal punctuation."
+    },
+    "check:C6": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a formula's expanded text holds $ or \\intertext (M7/M9)."
+    },
+    "check:C7": {
+      "route": "check",
+      "gate": "soft",
+      "about": "an inline formula whose raw braces do not balance (M4)."
+    },
+    "check:C8": {
+      "route": "check",
+      "gate": "soft",
+      "about": "a section or title string holds $ (M6)."
+    },
+    "check:C9": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a formula's expanded text holds four consecutive English words (M9: an unclosed $)."
+    },
+    "check:C10": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a formula's expanded text holds \\begin{..} other than grid/diagram (M9)."
+    },
+    "check:C11": {
+      "route": "check",
+      "gate": "soft",
+      "about": "a cases grid whose role is not piecewise (J3, a dead branch)."
+    },
+    "check:C12": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a sentence holds REF\\d+} or a ref target holds { (M5)."
+    },
+    "check:C13": {
+      "route": "check",
+      "gate": "soft",
+      "about": "a ref target that no label matches (D9)."
+    },
+    "check:C14": {
+      "route": "check",
+      "gate": "hard",
+      "about": "a name from outside_vocabulary appears in a sentence (R1)."
+    },
+    "human:source_error": {
+      "route": "human",
+      "gate": "soft",
+      "about": "the source itself is wrong: unbalanced $, a stray brace, a missing \\input file."
+    },
+    "human:model_refused": {
+      "route": "human",
+      "gate": "soft",
+      "about": "the model returned nothing twice for the same question, or answered 'unknown'."
+    },
+    "human:label_style": {
+      "route": "human",
+      "gate": "soft",
+      "about": "a label whose numbering style cannot be rendered (R4)."
+    },
+    "parse:coverage": {
+      "gate": "hard",
+      "route": "check",
+      "note": "a sentence has no parse record"
+    },
+    "parse:failed": {
+      "gate": "hard",
+      "route": "check",
+      "note": "no derivation, FAILED tree, or log_prob is not a number"
+    },
+    "parse:leaf_mismatch": {
+      "gate": "hard",
+      "route": "check",
+      "note": "the tree's leaves are not the sentence's tokens"
+    },
+    "parse:root": {
+      "gate": "soft",
+      "route": "check",
+      "note": "root category is not one of S[dcl]/S[wq]/S[q]/S[qem]/NP"
+    },
+    "check:C16": {
+      "gate": "soft",
+      "route": "check",
+      "note": "a display whose body reads like prose (3+ consecutive English words)"
+    },
+    "name:defined_unexpanded": {
+      "gate": "soft",
+      "route": "todo:names",
+      "note": "a name the paper defines that stayed unexpanded: asked with its definition instead of being dropped"
+    },
+    "display:orphan": {
+      "gate": "soft",
+      "route": "ledger",
+      "note": "a display whose anchor sentence was dropped"
+    },
+    "math:unclosed": {
+      "gate": "soft",
+      "route": "ledger",
+      "note": "an unclosed $$, $ or display environment"
+    },
+    "unresolved:line": {
+      "gate": "soft",
+      "route": "ledger",
+      "note": "one line latex2nl wrote to unresolved.log"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "_about": "Spelling variants for the same function. Only glyph-identical synonyms are aliased; a pair whose rendered symbol differs is left alone so the difference stays visible.",
+  "version": 1,
+
+  "symbol_aliases": {
+    "le": "leq",
+    "ge": "geq",
+    "ne": "neq",
+    "to": "rightarrow",
+    "gets": "leftarrow",
+    "iff": "Leftrightarrow",
+    "ldots": "dots",
+    "cdots": "dots",
+    "vdots": "dots",
+    "ddots": "dots",
+    "dfrac": "frac",
+    "tfrac": "frac",
+    "dbinom": "binom",
+    "tbinom": "binom",
+    "leqslant": "leq",
+    "geqslant": "geq",
+    "longrightarrow": "rightarrow",
+    "longleftarrow": "leftarrow",
+    "Longrightarrow": "Rightarrow",
+    "Longleftarrow": "Leftarrow",
+    "longleftrightarrow": "leftrightarrow",
+    "Longleftrightarrow": "Leftrightarrow",
+    "nequiv": "neq",
+    "Bbb": "mathbb",
+    "mathrm": "operatorname_marker",
+    "mathds": "mathbb",
+    "mathbbm": "mathbb",
+    "EuScript": "mathscr",
+    "mathpzc": "mathscr"
+  },
+
+  "_symbol_notes": [
+    "mathrm is NOT aliased to operatorname globally; the entry above is a marker used by the" ,
+    "text-slot pass in latex2nl, not by this normaliser.  Kept here only for documentation.",
+    "epsilon/varepsilon, phi/varphi, emptyset/varnothing, subset/subseteq are glyph-different" ,
+    "and must not be merged: 2307.08164 uses both subset and subseteq with different meanings."
+  ],
+
+  "size_commands": [
+    "left", "right", "middle",
+    "bigl", "bigr", "Bigl", "Bigr", "biggl", "biggr", "Biggl", "Biggr",
+    "big", "Big", "bigg", "Bigg"
+  ],
+
+  "layout_commands": [
+    "displaystyle", "textstyle", "scriptstyle", "scriptscriptstyle",
+    "notag", "nonumber", "allowdisplaybreaks", "noindent", "centering",
+    "medskip", "smallskip", "bigskip", "par", "hfill", "vfill",
+    "leavevmode", "allowbreak", "clearpage", "newpage"
+  ],
+
+  "thin_spaces": ["\\,", "\\;", "\\:", "\\!"],
+
+  "extra_commands": [
+    "llbracket", "rrbracket", "coloneqq", "eqqcolon", "sfrac", "lesssim",
+    "curvearrowright", "ltimes", "Box", "sharp", "flat", "qedhere",
+    "ddag", "frak", "Im", "Re", "coth", "choose", "atop", "lefteqn"
+  ],
+
+  "_extra_notes": "The 20 math commands that 13 surveyed papers used and the 432-entry lexicon lacks. Two of the 35 'outside' commands found by the survey were not math at all (they leaked out of \\newcommand bodies) and are not listed here.",
+
+  "canonical_envs": {
+    "statement": "statement",
+    "display": "display",
+    "list": "list",
+    "grid": "grid",
+    "diagram": "diagram"
+  },
+
+  "list_depth_defaults": {
+    "1": "{arabic}.",
+    "2": "({alph})",
+    "3": "{roman}.",
+    "4": "{Alph}."
+  }
+}

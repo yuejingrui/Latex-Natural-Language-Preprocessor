@@ -1,0 +1,4 @@
+{
+  "_about": "Corrections to decisions TeX made (data/tex_names.json).  tex_oracle reads the meaning; when that reading is wrong, an entry here wins.  `--merge` refuses answers for names TeX decides, so this file is the only way to fix such a name.",
+  "names": {}
+}

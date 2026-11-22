@@ -1,0 +1,55 @@
+{
+  "instructions": "Each item is one phrase that a paper wrote inside \\text{...} in a formula. Decide what it does in that formula: 'condition' when it is the condition of {x | ...}, 'proposition' when it is a whole statement such as one side of an \\iff, 'predicate' for a verb or relation such as 'has rank' or 'is mapped to', 'guard'/'consequent' for the two halves of an if-then, 'scope' for a quantifier, 'connective' for and/or, 'restriction' for 'where', 'default' for 'otherwise', 'label' for a name used inside a subscript, 'text' for running words that carry no structure. 'sig' is the normalised phrase, so the same answer is reused in other papers.",
+  "allowed_answers": [
+    "condition",
+    "proposition",
+    "predicate",
+    "predicate_part",
+    "guard",
+    "consequent",
+    "scope",
+    "connective",
+    "restriction",
+    "default",
+    "label",
+    "text",
+    "operator"
+  ],
+  "answer_meaning": {
+    "condition": "the condition in {x | ...}",
+    "proposition": "a whole statement",
+    "predicate": "a verb or relation",
+    "predicate_part": "the preposition of one",
+    "guard": "the 'if' of an implication",
+    "consequent": "the 'then' of an implication",
+    "scope": "a quantifier",
+    "connective": "and / or",
+    "restriction": "'where'",
+    "default": "'otherwise'",
+    "label": "a name inside a subscript",
+    "text": "running words, no structure",
+    "operator": "an upright name that is a function"
+  },
+  "meta": {
+    "items": 2,
+    "occurrences": 2
+  },
+  "items": [
+    {
+      "sig": "if some",
+      "raw": "if some",
+      "context": "{array}\\sum_i \\mathbf{v}_i, & <TXT> \\mathbf{w}_i \\neq 0 \\\\ \\sum_i",
+      "formula": "MATH559",
+      "count": 1,
+      "answer": null
+    },
+    {
+      "sig": "if all",
+      "raw": "if all",
+      "context": "\\\\ \\sum_i \\mathbf{v}_i - 1, & <TXT> \\mathbf{w}_i = 0\\end{grid}",
+      "formula": "MATH559",
+      "count": 1,
+      "answer": null
+    }
+  ]
+}

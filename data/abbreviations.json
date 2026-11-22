@@ -1,0 +1,17 @@
+{
+ "about": "Abbreviations the sentence splitter protects. 'always' keeps the dot from ending a sentence; 'before_digit' protects it only when a number follows, because 'No. 5' is an abbreviation while 'No. We disagree.' is a sentence. Matching is case-sensitive: include each case and plural that occurs.",
+ "always": [
+  "e.g.", "i.e.", "cf.", "c.f.", "et al.", "resp.", "vs.", "w.r.t.", "s.t.",
+  "no.", "Thm.", "Lem.", "Prop.", "Cor.", "Def.", "Fig.", "Eq.", "Sec.",
+  "Ex.", "viz.", "a.k.a.", "N.B.", "esp.", "incl.", "approx.", "ca.", "pp.",
+  "vol.", "ed.", "trans.", "w.l.o.g.", "i.i.d.", "a.s.", "a.e.", "Ph.D.",
+  "et seq.", "ibid.", "op. cit.", "loc. cit.", "cf. supra", "cf. infra"
+ ],
+ "before_digit": [
+  "No.", "Nos.", "Vol.", "Vols.", "Ch.", "Chs.", "Sec.", "Secs.", "Fig.",
+  "Figs.", "Eq.", "Eqs.", "Thm.", "Thms.", "Lem.", "Lems.", "Prop.", "Props.",
+  "Def.", "Defs.", "Cor.", "Cors.", "Ex.", "Exs.", "Ref.", "Refs.", "App.",
+  "App.", "Tab.", "Tabs.", "Alg.", "Const.", "Conj.", "Hyp.", "Rem.", "Cond.",
+  "Assum.", "Not.", "Th.", "Ths.", "Prob.", "Probs.", "Sect.", "Par.", "Paras."
+ ]
+}

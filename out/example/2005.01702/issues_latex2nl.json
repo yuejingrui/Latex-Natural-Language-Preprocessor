@@ -1,0 +1,73 @@
+{
+ "_about": "Every place the pipeline let something through, one entry per site, with the destination fixed in data/issue_kinds.json.",
+ "counts": {
+  "unresolved:line": 6
+ },
+ "sizes": {
+  "unresolved:line": 6
+ },
+ "hard": 0,
+ "kinds": {
+  "unresolved:line": {
+   "gate": "soft",
+   "route": "ledger",
+   "note": "one line latex2nl wrote to unresolved.log"
+  }
+ },
+ "entries": [
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "formula uses commands not understood: \\ssslash",
+   "size": 1,
+   "cls": "formula uses commands not understood"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
+   "size": 1,
+   "cls": "a new sentence follows but the display e"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
+   "size": 1,
+   "cls": "a new sentence follows but the display e"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "formula uses commands not understood: \\ssslash",
+   "size": 1,
+   "cls": "formula uses commands not understood"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
+   "size": 1,
+   "cls": "a new sentence follows but the display e"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
+   "gate": "soft",
+   "where": "text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'",
+   "size": 1,
+   "cls": "text slot(s) with no role hint"
+  }
+ ]
+}

@@ -1,0 +1,296 @@
+{
+  "_about": "Environment names -> function class. Built from a survey of 17 papers (nlprep/out + articles/, 62 distinct names). 'classes' names a function; 'statement_kinds' subdivides the one class that needs subtypes.",
+  "version": 5,
+  "statement_kinds": {
+    "theorem": [
+      "theorem",
+      "theorem*",
+      "THEOREM",
+      "thm"
+    ],
+    "lemma": [
+      "lemma",
+      "lem"
+    ],
+    "proposition": [
+      "proposition",
+      "prop",
+      "pro"
+    ],
+    "corollary": [
+      "corollary",
+      "corollary*",
+      "cor"
+    ],
+    "claim": [
+      "claim"
+    ],
+    "conjecture": [
+      "conjecture",
+      "conjecture*",
+      "conj"
+    ],
+    "definition": [
+      "definition",
+      "definition*",
+      "defn"
+    ],
+    "example": [
+      "example",
+      "exmp"
+    ],
+    "remark": [
+      "remark",
+      "remarks",
+      "rem"
+    ],
+    "question": [
+      "question"
+    ],
+    "proof": [
+      "proof",
+      "pf",
+      "prf"
+    ],
+    "assumption": [
+      "assumption",
+      "ipotesi",
+      "condition"
+    ],
+    "observation": [
+      "observation"
+    ],
+    "fact": [
+      "fact"
+    ],
+    "notation": [
+      "notation"
+    ],
+    "construction": [
+      "construction"
+    ],
+    "warning": [
+      "warning"
+    ],
+    "thought": [
+      "thought"
+    ],
+    "plan": [
+      "plan"
+    ],
+    "guess": [
+      "guess"
+    ],
+    "algorithm": [
+      "algorithm"
+    ],
+    "counterexample": [
+      "counterexample"
+    ],
+    "exercise": [
+      "exercise"
+    ],
+    "problem": [
+      "problem"
+    ],
+    "homework": [
+      "homework",
+      "readinghomework"
+    ]
+  },
+  "classes": {
+    "display": [
+      "equation",
+      "equation*",
+      "align",
+      "align*",
+      "gather",
+      "gather*",
+      "multline",
+      "multline*",
+      "flalign",
+      "flalign*",
+      "eqnarray",
+      "eqnarray*",
+      "displaymath",
+      "subequations",
+      "alignat",
+      "alignat*",
+      "equ",
+      "equs",
+      "eqn",
+      "eqs",
+      "IEEEeqnarray",
+      "IEEEeqnarray*",
+      "subeqn"
+    ],
+    "inner_display": [
+      "split",
+      "aligned",
+      "gathered",
+      "multlined",
+      "alignedat"
+    ],
+    "grid": [
+      "cases",
+      "dcases",
+      "rcases",
+      "array",
+      "matrix",
+      "pmatrix",
+      "bmatrix",
+      "vmatrix",
+      "Vmatrix",
+      "smallmatrix",
+      "ytableau",
+      "ytableaushort",
+      "psmallmatrix",
+      "psmallmatrix*",
+      "pmatrix*",
+      "bmatrix*",
+      "vmatrix*",
+      "Vmatrix*",
+      "matrix*",
+      "bsmallmatrix",
+      "bsmallmatrix*",
+      "Bmatrix*",
+      "cases*",
+      "dcases*",
+      "rcases*",
+      "pNiceArray",
+      "bNiceArray",
+      "NiceArray",
+      "VNiceArray",
+      "pNiceMatrix",
+      "bNiceMatrix",
+      "NiceMatrix",
+      "NiceTabular",
+      "subarray"
+    ],
+    "list": [
+      "enumerate",
+      "enumerate*",
+      "itemize",
+      "itemize*",
+      "description",
+      "trivlist",
+      "compactitem",
+      "compactitem*",
+      "compactenum",
+      "compactenum*",
+      "compactdesc",
+      "compactdesc*",
+      "asparaitem",
+      "asparaenum"
+    ],
+    "text_block": [
+      "abstract",
+      "center",
+      "flushleft",
+      "flushright",
+      "quote",
+      "quotation",
+      "dedication",
+      "verse",
+      "NoHyper",
+      "small",
+      "smalltext",
+      "footnotesize",
+      "scriptsize",
+      "tiny",
+      "large",
+      "Large",
+      "LARGE",
+      "huge",
+      "Huge",
+      "normalsize",
+      "rm",
+      "bf",
+      "it",
+      "tt",
+      "sf",
+      "sl",
+      "sc",
+      "em",
+      "multicols",
+      "multicols*",
+      "mdframed",
+      "landscape",
+      "centering",
+      "samepage",
+      "spacing",
+      "keyword",
+      "appendices",
+      "frontmatter",
+      "appendix",
+      "subfigure*",
+      "minipage*"
+    ],
+    "float": [
+      "figure",
+      "figure*",
+      "table",
+      "table*",
+      "tabular",
+      "tabular*",
+      "minipage",
+      "longtable",
+      "wrapfigure",
+      "subfigure"
+    ],
+    "bibliography": [
+      "thebibliography",
+      "bibdiv",
+      "biblist",
+      "bibliography"
+    ],
+    "diagram": [
+      "tikzpicture",
+      "tikzcd",
+      "xymatrix",
+      "picture",
+      "pspicture",
+      "tikzcd*",
+      "pspicture*",
+      "xy",
+      "xygraph",
+      "pgfpicture",
+      "pgfonlayer",
+      "tikz",
+      "feynman",
+      "feynmp",
+      "asy",
+      "circuitikz",
+      "CD",
+      "CD*",
+      "scope",
+      "overpic",
+      "axis",
+      "pgfonlayer*",
+      "forest",
+      "forest*"
+    ],
+    "drop": [
+      "comment",
+      "verbatim",
+      "filecontents",
+      "filecontents*",
+      "tikzmath",
+      "pgfmathparse"
+    ],
+    "document": [
+      "document"
+    ]
+  },
+  "_notes": [
+    "proof is a statement kind, not a separate class: it is a block with a heading and a body.",
+    "inner_display has no wrapper of its own after normalisation: its rows join the enclosing display.",
+    "grid keeps its delimiter because cases/array/matrix differ in the rendered delimiter, which is content.",
+    "float and bibliography are dropped wholesale; the count is reported, not silently discarded.",
+    "2026-11-18: the package environments that were most often unknown join their class -- tikz scope/overpic/pgfplots axis draw (diagram); multicols/mdframed/restatable/landscape/centering/spacing/keyword and the front/back matter wrappers keep their content (text_block); appendix and frontmatter are wrappers, not units.",
+    "2026-11-18: the heads measured from unknown_envs after normalize (not from source counts): IEEEeqnarray/subeqn are displays, the nicematrix family is a grid, forest is a drawing.  math/title/author are not here -- they are handled as commands (\\begin{X} runs \\X).",
+    "2026-11-18: the paralist family (compactitem/compactenum/compactdesc) is a list; it was the largest remaining unknown after the first five rules.",
+    "2026-11-18: restatable removed from text_block -- normalize has a branch for it that the table entry made unreachable (GAPS.md J6).",
+    "2026-11-20: subarray moved from inner_display to grid -- inside a math group the inner_display rewrite broke the braces (C7, OPEN.md 1.8)."
+  ]
+}

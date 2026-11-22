@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""The five boundary cases the 2005.01702 review found (SPLITTING.md 2.3)."""
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
+if not os.path.isdir(SCRIPTS):
+    SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "nlprep", "scripts")
+sys.path.insert(0, SCRIPTS)
+import latex2nl as L  # noqa: E402
+import normalize as N  # noqa: E402
+
+RESULTS = []
+
+
+def check(label, ok, detail=""):
+    RESULTS.append((label, ok))
+    print("%-58s %s%s" % (label, "green" if ok else "RED",
+                          "" if ok else "  " + str(detail)))
+
+
+def run(body, pre=""):
+    tex = "\\documentclass{article}\n" + pre + "\\begin{document}\n" + body + "\n\\end{document}\n"
+    n = N.Normalizer(paper="p")
+    norm = n.normalize(tex)
+    L.use_canonical_names()
+    c = L.LatexToNL()
+    c.canonical = True
+    return norm, c.convert(norm)
+
+
+def texts(doc):
+    return [s["text"] for s in doc["sentences"]]
+
+
+# 1-2: a full stop inside the parentheses ends the sentence
+norm, doc = run("(In particular, only MATH1.) Then MATH2 and MATH3.")
+check("a full stop before ) ends the sentence", len(texts(doc)) == 2,
+      texts(doc))
+norm, doc = run("(One can deduce it.) This completes the proof.")
+check(".) before This completes splits", len(texts(doc)) == 2, texts(doc))
+
+# 3-5: list labels
+norm, doc = run("\\begin{enumerate}[(i)]\n\\item $\\mathbf v=\\sum_\\ell \\mathbf v^{(\\ell)}$,\n"
+                "\\item for each MATH1 there is at most one.\n\\end{enumerate}")
+sent = texts(doc)
+check("a formula-only item is kept", any("(i)" in s for s in sent), sent)
+check("the label keeps no brackets", not any("[" in s for s in sent), sent)
+norm, doc = run("\\begin{enumerate}\n\\item First point.\n\\item Second point.\n\\end{enumerate}")
+check("a numbered label does not split off",
+      not any(s.strip() in ("1.", "2.") for s in texts(doc)), texts(doc))
+
+# 6: a colon before a display joins it
+norm, doc = run("There is a grading on the ring:\n\\[ H=\\bigoplus H_\\varkappa \\]\n"
+                "and we use it.")
+check("a display after a colon joins its lead-in",
+      any(s.endswith("MATH1") or "ring: MATH" in s for s in texts(doc)), texts(doc))
+
+# 7-8: a placeholder next to a word gets a space
+norm, doc = run("The map is flat\\cite{stacks} and flat\\ref{lem}.")
+sent = " ".join(texts(doc))
+check("a cite keeps a space before REF", "flat REF" in sent, sent)
+check("a ref keeps a space before REF", sent.count("flat REF") >= 2, sent)
+
+# 9-10: a float keeps its caption and loses its body
+norm, doc = run("\\begin{figure}\n\\includegraphics{x.png}\n"
+                "\\caption{The quiver $Q$ is connected.}\n\\end{figure}\n"
+                "Text follows.")
+check("a figure caption is kept", any("quiver" in s for s in texts(doc)), texts(doc))
+check("the figure body is dropped", not any("includegraphics" in s for s in texts(doc)),
+      texts(doc))
+
+bad = [x for x in RESULTS if not x[1]]
+print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
+sys.exit(1 if bad else 0)

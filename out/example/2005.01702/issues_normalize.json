@@ -1,0 +1,42 @@
+{
+ "_about": "Every place the pipeline let something through, one entry per site, with the destination fixed in data/issue_kinds.json.",
+ "counts": {
+  "drop:footnote": 1,
+  "drop:float": 1
+ },
+ "sizes": {
+  "drop:footnote": 595,
+  "drop:float": 3499
+ },
+ "hard": 0,
+ "kinds": {
+  "drop:float": {
+   "route": "code",
+   "gate": "soft",
+   "about": "a float (tabular/minipage/longtable/table/figure) is dropped wholesale (D2). tabular and minipage should keep their content."
+  },
+  "drop:footnote": {
+   "route": "human",
+   "gate": "soft",
+   "about": "\\footnote content is deleted (D1). Strategy undecided: keep as its own unit or drop. Size is the character count removed."
+  }
+ },
+ "entries": [
+  {
+   "kind": "drop:footnote",
+   "site": "normalize._drop_bare",
+   "route": "human",
+   "gate": "soft",
+   "where": "",
+   "size": 595
+  },
+  {
+   "kind": "drop:float",
+   "site": "normalize._envs",
+   "route": "code",
+   "gate": "soft",
+   "where": "figure",
+   "size": 3499
+  }
+ ]
+}

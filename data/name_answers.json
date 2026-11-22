@@ -1,0 +1,2213 @@
+{
+ "_about": "Answers for command names TeX does not define and the paper does not define.  `names` applies to every paper; `papers` holds what one paper says about its own notation, which overrides a general answer but never a TeX decision.  Written by `pending_names.py --merge`, read by `normalize.py` through NameTable.",
+ "names": {
+  "A": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "Used as a variable for a KK-category."
+  },
+  "Aut": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "the automorphism group functor, \\Aut_\\calf(A): an operator name"
+  },
+  "B": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Used as a symbol for an abelian category."
+  },
+  "C": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "blackboard C, the complex numbers (\\C^\\times); a math letter"
+  },
+  "End": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "Standard LaTeX command for the Endomorphism operator."
+  },
+  "F": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "\\F_p, the field with p elements; a math letter"
+  },
+  "Hom": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "Standard operator for Homomorphisms."
+  },
+  "IVN": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "notation for a transformed remainder, \\IVN[M][-](u,v); symbol"
+  },
+  "LON": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\LON[K][-] is defined in the text as a combination of low-frequency terms; symbol"
+  },
+  "NN": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "It represents the natural numbers $\bbN$, a standard letter/symbol."
+  },
+  "Para": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\Para[v][ll] f: the paper's parallel-transport operator family; symbol"
+  },
+  "Q": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "Symbol for rational numbers field."
+  },
+  "U": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "Used as a variable name for a subcategory."
+  },
+  "UN": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "same family as \\VN: the paper's notation for a nonlinear term, used only inside formulas"
+  },
+  "V": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Used as a variable name for a Hilbert module."
+  },
+  "VN": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "paper's own remainder"
+  },
+  "Vect": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "Standard notation for the category of vector bundles, functioning as a named operator."
+  },
+  "Wuv": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\Wuv[\\alpha][\\beta]-spaces: a symbol with two parameters"
+  },
+  "Z": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "blackboard Z, the integers (\\Z/p, p\\Z); a math letter"
+  },
+  "bfA": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Boldface A representing a constant."
+  },
+  "bfP": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "It is a bold capital P, used as a variable or set name (Power set)."
+  },
+  "cD": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Defined as a category or space."
+  },
+  "calK": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Defined as a continuous function."
+  },
+  "calO": {
+   "action": "allow",
+   "source": "answer",
+   "class": "letter",
+   "note": "Calligraphic O used as a label for a property/set name."
+  },
+  "calf": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\calf and \\calf_S(G) name a fusion system; a single symbol, never a word"
+  },
+  "chinull": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "the cut-off function, \\chinull[...]; symbol"
+  },
+  "citelist": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "Bibliography helper command, carries no semantic content itself."
+  },
+  "citep": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "Citation command; carries no mathematical content."
+  },
+  "citet": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "Bibliography citation command, not part of the mathematical sentence stream."
+  },
+  "clip": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "TikZ drawing command, not mathematical content."
+  },
+  "curraddr": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "Metadata command for author affiliation, not part of the mathematical content stream."
+  },
+  "dif": {
+   "action": "expand",
+   "source": "answer",
+   "body": "d",
+   "note": "Stands for differential, expandable to 'd'."
+  },
+  "draw": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "TikZ drawing command, not a mathematical symbol or operator."
+  },
+  "ensurestackMath": {
+   "action": "unwrap",
+   "source": "answer",
+   "note": "It is a wrapper to ensure math mode for its argument; keep the inner content."
+  },
+  "faktor": {
+   "action": "allow",
+   "source": "answer",
+   "class": "bigop",
+   "note": "Operator for quotient/factor object."
+  },
+  "fint": {
+   "action": "allow",
+   "source": "answer",
+   "class": "bigop",
+   "note": "esint's integral with a bar, \\fint_{B_r(x_0)}: a large operator"
+  },
+  "frakq": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\frakq_*(\\xi): a scalar functional defined in the paper; symbol"
+  },
+  "lVertD": {
+   "action": "allow",
+   "source": "answer",
+   "class": "bigop",
+   "note": "Custom macro likely representing a norm operator (double vertical bars), similar to \\|."
+  },
+  "lVertT": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Represents the norm of a specific operator T, used as a variable/constant in equations."
+  },
+  "lVerta": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Used as a variable name for a function or section in norm expressions."
+  },
+  "lVertb": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Custom symbol used as a variable name for an element b in norm expressions."
+  },
+  "lVerte": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Custom norm command likely referring to the norm of e (or exponential term), treated as a constant value reference."
+  },
+  "lVertf": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Custom command acting as a norm symbol variable."
+  },
+  "lVertg": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Represents the norm of function g, used as a variable/constant."
+  },
+  "lVertn": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Custom command representing the norm of variable n, used as a value/constant in inequalities."
+  },
+  "lVertq": {
+   "action": "allow",
+   "source": "answer",
+   "class": "bigop",
+   "note": "Custom macro likely representing a norm operator applied to q."
+  },
+  "langleA": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "Custom command representing an inner product operator (angle brackets)."
+  },
+  "lcm": {
+   "action": "allow",
+   "source": "answer",
+   "class": "named_operator",
+   "note": "Least common multiple, a standard named operator."
+  },
+  "lvertA": {
+   "action": "allow",
+   "source": "answer",
+   "class": "accent",
+   "note": "Custom command for absolute value bars around A."
+  },
+  "lvertB": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "It stands for the volume of a ball $B_r$, acting as a constant value in the formula."
+  },
+  "lvertv": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Represents the absolute value/norm of vector v, used as a variable/constant."
+  },
+  "node": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "TikZ node placement command, not a mathematical symbol."
+  },
+  "noforkbox": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Makkai's anchor symbol, used as \\mathop{\\noforkbox}\\limits; symbol"
+  },
+  "on": {
+   "action": "unwrap",
+   "source": "answer",
+   "note": "Standard LaTeX2e command to set upright font for operator names; unwrap to keep the argument text."
+  },
+  "slashed": {
+   "action": "allow",
+   "source": "answer",
+   "class": "accent",
+   "note": "the slashed package's Feynman slash, \\slashed{\\mathfrak{D}}_g: an accent-like wrapper"
+  },
+  "stackon": {
+   "action": "unwrap",
+   "source": "answer",
+   "note": "Stacking macro that combines arguments into a single visual unit; keep the combined content."
+  },
+  "tensor": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "\\tensor[_V]{..}{^W}: tensor-product notation from the tensor package"
+  },
+  "urladdr": {
+   "action": "ignore",
+   "source": "answer",
+   "note": "It is a formatting command for URLs, carrying no mathematical content."
+  },
+  "vb": {
+   "action": "unwrap",
+   "source": "answer",
+   "class": "letter",
+   "note": "\\vb{v} prints a bold v (a vector); the paper uses it inside \\vv = {\\vb{v}} but ships no definition, so the argument is the content and the boldness is styling"
+  },
+  "widecheck": {
+   "action": "allow",
+   "source": "answer",
+   "class": "accent",
+   "note": "mathabx's wide hat: an accent with one argument, \\widecheck{h\\star\\varphi}"
+  },
+  "yng": {
+   "action": "allow",
+   "source": "answer",
+   "class": "const",
+   "note": "Yanagida diagram/Young tableau symbol, used as a constant identifier for representations."
+  },
+  "young": {
+   "action": "unwrap",
+   "source": "answer",
+   "note": "It takes a group containing the tableau entries; keep the content, drop the command."
+  }
+ },
+ "papers": {
+  "1309.3267": {
+   "needspace": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Layout command to reserve vertical space, carries no mathematical meaning."
+   }
+  },
+  "1405.2608": {
+   "psfrag": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Package command for replacing text in figures; not part of the mathematical content."
+   }
+  },
+  "1409.0501": {
+   "example": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Environment or label command for examples, not part of the sentence stream content."
+   }
+  },
+  "1505.06548": {
+   "boxrwidth": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Length register used for layout calculations, not part of the math stream."
+   },
+   "boxwidth": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "LaTeX length register used for layout calculations, not mathematical content."
+   },
+   "sembox": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Definition of a box content for formatting; not a math symbol itself."
+   },
+   "semrbox": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Custom macro for box manipulation/layout, carries no semantic math content."
+   },
+   "semrwidth": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Length register used for layout calculations, not part of the math stream."
+   },
+   "semwidth": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "It is a LaTeX length register used for box sizing, not mathematical content."
+   }
+  },
+  "1507.06903": {
+   "dashedrightarrow": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Custom arrow relation symbol."
+   }
+  },
+  "1512.00580": {
+   "nomenclature": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Metadata command for generating a list of terms."
+   }
+  },
+  "1512.07573": {
+   "bsegment": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Command in texdraw environment for drawing segments; not part of mathematical content."
+   },
+   "esegment": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Command in texdraw environment for ending segments; not part of mathematical content."
+   },
+   "fcir": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Command in texdraw environment for drawing circles; not part of mathematical content."
+   },
+   "lvec": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Command in texdraw environment for drawing vectors; not part of mathematical content."
+   },
+   "move": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Command in texdraw environment for drawing coordinates; not part of mathematical content."
+   }
+  },
+  "1601.00932": {
+   "begingroupd": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Likely a custom group delimiter or formatting switch without intrinsic math meaning."
+   }
+  },
+  "1606.05133": {
+   "AGL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for the Affine General Linear Group."
+   },
+   "Fr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard mathematical abbreviation for Frattini subgroup, treated as a named operator."
+   },
+   "GL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents the General Linear group, a named operator."
+   },
+   "GO": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for the Orthogonal Group."
+   },
+   "Id": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard abbreviation for Identity map, treated as a named operator."
+   },
+   "Inn": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard mathematical abbreviation for inner automorphisms group."
+   },
+   "Irr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Irreducible representations, a named mathematical operator."
+   },
+   "Ker": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Kernel, a standard named operator."
+   },
+   "Out": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for the outer automorphism group, functioning as a named operator in category theory/group theory."
+   },
+   "PGL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for the projective general linear group, functioning as a named operator."
+   },
+   "PSL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for Projective Special Linear group."
+   },
+   "PSU": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents the projective special unitary group, a named operator/group."
+   },
+   "PSp": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents the projective symplectic group, a named mathematical operator."
+   },
+   "SL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for Special Linear group."
+   },
+   "SO": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for Special Orthogonal group, used as a named operator."
+   },
+   "SU": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Special unitary group, a named mathematical operator."
+   },
+   "Sp": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for the Symplectic group."
+   },
+   "Sym": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for Symmetric power."
+   },
+   "Th": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for the Thompson group."
+   },
+   "calb": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as a specific set of subgroups."
+   },
+   "calc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command defining a specific mathematical object (a class of subgroups), treated as a constant symbol in the stream."
+   },
+   "cale": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Variable name for a normal subsystem."
+   },
+   "calh": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as a specific set of subgroups."
+   },
+   "count": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TeX primitive for counter manipulation, carries no mathematical content."
+   },
+   "eeqq": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "End-of-equation marker/formatting command, carries no content."
+   },
+   "foc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Function name for focal subgroup."
+   },
+   "lfloorn": {
+    "action": "allow",
+    "source": "answer",
+    "class": "bigop",
+    "note": "Custom floor function operator."
+   }
+  },
+  "1608.08992": {
+   "rTo": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Custom command for right arrow morphism, acts as a relation symbol."
+   }
+  },
+  "1612.06363": {
+   "coordinate": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command that defines a point coordinate; it carries no semantic content for the sentence stream."
+   }
+  },
+  "1701.01907": {
+   "llangle": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Left double angle bracket, used as an opening fence for averages."
+   },
+   "rrangle": {
+    "action": "allow",
+    "source": "answer",
+    "class": "close",
+    "note": "Right double angle bracket, used as a closing fence for averages."
+   }
+  },
+  "1701.08152": {
+   "JA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol representing a specific algebraic structure or index set, treated as a constant."
+   },
+   "scriptscriptstyleaff": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font size switch to scriptscript style."
+   }
+  },
+  "1705.04495": {
+   "Edge": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command for graph edges, not a math symbol."
+   },
+   "Vertex": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command for graph visualization, not a math symbol."
+   }
+  },
+  "1706.00750": {
+   "lceilj": {
+    "action": "allow",
+    "source": "answer",
+    "class": "bigop",
+    "note": "Custom command representing the ceiling function applied to a variable."
+   },
+   "lfloorj": {
+    "action": "expand",
+    "source": "answer",
+    "body": "\\lfloor j \\rfloor",
+    "note": "Custom command for floor function applied to variable j."
+   }
+  },
+  "1711.02609": {
+   "Meas": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for the space of measures."
+   },
+   "PL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Abbreviation for Piecewise Linear functions space."
+   },
+   "Supp": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard abbreviation for Support, used as a named operator/function."
+   },
+   "can": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a subscript/variable name for canonical measure."
+   },
+   "cl": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command for closure operator, treated as a named operator."
+   }
+  },
+  "1806.00391": {
+   "lVerti": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom left double vertical bar (norm) symbol."
+   }
+  },
+  "1809.03803": {
+   "bfQ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Boldface Q representing a unit cube or set."
+   },
+   "bfT": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Bold capital T used as a variable/operator name in ergodic theory context."
+   },
+   "calB": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic B representing a sigma-algebra, treated as a letter variable."
+   },
+   "calF": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for Fourier transform operator."
+   },
+   "calH": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic H used as a variable/operator name (Hilbert transform)."
+   },
+   "calM": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic M used as a variable/operator name (maximal operator)."
+   },
+   "calR": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as a specific set of reduced fractions."
+   },
+   "calT": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic T used as a variable name for operators."
+   },
+   "calZ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic Z representing a countable set of indices, treated as a letter variable."
+   },
+   "delimsize": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch to adjust size/delimiters, does not carry semantic content itself."
+   },
+   "diam": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard mathematical operator for diameter."
+   },
+   "dist": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard mathematical operator for distance."
+   },
+   "frakm": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Fraktur letter representing a measure."
+   }
+  },
+  "1810.03672": {
+   "endline": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Internal TeX primitive for line endings, carries no semantic meaning."
+   },
+   "ifkbalignright": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Conditional macro for table alignment logic, not mathematical content."
+   },
+   "kbcolsep": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Internal LaTeX length parameter for table spacing, not part of the mathematical content stream."
+   }
+  },
+  "1811.02461": {
+   "Ch": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Symbol for the category of chain complexes."
+   },
+   "CovD": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Name of a category (category of covers)."
+   },
+   "D": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable/name for the derived category D(A)."
+   },
+   "Ex": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Used as a subscript/superscript modifier for categories (Exact), functioning as a named operator label."
+   },
+   "Fun": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Standard notation for Functor category."
+   },
+   "J": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a subcategory, used as a mathematical object/variable."
+   },
+   "K": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Symbol for Eilenberg-MacLane space functor."
+   },
+   "KK": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as a field."
+   },
+   "Li": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command used as a symbol for a set of maps."
+   },
+   "M": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom command representing a category or module class, acting as a letter symbol."
+   },
+   "NNN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Used as a symbol for the category of natural numbers/poset."
+   },
+   "PP": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Double-struck P representing projective space, treated as a letter symbol."
+   },
+   "QQ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "It represents the rational numbers $\bbQ$, a standard letter/symbol."
+   },
+   "QQo": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command defining a specific poset, treated as a constant symbol."
+   },
+   "QQu": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command defining a specific subposet, treated as a constant symbol."
+   },
+   "RRR": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command for Right Derived Functor, treated as a named operator."
+   },
+   "T": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Capital T used as a variable name for triangulation."
+   },
+   "X": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Symbol for an infinity-category or construction result."
+   },
+   "ZZ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Blackboard bold Z representing integers."
+   },
+   "closure": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator for closure, used as a function name in math mode."
+   },
+   "colim": {
+    "action": "allow",
+    "source": "answer",
+    "class": "bigop",
+    "note": "Standard LaTeX command for colimit, which is a large operator."
+   },
+   "coveradj": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Operator name for cover adjustment operation."
+   },
+   "coverpb": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator for cover construction, used as a function name."
+   },
+   "covers": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Defined as a relation symbol indicating that F is a cover of n."
+   },
+   "eS": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Part of the notation for Waldhausen's S-construction, acting as a variable/symbol."
+   },
+   "ex": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Modifier for functors (exact functors), functioning as a named operator/subscript."
+   },
+   "hh": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Abbreviation for 'homotopy category', functioning as a named operator on a category."
+   },
+   "horn": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable name for specific horns in simplicial sets."
+   },
+   "hra": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Custom command for horizontal inclusion arrow, acts as a relation symbol."
+   },
+   "introduce": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Textual formatting command for introducing terms, no mathematical content."
+   },
+   "lRa": {
+    "action": "expand",
+    "source": "answer",
+    "body": "\\longrightarrow",
+    "note": "Standard long right arrow relation symbol."
+   },
+   "leftKcoverings": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom command defining a specific class/set of objects (mathematical object name)."
+   },
+   "lefthorns": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator name defined by the paper for left horns class."
+   },
+   "localE": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Symbol used to denote a specific saturated class of covers."
+   },
+   "localP": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a set/category of covers, used as a mathematical object."
+   },
+   "lowerScovering": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It is a named mathematical object (a specific cover/poset) defined by the authors."
+   },
+   "m": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Lowercase m used as a variable/index in categorical notation."
+   },
+   "minsubsets": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom symbol representing a specific mathematical object (poset), used as a variable/name."
+   },
+   "mmod": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named category/operator 'Mod' (modules)."
+   },
+   "n": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents the integer n or set [n] in context."
+   },
+   "op": {
+    "action": "expand",
+    "source": "answer",
+    "body": "^{\\mathrm{op}}",
+    "note": "Stands for opposite algebra/operator, expressible via standard superscript."
+   },
+   "overcat": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents the slice category operator (over-category)."
+   },
+   "perf": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Abbreviation for 'perfect' category, acting as a symbol/name in derived category theory."
+   },
+   "refines": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Binary relation symbol for cover refinement."
+   },
+   "restr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator for restriction, used as a function name in math mode."
+   },
+   "rightKcoverings": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator name defined by the paper for right K-coverings class."
+   },
+   "setP": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Standard set builder notation command taking two arguments (predicate and element); keep content, drop name."
+   },
+   "tcofib": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator for total cofibre."
+   },
+   "tfib": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator for total fibre, used as a function name."
+   },
+   "upperScovering": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command naming a specific type of cover/set, acting as a named operator."
+   },
+   "xhra": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Custom relation symbol for morphisms (likely 'homomorphism' or similar), acts as a relation."
+   },
+   "xra": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Arrow relation symbol used in commutative diagrams."
+   }
+  },
+  "1812.11649": {
+   "HL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a sheaf of hyperlogarithms, used as a mathematical object/variable."
+   },
+   "PerT": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a tensor algebra or similar structure used as a variable."
+   },
+   "VA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It denotes a specific vector space or algebra of forms, a named operator."
+   },
+   "VAr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a mathematical object (Rham complex) used as a symbol/variable."
+   },
+   "Vr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro for sheaves of polylogarithms, acting as a variable/set."
+   },
+   "langleS": {
+    "action": "allow",
+    "source": "answer",
+    "class": "fence",
+    "note": "Defines angled brackets for free algebras, acting as fences."
+   },
+   "outD": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom command representing a geometric boundary or domain (variable/object name)."
+   },
+   "shuffle": {
+    "action": "allow",
+    "source": "answer",
+    "class": "binop",
+    "note": "Mathematical binary operator for shuffle product."
+   }
+  },
+  "1904.09434": {
+   "mathfontb": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting bold blackboard bold typeface."
+   }
+  },
+  "1910.07785": {
+   "Frac": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Operator for fraction field."
+   },
+   "bbF": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Blackboard bold F representing a field."
+   },
+   "bbN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Blackboard bold N representing the set of natural numbers."
+   },
+   "bbQ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Blackboard bold Q representing rational numbers, treated as a letter/symbol."
+   },
+   "bbZ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Blackboard bold Z, standard notation for integers."
+   },
+   "calA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro for the moduli space of abelian varieties, acting as a letter/variable."
+   },
+   "calG": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Calligraphic G used as a variable name for a group scheme."
+   },
+   "calL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro for a chain of lattices, acting as a set/variable."
+   }
+  },
+  "1912.12721": {
+   "cyrs": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Font switch for Cyrillic X; unwrap to keep the letter X."
+   }
+  },
+  "2002.03180": {
+   "lcnamecref": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Cross-reference command from cleveref package; drops the reference label in sentence stream."
+   }
+  },
+  "2003.10934": {
+   "id": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Identity morphism/operator."
+   }
+  },
+  "2008.06148": {
+   "State": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Algorithmic environment command, not part of the mathematical content stream."
+   }
+  },
+  "2009.11854": {
+   "lVertH": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom norm command likely referring to the norm of H (mean curvature), treated as a constant value reference."
+   },
+   "lVertk": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing a specific constant value (initial norm bound)."
+   }
+  },
+  "2010.02884": {
+   "stackinset": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Formatting command from stackengine package; drops the wrapper and keeps the stacked content."
+   }
+  },
+  "2010.05704": {
+   "braket": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Represents a bracket pairing/bilinear form, used as a relation/operator."
+   }
+  },
+  "2012.01679": {
+   "parencite": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Bibliography command that carries no mathematical content itself; drops the name and keeps citation keys if needed, but here it's just a reference marker."
+   }
+  },
+  "2101.08583": {
+   "bbbeta": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Double-struck beta used as a variable name for a framing map."
+   },
+   "bbmu": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Bold mu representing roots of unity group, treated as a letter variable."
+   }
+  },
+  "2102.08797": {
+   "itshapeProof": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting italic shape for the proof label."
+   }
+  },
+  "2103.04368": {
+   "widering": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Visual accent (wide ring) over an argument; drop command, keep content."
+   }
+  },
+  "2103.10137": {
+   "sffamilyA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It is a font-switched name for an algebra, treated as a named operator."
+   },
+   "sffamilyAff": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named category/operator 'Aff' (affine schemes) formatted with sans-serif font."
+   },
+   "sffamilyBun": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named category/operator 'Bun' (bundles) formatted with sans-serif font."
+   },
+   "sffamilyCorr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named category/operator 'Corr' (correspondences) formatted with sans-serif font."
+   },
+   "sffamilyDGCat": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It is a font-switched name for the category of DG categories, treated as a named operator."
+   },
+   "sffamilyDisk": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Part of a custom named operator for the disk category; font switch is internal to the definition."
+   },
+   "sffamilyE": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Font switch combined with letter; unwrap to keep content 'E'."
+   },
+   "sffamilyEis": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Font switch combined with text; unwrap to keep content 'Eis'."
+   },
+   "sffamilyGr": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Font switch command; the text 'Gr' is handled by surrounding \\operatorname or similar structures."
+   },
+   "sffamilyH": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Selects sans-serif font for the symbol H; it is a font switch."
+   },
+   "sffamilyIndCoh": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Selects sans-serif font for the category name IndCoh."
+   },
+   "sffamilyLS": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Switches font to sans-serif for the label LS."
+   },
+   "sffamilyQCoh": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named operator for the category of quasi-coherent sheaves, formatted with sans-serif font but semantically an operator."
+   },
+   "sffamilyShv": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Named category/operator 'Shv' (sheaves) formatted with sans-serif font."
+   },
+   "sffamilySpc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Part of a custom named operator for the infinity-category of spaces."
+   },
+   "sffamilySpec": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting sans-serif typeface for the text 'Spec'."
+   },
+   "sffamilyap": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch for sans-serif small caps/apostrophe style."
+   },
+   "sffamilyauto": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch for sans-serif small caps/auto style."
+   },
+   "sffamilydR": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch for sans-serif small caps/dR style."
+   },
+   "sffamilydef": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Font switch used inside \\text{} for 'def'; carries no semantic meaning itself."
+   },
+   "sffamilyfin": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting sans-serif font for the argument."
+   },
+   "sffamilymod": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting sans-serif family for the word 'mod'."
+   },
+   "sffamilyop": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Font switch for 'op' (opposite); the content is just text formatting, but since it's part of a larger identifier like Aff^op, it acts as a modifier. However, strictly it's a font switch. Given the instruction 'font: it only selects a typeface... class is font', this should be font. But wait, 'op' is often part of the name. Let's look at context: \\operatorname{\text{ \textbf{Aff}}^{\text{ \textbf{op}}}}. It seems to be applying font to the word 'op'. So it is a font switch."
+   },
+   "sffamilyperf": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Font switch command; the text content is handled by surrounding \\operatorname or similar structures."
+   },
+   "sffamilypt": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents a point object in topology; font switch is internal."
+   },
+   "sffamilytriv": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch selecting sans-serif family for the word 'triv'."
+   }
+  },
+  "2105.10964": {
+   "sep": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Separator keyword tag, carries no mathematical or textual content itself."
+   }
+  },
+  "2106.00631": {
+   "bigcupdot": {
+    "action": "expand",
+    "source": "answer",
+    "body": "\\bigsqcup",
+    "note": "Disjoint union symbol, equivalent to bigsqcup."
+   }
+  },
+  "2106.05334": {
+   "lceilA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents a specific algebra A (likely 'ceiling' or similar notation), used as a variable/constant."
+   },
+   "lfloorA": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a mathematical object (ring A) used as a variable."
+   },
+   "lfloorF": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command acting as a functor/operator mapping F to its underlying structure, treated as a named operator."
+   },
+   "lfloorG": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Used as a variable/symbol representing a group or action."
+   },
+   "lfloorL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a mathematical object (likely a field or ring L) used as a variable/symbol."
+   },
+   "lfloorR": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "It represents the underlying ring $R$ of a difference ring, acting as a variable."
+   },
+   "lfloorS": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a localization or quotient category, used as a mathematical object."
+   },
+   "lfloorZ": {
+    "action": "expand",
+    "source": "answer",
+    "body": "\\lfloor Z \\rfloor",
+    "note": "Custom command for floor function applied to variable Z."
+   },
+   "lfloork": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents the base field k, a constant in the context of field extensions."
+   }
+  },
+  "2201.10462": {
+   "Block": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Custom command for NiceArray cell spanning/formatting; carries no mathematical content."
+   },
+   "Ddots": {
+    "action": "allow",
+    "source": "answer",
+    "class": "separator",
+    "note": "Diagonal dots symbol used in matrices/arrays."
+   },
+   "SubMatrix": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "NiceArray annotation command for bracketing matrix subregions; carries no semantic math content."
+   },
+   "UnderBrace": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "NiceArray annotation command for drawing braces; carries no semantic math content."
+   },
+   "Vdots": {
+    "action": "allow",
+    "source": "answer",
+    "class": "separator",
+    "note": "Vertical dots symbol used in matrices/arrays."
+   },
+   "ar": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Xy-pic arrow command; structural diagram element, not part of the mathematical sentence stream."
+   },
+   "x": {
+    "action": "allow",
+    "source": "answer",
+    "class": "binop",
+    "note": "Used as a binary operator (product/direct product) between groups GL_M and GL_N."
+   }
+  },
+  "2204.04123": {
+   "scaleobj": {
+    "action": "unwrap",
+    "source": "answer",
+    "note": "Scales the argument object; keep the content, drop the command."
+   }
+  },
+  "2204.06473": {
+   "langlee": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "It is a custom double left angle bracket symbol used as an operator delimiter."
+   },
+   "langlez": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom left angle bracket symbol used in algebraic expressions."
+   }
+  },
+  "2205.09102": {
+   "vertQ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom vertical bar/absolute value symbol used as a function or norm prefix."
+   }
+  },
+  "2206.08212": {
+   "backslashG": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command for double coset space notation, acts as a named operator/symbol."
+   }
+  },
+  "2211.08409": {
+   "ydiagram": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Package command for drawing diagrams; not a mathematical symbol or text content."
+   }
+  },
+  "2211.14618": {
+   "mathbcal": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font switch for bold calligraphic letters."
+   }
+  },
+  "2302.06192": {
+   "Scale": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents dual objects (left/right dual), acting as a unary operator on the object."
+   }
+  },
+  "2303.09313": {
+   "VertV": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom double vertical bar (norm) symbol."
+   },
+   "Vertp": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing the norm of point p, used as a value/constant."
+   }
+  },
+  "2305.14789": {
+   "wedged": {
+    "action": "allow",
+    "source": "answer",
+    "class": "binop",
+    "note": "Custom wedge product operator."
+   }
+  },
+  "2309.06261": {
+   "HHLN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents high-high-to-low operators, treated as a named operator."
+   },
+   "HHLNErr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom macro representing a specific error term constant."
+   },
+   "IUN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents a specific operator defined by a sum, treated as a named function."
+   },
+   "IUNtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing a specific stochastic process or field variable (tilde N)."
+   },
+   "JcbNErr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom macro representing a specific error term constant in an equation."
+   },
+   "LONtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom command representing a specific mathematical variable or function."
+   },
+   "PIN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command used as a variable/error term in equations."
+   },
+   "RenNErr": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom macro representing a renormalization error term constant."
+   },
+   "Renorm": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents a renormalization operator/counterterm."
+   },
+   "Renormbd": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom named operator for renormalization bound."
+   },
+   "SEN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom error term operator defined in the paper."
+   },
+   "SHHLN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator name defined in the paper."
+   },
+   "SN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents modulation operators, treated as a named operator/function in equations."
+   },
+   "SNin": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom operator name defined in the paper."
+   },
+   "SNtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a specific mathematical object (likely a norm or sequence), used as a variable."
+   },
+   "SNtilin": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing a specific stochastic term (tilde SN initial), acting as a variable."
+   },
+   "Smod": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents modulation functions/operators, treated as a named function."
+   },
+   "Smodtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a specific mathematical object/space, used as a variable."
+   },
+   "Sn": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable name for frequency-supported components in sums."
+   },
+   "UNintro": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command used as a variable/symbol in equations."
+   },
+   "UNtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable name for a modified field/component."
+   },
+   "VN": {
+    "action": "allow",
+    "class": "const",
+    "source": "answer",
+    "note": "this paper's nonlinear remainder; see its own decomposition formula"
+   },
+   "VNintro": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable name for vector fields/components in equations."
+   },
+   "Wfuv": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a function space, used as a mathematical object."
+   },
+   "XNcal": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It represents a specific mathematical map/operator name defined in the paper."
+   },
+   "YN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents a specific mathematical quantity (nonlinear remainder)."
+   },
+   "YNcal": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command defining a map/operator name (para-controlled modulation equation)."
+   },
+   "pSN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Represents pure modulation operators, treated as a named operator/function."
+   },
+   "pSNtil": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing a specific stochastic term (tilde SN paracontrolled), acting as a variable."
+   },
+   "pXN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command used as a variable in ansatz equations."
+   },
+   "pYN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command used as a variable in ansatz equations."
+   },
+   "widebar": {
+    "action": "allow",
+    "source": "answer",
+    "class": "accent",
+    "note": "Acts as an accent (bar) over variables like \\chi."
+   }
+  },
+  "2309.10466": {
+   "scriptscriptstylev": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font size switch to scriptscript style."
+   },
+   "scriptscriptstylex": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Likely a typo or internal font size switch not carrying semantic meaning."
+   },
+   "scriptstylev": {
+    "action": "font",
+    "source": "answer",
+    "class": "font",
+    "note": "Font size switch to script style."
+   },
+   "scriptstylex": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Likely a typo or internal font size switch not carrying semantic meaning."
+   }
+  },
+  "2402.04244": {
+   "Midm": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "Custom 'such that' or separator relation symbol."
+   }
+  },
+  "2403.18879": {
+   "lVertv": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom left double vertical bar (norm) symbol."
+   },
+   "lVertw": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom command representing the norm of variable w, used as a value/constant."
+   },
+   "lvertG": {
+    "action": "allow",
+    "source": "answer",
+    "class": "open",
+    "note": "Custom left single vertical bar (absolute value/norm) symbol."
+   },
+   "lvertx": {
+    "action": "allow",
+    "source": "answer",
+    "class": "accent",
+    "note": "Custom command for absolute value bars around x."
+   },
+   "lverty": {
+    "action": "allow",
+    "source": "answer",
+    "class": "bigop",
+    "note": "Custom macro representing absolute value/norm operator applied to y."
+   },
+   "strokedint": {
+    "action": "allow",
+    "source": "answer",
+    "class": "bigop",
+    "note": "Integral with stroke, representing an average integral operator."
+   }
+  },
+  "2408.10169": {
+   "lvertS": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom notation for a specific sum or norm variant."
+   },
+   "lvertl": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom macro representing a functional or linear form, acting as a named operator/function."
+   }
+  },
+  "2502.03028": {
+   "ARSMbranchwisetamedcongruencelemma": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Label/reference command for a theorem/lemma; carries no math content."
+   },
+   "HLRSMcontextualizationlemma": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "It is a label/reference command for a lemma, not part of the mathematical stream."
+   },
+   "LRSMtamednewmannlemma": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Label reference for a theorem/lemma statement, carries no mathematical content itself."
+   },
+   "fcap": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command for diagrammatic calculus, not a standard math symbol."
+   },
+   "flst": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol used in diagrammatic rewriting steps."
+   },
+   "frst": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol used in diagrammatic rewriting steps."
+   },
+   "funzip": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command for diagrammatic representation, not part of the mathematical sentence stream."
+   },
+   "fzip": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "TikZ drawing command for visual representation, carries no semantic math content for sentence stream."
+   },
+   "lverti": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "It represents the index variable $i$ (likely 'letter i') used in inequalities."
+   },
+   "minicup": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Custom TikZ command for drawing diagrams; carries no semantic math content itself."
+   },
+   "ministrand": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a node label in diagrams (tikz), representing a specific element/strand."
+   },
+   "pic": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "It is a TikZ picture macro, graphical content rather than mathematical symbols."
+   },
+   "tikzpic": {
+    "action": "ignore",
+    "source": "answer",
+    "note": "Wrapper for TikZ pictures, not a mathematical symbol."
+   }
+  },
+  "2510.03709": {
+   "Piagcs": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Represents a specific operator or projection in the context."
+   },
+   "Pielc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command representing a projection operator."
+   },
+   "Pigc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command representing a projection operator."
+   },
+   "Pigcs": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command for Coulomb projection operator."
+   },
+   "Pilc": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom named operator (projection map)."
+   },
+   "R": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Standard LaTeX math mode macro for the real numbers set."
+   },
+   "cB": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a mathematical space (quotient space) used as a variable."
+   },
+   "cC": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as the configuration space."
+   },
+   "cF": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom macro representing the Seiberg-Witten map/operator."
+   },
+   "cG": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Denotes the gauge transformation group, used as a mathematical object."
+   },
+   "cH": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It is a calligraphic H, used as a name for the Extended Hessian operator."
+   },
+   "cL": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Script L used as a variable name for the Chern-Simons-Dirac functional."
+   },
+   "cN": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom macro representing a set (neighborhood) used as a variable."
+   },
+   "cT": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Denotes the tangent space, used as a mathematical object/variable."
+   },
+   "cU": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Script letter U, used as a variable name for an open subset."
+   },
+   "cV": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Used as a variable name for a vector bundle."
+   },
+   "cX": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Defined as the L^2 gradient of the CSD functional (a variable/operator)."
+   },
+   "s": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Used as a variable name for a spin^c structure."
+   },
+   "scrI": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Script letter used as a variable for an invariant set."
+   },
+   "scrZ": {
+    "action": "allow",
+    "source": "answer",
+    "class": "letter",
+    "note": "Custom command for a zero set, acting as a letter symbol for a set."
+   },
+   "tg": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Used as a variable name for a specific metric tensor."
+   },
+   "xagcsq": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "Custom command for an action functional, treated as a named operator."
+   },
+   "xgcq": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol used as a variable name for a stationary point/functional."
+   },
+   "xgcsq": {
+    "action": "allow",
+    "source": "answer",
+    "class": "named_operator",
+    "note": "It is the name of a specific function/operator (Chern-Simons functional) in the context."
+   },
+   "xgcsql": {
+    "action": "allow",
+    "source": "answer",
+    "class": "const",
+    "note": "Custom symbol for a specific function or potential, used as a variable."
+   }
+  },
+  "danmark": {
+   "curvearrowright": {
+    "action": "allow",
+    "source": "answer",
+    "class": "relation",
+    "note": "It is a standard mathematical relation symbol used to denote an action or mapping direction."
+   }
+  },
+  "selecta": {
+   "hollowslash": {
+    "action": "allow",
+    "source": "answer",
+    "class": "binop",
+    "note": "It is used as a binary operator (quotient action) between mathematical objects."
+   }
+  }
+ }
+}

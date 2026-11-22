@@ -1,0 +1,573 @@
+Braverman, Finkelberg and Nakajima have recently given a mathematical construction of the Coulomb branches for a large class of $3d$ $\mathcal{N} =4$ gauge theories, as algebraic varieties with Poisson structure. They conjecture that these varieties have symplectic singularities. We confirm this conjecture for all quiver gauge theories without loops or multiple edges, which in particular implies that the corresponding Coulomb branches have finitely many symplectic leaves and have rational Gorenstein singularities. We also give a criterion for proving that any particular Coulomb branch has symplectic singularities, and discuss the possible extension of our results to quivers with loops and/or multiple edges.
+
+\section{Introduction}
+
+Braverman, Finkelberg and Nakajima have proposed a mathematical definition for the Coulomb branches of a large class of $3d$ $\mathcal{N}=4$ gauge theories \cite{Nak6,BFN1}. Their work has attracted considerable interest due to its origin in quantum field theory, and also because Coulomb branches -- along with their duals, Higgs branches -- play a natural role in the mathematical theory of symplectic duality \cite{BLPW, BDGH, Web3, BF2}. They define Coulomb branches as algebraic varieties with Poisson structures over $\mathbb{C}$ (in fact, they are defined over $\mathbb{Z}$), and conjecture \cite[§ 3(iv)]{BFN1} that Coulomb branches have symplectic singularities in the sense of Beauville \cite{Beauville}. This is a natural conjecture from the point of view of the symplectic duality program, but remains unknown outside of a limited number of cases.
+
+Quiver gauge theories form a particularly interesting family of $3d $ $\mathcal{N} =4$ gauge theories, whose Higgs branches are Nakajima quiver varieties. Their Coulomb branches are also important spaces in geometric representation theory: in finite ADE types they are generalized affine Grassmannian slices \cite[Theorem 3.10]{BFN2}, while in affine type A they are Cherkis bow varieties \cite[Theorem 6.18]{NakTak}. In general, the Coulomb branch for a quiver gauge theory without loops can be thought of as a generalized affine Grassmannian slice for the corresponding symmetric Kac-Moody group \cite{FinkICM}. These varieties are suggested as a possible setting in which to generalize the geometric Satake correspondence, see \cite{Nak8} and \cite[§ 3(viii)]{BFN2}.
+
+Given a quiver $Q$ along with dimension vectors $\mathbf{v}, \mathbf{w}$, we denote the corresponding Coulomb branch by $\mathcal{M}_C(Q,\mathbf{v}, \mathbf{w})$. Throughout most of this note, we assume that $Q$ is a simple quiver: that its underlying graph has no loops or multiple edges (although cycles are still allowed).
+\begin{statement}{theorem}
+\label{main thm}
+For any simple quiver, $\mathcal{M}_C(Q,\mathbf{v}, \mathbf{w})$ has symplectic singularities.
+\end{statement}
+
+This result is already known in certain cases. In affine type A it follows from the work of Nakajima and Takayama, since bow varieties admit symplectic resolutions \cite[§ 6.2]{NakTak}. In finite ADE types, recall that $\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) \cong \overline{\mathcal{W}}_{\mu^\ast}^{\lambda^\ast}$ is a generalized affine Grassmannian slice. These varieties have symplectic singularities by the recent work of Zhou \cite[Theorem 4.7]{Zhou}. Zhou's result subsumes several previous results for finite ADE types: If $\mu^\ast$ is dominant then it is an {ordinary} affine Grassmannian slice, so the above theorem is part of \cite[Theorem 2.7]{KWWY}. When $\lambda^\ast = 0$ or equivalently $\mathbf{w} = 0$, then $\overline{\mathcal{W}}_{\mu^\ast}^0$ is an open Zastava space \cite[Theorem 3.1]{BFN2}, which is smooth \cite[Prop.~3.5]{Finkelberg-Mirkovic} and symplectic \cite[Corollary 1]{FKMM}. Finally, if $\lambda^\ast$ is minuscule and $\mu^\ast \in W \lambda^\ast$, then $\overline{\mathcal{W}}_{\mu^\ast}^{\lambda^\ast} \cong \mathbb{A}^{2 \langle \rho, \lambda^\ast - \mu^\ast\rangle}$ is smooth and symplectic by \cite[Theorem 2.9]{KryPer}, and in fact its symplectic structure can be identified with the standard one on $\mathbb{A}^{2 \langle \rho, \lambda^\ast - \mu^\ast\rangle} \cong T^\ast \mathbb{A}^{\langle \rho, \lambda^\ast - \mu^\ast\rangle}$.
+
+We develop a criterion (Theorem \ref{criterion}) for showing that a given Coulomb branch has symplectic singularities. Applying this criterion in the case of quiver gauge theories, the proof of Theorem \ref{main thm} reduces to the study of several simple quivers, see Figure \ref{figure}.
+In § \ref{section: extending} we list those additional cases which would be necessary and sufficient in order to extend the main theorem to all quivers, i.e.~to allow loops and/or multiple edges.
+
+In addition to providing a definition of Coulomb branches in their foundational paper \cite{BFN1}, Braverman, Finkelberg and Nakajima also developed several techniques which are crucial in the present work. The most important is a construction of partial resolutions of Coulomb branches using flavour symmetry, see §\ref{section: flavour resolutions}. This construction can be interpreted as a GIT quotient, allowing for variation of GIT arguments. In the case of simple quivers, we show that for generic GIT parameters these partial resolutions have terminal singularities, and we optimistically expect that they are $\mathbb{Q}$--factorial terminalizations, see Remark \ref{remark: qfactterm}.
+
+In this paper we will not make use of the physical meaning of Coulomb branches, and refer the reader to \cite{BDG, Nak6} for more details and further references. We note that the symplectic singularities and resolutions of Coulomb branches have been studied in physics, for example by Hanany and collaborators \cite{HananySperling,Hetal,GrimmingerHanany}.
+
+By \cite[Prop.~1.3]{Beauville}, \cite[Theorem 2.3]{Kaledin} and \cite[Prop.~3.7]{Brown-Gordon}, Theorem \ref{main thm} has several immediate consequences:
+\begin{statement}{corollary}
+For any simple quiver:
+\begin{list}{enumerate}
+\item[(a)] $\mathcal{M}_C(Q,\mathbf{v},\mathbf{w})$ has rational Gorenstein singularities.
+\item[(b)] $\mathcal{M}_C(Q,\mathbf{v}, \mathbf{w})$ has finitely many (holomorphic) symplectic leaves. Moreover, the symplectic leaves are the irreducible components of the smooth loci $X_i^{reg} \subset X_i$ for the stratification
+
+\begin{display}\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) = X_0 \supset X_1 \supset X_2 \supset …,\end{display}
+
+where $X_{i+1}$ is the singular locus of $X_{i}$.
+\item[(c)] The symplectic leaves of $\mathcal{M}_C(Q,\mathbf{v}, \mathbf{w})$ are smooth connected locally-closed subvarieties.
+\end{list}
+\end{statement}
+
+In finite ADE type $\mathcal{M}_C(Q, \mathbf{v},\mathbf{w})$ has an explicit decomposition into symplectic leaves by \cite{MuthiahWeekes}, \cite[Theorem~2.5]{KWWY}, and in affine type A by \cite[§ 4.1]{NakTak}. These decompositions are very natural from the point of view of affine Grassmannian slices (resp.~bow varieties), and are of representation-theoretic significance. Some predictions in general are given in \cite[§ 2(ii)]{Nak7},\cite{Hetal,GrimmingerHanany}.
+
+\subsection{Acknowledgements}
+
+This work owes its existence to Braverman, Finkelberg, and Nakajima, and their groundbreaking work on Coulomb branches.
+It also would not have been possible without discussions with Gwyn Bellamy, Michael Finkelberg, Dinakar Muthiah, Hiraku Nakajima, Travis Schedler and Oded Yacobi. I am grateful to them for their many helpful suggestions and comments. Finally, I would like to thank my anonymous referees for their careful reading and feedback.
+
+\section{Recollections on Coulomb branches}
+
+\subsection{The definition}
+We briefly overview the construction of Coulomb branches due to Braverman, Finkelberg, and Nakajima, referring the reader to \cite{BFN1} for more details and properties.
+
+Let $\mathbf G$ be a connected reductive group over $\mathbb{C}$, and let $\mathbf{N}$ be a representation of $\mathbf G$ over $\mathbb{C}$. It will be convenient to fix a maximal torus $\mathbf{T} \subset \mathbf G$, with Lie algebra $\mathfrak t = \operatorname{Lie} \mathbf{T}$ and Weyl group $W$.
+
+To the datum $(\mathbf G, \mathbf{N})$ there is an associated moduli space $\mathcal{R}_{\mathbf G, \mathbf{N}}$ \cite[§ 2(i)]{BFN1}, consisting of triples $(P, \varphi, s)$ where (i) $P$ is principal $\mathbf G$--bundle on the formal disk $D$, (ii) $\varphi : P |_{D^\times} \rightarrow D^\times \times \mathbf G$ a trivialization over the formal punctured disk, and (iii) $s$ is a section of the associated bundle $P \times^\mathbf G \mathbf{N}$ such that $\varphi(s)$ is regular. Its equivariant Borel-Moore homology $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G, \mathbf{N}})$ has a commutative ring structure by \cite[Theorem 3.10]{BFN1}, and the corresponding affine scheme
+\label{eq: CB def}
+\begin{display}\mathcal{M}_C(\mathbf G, \mathbf{N}) = \operatorname{Spec} H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G, \mathbf{N}})\end{display}
+is called the Coulomb branch associated to $(\mathbf G, \mathbf{N})$ \cite[Definition 3.13]{BFN1}.
+
+\begin{statement}{remark}
+We will always take Borel-Moore homology with coefficients in $\mathbb{C}$, and think of $\mathcal{M}_C(\mathbf G,\mathbf{N})$ as a scheme over $\mathbb{C}$.
+\end{statement}
+
+Some key examples of Coulomb branches are recalled in § \ref{examples}. For now, we summarize several important properties:
+\begin{statement}{theorem}[\mbox{\cite[Cor.~5.21, 5.22, Prop.~6.12, 6.15]{BFN1}}]
+\label{thm: BFN theorem}
+$\mathcal{M}_C(\mathbf G, \mathbf{N})$ is an irreducible normal affine variety of dimension $2 \operatorname{rk} \mathbf G$. It has a Poisson structure which is symplectic on its smooth locus.
+\end{statement}
+
+The Poisson structure on $\mathcal{M}_C(\mathbf G,\mathbf{N})$ is defined by considering $H_\ast^{\mathbf G_\mathcal{O} \rtimes \mathbb{C}^\times}(\mathcal{R}_{\mathbf G,\mathbf{N}})$, where the group $\mathbb{C}^\times$ acts on $\mathcal{R}_{\mathbf G,\mathbf{N}}$ via loop rotation of the disc $D$. This Borel-Moore homology again carries an algebra structure, and is a non-commutative deformation of $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G,\mathbf{N}})$, see \cite[§ 3(iv)]{BFN1}. This naturally endows $\mathcal{M}_C(\mathbf G,\mathbf{N})$ with a Poisson structure.
+
+One further property of $\mathcal{M}_C(\mathbf G,\mathbf{N})$ that we will need is described in \cite[§ 3(vii)(a)]{BFN1}: suppose that $\mathbf G = \mathbf G_1 \times \mathbf G_2$ and $\mathbf{N} = \mathbf{N}_1\oplus \mathbf{N}_2$, where $\mathbf{N}_i$ is a representation of $\mathbf G_i$ alone. Then
+\label{eq: product}
+\begin{display}\mathcal{M}_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\mathbf G_1,\mathbf{N}_1) \times \mathcal{M}_C(\mathbf G_2, \mathbf{N}_2)\end{display}
+
+\subsection{Flavour resolutions}
+\label{section: flavour resolutions}
+An important structure for Coulomb branches is the notion of flavour symmetry, this lively terminology coming from physics. For the purposes of this paper we will only consider the following situation: that $\mathbf G$ fits into an exact sequence of connected reductive groups
+\begin{display}1 \rightarrow \mathbf G \rightarrow \widetilde{\mathbf G} \rightarrow \mathbf F \rightarrow 1\end{display}
+such that $(i)$ the action of $\mathbf G$ on $\mathbf{N}$ extends to an action of the larger group $\widetilde{\mathbf G}$, and $(ii)$ $\mathbf F$ is a torus. In particular, $\mathbf G$ is a normal subgroup of $\widetilde{\mathbf G}$. We call $\mathbf F$ a flavour symmetry group. We will denote a maximal torus by $\mathbf{T} \subset \widetilde{\mathbf{T}} \subset \widetilde{\mathbf G}$, and its Lie algebra by $\tilde{\mathfrak t} = \operatorname{Lie}\widetilde{\mathbf{T}}$.
+
+The flavour symmetry group $\mathbf F$ can be used to construct partial resolutions of the Coulomb branch, as well as to construct associated line bundles, following \cite[§ 3(ix)]{BFN1} and \cite{BFN4}. For these partial resolutions we should consider the moduli space $\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}}$ for the pair $(\widetilde{\mathbf G}, \mathbf{N})$. It admits a map $\pi : \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} \rightarrow \mathsf{Gr}_\mathbf F$ to the affine Grassmannian $\mathsf{Gr}_\mathbf F$ for the group $\mathbf F$. For any coweight $\varkappa \in X_\ast(\mathbf F)$ of $\mathbf F$ we define $\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} (\varkappa) = \pi^{-1}(z^\varkappa)$ to be the preimage of the point $z^\varkappa \in \mathsf{Gr}_\mathbf F$. In particular $\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} (0) = \mathcal{R}_{\mathbf G, \mathbf{N}}$. There is a corresponding grading on the equivariant homology ring:
+\label{eq: grading by coweights}
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}}) = \bigoplus_{\varkappa \in X_\ast(\mathbf F)} H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} (\varkappa) )\end{display}
+Now, for a fixed coweight $\varkappa$ define:
+\begin{display}\mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N}) = \operatorname{Proj} ( \bigoplus_{n \geq 0} H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa) ) )\end{display}
+In particular, $ \mathcal{M}_C^0(\mathbf G, \mathbf{N}) = \mathcal{M}_C(\mathbf G, \mathbf{N})$. Note that we omit $\widetilde{\mathbf G}$ from our notation, though it is important in the definition of $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$. There is a natural projective morphism
+\label{eq: partial reso}
+\begin{display}\pi^\varkappa : \mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N}) \rightarrow \mathcal{M}_C(\mathbf G, \mathbf{N}),\end{display}
+which is birational by \cite[Remark 1.1]{BFN4}. In good cases this map will be a symplectic resolution, see e.g.~§ \ref{example 1}, \ref{example 2}.
+
+\begin{statement}{remark}
+\label{rem: hamiltonian reduction}
+As explained in \cite[§ 3(ix)]{BFN1}, this construction can be naturally identified with a Hamiltonian reduction:
+
+\begin{display}\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\mathbf G}, \mathbf{N})\ssslash_\varkappa \mathbf F^\vee\end{display}
+
+Here $\mathbf F^\vee = \operatorname{Spec} \mathbb{C}[X_\ast(\mathbf F)]$ is the dual torus to $\mathbf F$, and $\varkappa$ is thought of as a GIT parameter for $\mathbf F^\vee$. In particular, this perspective shows that $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is finite type, and that the map $\pi^\varkappa$ is Poisson.
+\end{statement}
+
+\begin{statement}{remark}
+The $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ are irreducible varieties by Lemma \ref{cor: integral} below. We expect that they are also normal, and symplectic on their smooth loci. In Theorem \ref{thm: BFN theorem for resolutions}, we will prove that these properties hold in the case of quiver gauge theories for simple quivers.
+\end{statement}
+
+We now consider a flavoured generalization of (\ref{eq: product}). Following the same notation, suppose that the theories $(\mathbf G_i, \mathbf{N}_i)$ both admit the same flavour symmetry group $\mathbf F$. Then so does $(\mathbf G, \mathbf{N})$:
+\begin{display}\begin{diagram}{tikzcd}
+1 \ar[d,equal] \ar[r] & \mathbf G_1 \times \mathbf G_2 \ar[d,equal] \ar[r] & \widetilde{\mathbf G_1} \times \widetilde{\mathbf G_2} \ar[r] & \mathbf F \times \mathbf F \ar[r] & 1 \ar[d, equal] \\
+1 \ar[r] & \mathbf G \ar[r] & \widetilde{\mathbf G} \ar[u, hookrightarrow] \ar[r] & \mathbf F \ar[u, hookrightarrow, "\Delta"] \ar[r] & 1
+\end{diagram}\end{display}
+That is, we define $\widetilde{\mathbf G} \subset \widetilde{\mathbf G_1}\times \widetilde{\mathbf G_2}$ as the preimage of the diagonal $\mathbf F \subset \mathbf F \times \mathbf F$. Since $\widetilde{\mathbf G}_1\times \widetilde{\mathbf G}_2$ naturally acts on $\mathbf{N} = \mathbf{N}_1 \oplus \mathbf{N}_2$, so does its subgroup $\widetilde{\mathbf G}$.
+\begin{statement}{lemma}
+\label{lemma: segre}
+With the above choice of $\widetilde{\mathbf G}$, for any $\varkappa \in X_\ast(\mathbf F)$ we have
+
+\begin{display}\mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C^\varkappa(\mathbf G_1, \mathbf{N}_1) \times \mathcal{M}_C^\varkappa(\mathbf G_2, \mathbf{N}_2)\end{display}
+
+\end{statement}
+\begin{statement}{proof}
+This is a Segre product: by \cite[Exercise II.5.11]{Hartshorne}, it suffices to show that for $n\geq 0$
+
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa) ) \cong H_\ast^{\mathbf G_{1,\mathcal{O}}}( \mathcal{R}_{\widetilde{\mathbf G_1}, \mathbf{N}_1} ( n \varkappa) ) \otimes_\mathbb{C} H_\ast^{\mathbf G_{2,\mathcal{O}}}( \mathcal{R}_{\widetilde{\mathbf G_2}, \mathbf{N}_2} ( n \varkappa) )\end{display}
+
+By K\"unneth's theorem, this follows from $\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}}(n\varkappa) \cong \mathcal{R}_{\widetilde{\mathbf G_1}, \mathbf{N}_1}(n \varkappa) \times \mathcal{R}_{\widetilde{\mathbf G_2}, \mathbf{N}_2}(n \varkappa)$, which in turn follows from the definitions.
+\end{statement}
+
+\subsection{The integrable system and hyperplane arrangement}
+We will freely identify equivariant cohomology rings with the coordinate rings of quotients of Cartan subalgebras, for example:
+
+\begin{display}H_\mathbf{T}^\ast(pt) \cong \mathbb{C}[\mathfrak t] \text{ and } H_\mathbf G^\ast(pt) \cong \mathbb{C}[\mathfrak t]^W\end{display}
+
+There is an inclusion of rings $\mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathbf G, \mathbf{N}})$ by \cite[§ 3(vi)]{BFN1}, which induces a morphism
+\begin{display}\varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W,\end{display}
+Composing with $\pi^\varkappa$ we obtain a map $\varpi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W$. The maps $\varpi, \varpi^\varkappa$ are integrable systems for the Poisson structure, in that $\mathbb{C}[\mathfrak t]^W$ is a maximal Poisson-commutative subalgebra by \cite[Cor.~5.21]{BFN1}.
+
+\begin{statement}{lemma}
+\label{lemma: faithfully flat}
+The morphisms $\varpi, \varpi^\varkappa$ are faithfully flat.
+\end{statement}
+\begin{statement}{proof}
+\cite[Lemma 2.6]{BFN1} shows that $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}})$ is free over $\mathbb{C}[\mathfrak t]^W$. More precisely, there is a non-canonical isomorphism of $\mathbb{C}[\mathfrak t]^W$--modules (c.f.~also \cite[§ 6(i)]{BFN1}, \cite[Lemma 6.2]{BFM})
+\label{eq: decomp into lambdas}
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}}) \cong \bigoplus_\lambda H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}}^\lambda),\end{display}
+where $\lambda$ runs over dominant coweights of $\mathbf G$. Here $\mathcal{R}_{{\mathbf G}, \mathbf{N}}^\lambda$ denotes the preimage in $\mathcal{R}_{\mathbf G,\mathbf{N}}$ of the $\mathbf G_\mathcal{O}$-orbit $\mathsf{Gr}^\lambda_\mathbf G \subset \mathsf{Gr}_\mathbf G$. Up to a grading shift, there is an isomorphism $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}}^\lambda) \cong H_\ast^{\mathbf G}( \mathbf G / \mathbf{P}_\lambda)$, where $\mathbf G / \mathbf{P}_\lambda$ is a partial flag variety corresponding to $\lambda$. Each $\mathbb{C}[\mathfrak t]^W$-module $H_\ast^{\mathbf G}( \mathbf G / \mathbf{P}_\lambda)$ is free, which proves that $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}})$ is free. In particular, the map $\varpi$ is faithfully flat.
+
+For any $n$, the $\mathbb{C}[\mathfrak t]^W$-module $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} (n \varkappa))$ has a decomposition analogous to (\ref{eq: decomp into lambdas}), but where the sum runs over coweights $\tilde{\lambda}$ of $\widetilde{\mathbf G}$ which are lifts of $n \varkappa$. By similar reasoning as above, this proves that $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} (n \varkappa))$ is free over $\mathbb{C}[\mathfrak t]^W$. Consequently the morphism $\varpi^\varkappa$ is flat\cite[\href{https://stacks.math.columbia.edu/tag/0D4C}{Tag 0D4C}]{stacks-project}. But $\varpi^\varkappa$ is also surjective: we know already that this is true of $\varpi$, while $\pi^\varkappa$ is surjective since it is proper and dominant.
+\end{statement}
+
+\subsubsection{Generalized root filtration}
+Following \cite[Definition 5.2]{BFN1}, a generalized root for $(\mathbf G, \mathbf{N})$ is an element of $\mathfrak t^\ast$ which is either (I) a non-zero weight of $\mathbf{N}$ or (II) a root of $\operatorname{Lie} \mathbf G$. Let $\varphi_1,…, \varphi_r$ be the distinct generalized roots for $(\mathbf G, \mathbf{N})$. For any $t \in \mathfrak t$, define
+\label{eq: codim function}
+\begin{display}\operatorname{codim}_{\mathbf G, \mathbf{N}}(t) = \operatorname{codim}_\mathfrak t ( \bigcap_{\varphi_i(t) = 0} \mathbb{V}(\varphi_i) )\end{display}
+Here $\mathbb{V}(f) \subset \mathfrak t$ denotes the vanishing locus of a function $f$ on $\mathfrak t$. Note that the intersection on the right-hand side above is simply the intersection of all generalized root hyperplanes containing $t$. For any $k\geq 0$, we define a subvariety of $\mathfrak t$ by
+\label{eq: codim subsets}
+\begin{display}\mathfrak t^{(k)} = \{ t\in \mathfrak t : \operatorname{codim}_{\mathbf G, \mathbf{N}}(t) \geq k \}\end{display}
+It is not hard to see that $\mathfrak t^{(k)}$ is a Zariski closed subset: it is the union of all codimension $\geq k$ intersections of generalized root hyperplanes. In particular $\mathfrak t^{(k)}$ may be empty, but if $\mathfrak t^{(k)}\neq \emptyset$ then $\operatorname{codim}_\mathfrak t \mathfrak t^{(k)} = k$.
+
+\begin{statement}{remark}
+Up to a minor discrepancy when $\dim \mathfrak t = 2$, in the notation of \cite[§ 5(vi)]{BFN1}
+
+\begin{display}\mathfrak t^{\circ} = \mathfrak t \setminus \mathfrak t^{(1)}, \mathfrak t^• = \mathfrak t \setminus \mathfrak t^{(2)}\end{display}
+
+\end{statement}
+
+\subsubsection{Preimages of local rings}
+
+Let $t \in \mathfrak t$. Let $Z_\mathbf G(t) \subset \mathbf G$ be the centralizer of $t$, and $\mathbf{N}^t \subset \mathbf{N}$ the subspace of $t$--invariants. Then $\mathbf{T}$ is a maximal torus of $Z_\mathbf G(t)$, and the Weyl group of $Z_\mathbf G(t)$ is the stabilizer $W_t \subset W$ of $t$. Note that $H_{Z_\mathbf G(t)}^\ast(pt) \cong \mathbb{C}[\mathfrak t]^{W_t}$. Also note that
+\label{eq: codim = codim}
+\begin{display}\operatorname{codim}_{\mathbf G, \mathbf{N}}(t) = \operatorname{codim}_{Z_\mathbf G(t), \mathbf{N}^t}( 0 )\end{display}
+
+As explained in \cite[§ 6(v)]{BFN1}, there is an isomorphism of rings
+\label{eq: fibers BFN iso}
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W_t}_t \stackrel{\sim}{\rightarrow} H_\ast^{Z_\mathbf G(t)_\mathcal{O}} (\mathcal{R}_{Z_\mathbf G(t), \mathbf{N}^t} ) \otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t\end{display}
+Here $\mathbb{C}[\mathfrak t]^{W_t}_t$ denotes the localization of $\mathbb{C}[\mathfrak t]^{W_t}$ at the maximal ideal corresponding to the image of $t$ under $\mathfrak t \rightarrow \mathfrak t \sslash W_t$. Similarly, we'll write $\mathbb{C}[\mathfrak t]_t$ for localization of $\mathbb{C}[\mathfrak t]$ at $t$, and $\mathbb{C}[\mathfrak t]^W_t$ for the localization of $\mathbb{C}[\mathfrak t]^W$ at the image of $t$ under $\mathfrak t \rightarrow \mathfrak t \sslash W$. The group $W_t$ acts on $\mathbb{C}[\mathfrak t]_t$ with invariants $(\mathbb{C}[\mathfrak t]_t)^{W_t} = \mathbb{C}[\mathfrak t]_t^{W}$, as follows from the fact that $\operatorname{Frac}(\mathbb{C}[\mathfrak t])^{W_t} = \operatorname{Frac}(\mathbb{C}[\mathfrak t]^{W_t})$.
+
+Since $\mathbb{C}[\mathfrak t]^W_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t$, by composition we obtain from (\ref{eq: fibers BFN iso}) a map of rings
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W}_t \lhook\joinrel\rightarrow H_\ast^{Z_\mathbf G(t)_\mathcal{O}} (\mathcal{R}_{Z_\mathbf G(t), \mathbf{N}^t} ) \otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t\end{display}
+Denote the corresponding affine schemes by $\mathcal{M}_C(\mathbf G, \mathbf{N})_t$ and $\mathcal{M}_C(Z_\mathbf G(t), \mathbf{N}^t)_t$, respectively. Then we can rephrase (\ref{eq: fibers BFN iso}) as a Cartesian diagram of schemes:
+\label{eq: fibers map 2}
+\begin{display}\begin{diagram}{tikzcd}
+\mathcal{M}_C(Z_\mathbf G(t), \mathbf{N}^t)_t \ar[r] \ar[d] & \mathcal{M}_C(\mathbf G, \mathbf{N})_t \ar[d] \\
+\operatorname{Spec} \mathbb{C}[\mathfrak t]^{W_t}_t \ar[r] & \operatorname{Spec} \mathbb{C}[\mathfrak t]^{W}_t
+\end{diagram}\end{display}
+
+This picture extends to include flavour resolutions. In the notation of Section \ref{section: flavour resolutions}, first observe that there is a corresponding exact sequence of centralizer subgroups
+\begin{display}1 \rightarrow Z_\mathbf G(t) \rightarrow Z_{\widetilde{\mathbf G}}(t) \rightarrow \mathbf F \rightarrow 1\end{display}
+In particular, for any $\varkappa\in X_\ast(\mathbf F)$ there is a corresponding variety $\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)$. Note that $
+\bigoplus_{n\geq 0}H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa) )
+$
+is a graded algebra over $\mathbb{C}[\mathfrak t]^W$, which lies in degree zero. Thus $\operatorname{Proj}$ is compatible with base change to any trivially graded $\mathbb{C}[\mathfrak t]^W$--algebra, see \cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-project}, and in particular:
+\label{eq: base change}
+\begin{display}\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t \sslash W} \operatorname{Spec} \mathbb{C}[\mathfrak t]^W_t \cong \operatorname{Proj} ( \bigoplus_{n \geq 0} H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa)) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^W_t )\end{display}
+We denote this scheme by $\mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N})_t$. Similarly, we write $\mathcal{M}_C^\varkappa(Z_{\mathbf G}(t), \mathbf{N}^t)_t$ for an analogous base change along $\mathbb{C}[\mathfrak t]^{W_t} \rightarrow \mathbb{C}[\mathfrak t]^{W_t}_t$.
+
+The following result directly generalizes (\ref{eq: fibers map 2}):
+\begin{statement}{theorem}
+\label{prop: fibers via centralizers and fixed}
+For any $\varkappa\in X_\ast(\mathbf F)$ and $t\in \mathfrak t$, there is a Cartesian diagram of schemes:
+
+\begin{display}\begin{diagram}{tikzcd}
+\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t \ar[r] \ar[d] & \mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N})_t \ar[d] \\
+\operatorname{Spec} \mathbb{C}[\mathfrak t]^{W_t}_t \ar[r] & \operatorname{Spec} \mathbb{C}[\mathfrak t]^{W}_t
+\end{diagram}\end{display}
+
+Moreover, the horizontal arrows are both \'etale and surjective.
+\end{statement}
+
+\begin{statement}{proof}
+By a variation on the far right column of the diagram \cite[Equation (5.24)]{BFN1}, there is a diagram of $\mathbb{C}[\mathfrak t]$--algebras
+
+\begin{display}\begin{diagram}{tikzcd}
+H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{Z_{\widetilde{\mathbf G}}(t), \mathbf{N}^t}) & H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{Z_{\widetilde{\mathbf G}}(t), \mathbf{N}}) \ar[l,"\mathbf{z}^\ast"'] \ar[r, "\iota_\ast"] & H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}})
+\end{diagram}\end{display}
+
+Both maps respect gradings by coweights $X_\ast(\mathbf F)$, defined as in (\ref{eq: grading by coweights}), since they are induced by maps of spaces over $\mathsf{Gr}_\mathbf F$. Both maps also respect natural $W_t$--actions, by \cite[Lemma 3.19]{BFN1}. Finally, by the localization theorem both maps become isomorphisms over $\mathbb{C}[\mathfrak t]_t$. Therefore, the map $ \mathbf{z}^\ast \iota_\ast^{-1}$ induces a $W_t$--equivariant isomorphism of $X_\ast(\mathbf F)$-graded algebras
+\begin{display}H_\ast^{\mathbf{T}_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t \stackrel{\sim}{\rightarrow} H_\ast^{\mathbf{T}_\mathcal{O}} (\mathcal{R}_{Z_{\widetilde{\mathbf G} }(t), \mathbf{N}^t} )\otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t\end{display}
+
+Taking $W_t$-invariants on both sides, we claim that we obtain an isomorphism
+\label{eq: localization isomorphism with flavour 2}
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W_t}_t \stackrel{\sim}{\rightarrow} H_\ast^{{Z_{\mathbf G}(t)}_\mathcal{O}} (\mathcal{R}_{Z_{\widetilde{\mathbf G} }(t), \mathbf{N}^t} )\otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t\end{display}
+To prove this claim, we identify the left side of (\ref{eq: localization isomorphism with flavour 2}) with the $W_t$--invariants of the left side of the preceding equation; a similar argument applies to the right side. We have $H_\ast^{\mathbf{T}_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \cong H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]$ by \cite[Lemma 5.3]{BFN1}, and therefore
+\label{eq: base changing}
+\begin{display}H_\ast^{\mathbf{T}_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t \cong H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W}\mathbb{C}[\mathfrak t] \otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t \cong H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]_t\end{display}
+By the proof of Lemma \ref{lemma: faithfully flat}, $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}})$ is free over $\mathbb{C}[\mathfrak t]^W$. Both carry trivial actions of $W_t$, while $(\mathbb{C}[\mathfrak t]_t)^{W_t} = \mathbb{C}[\mathfrak t]_t^{W_t}$. Taking $W_t$--invariants on the right side of (\ref{eq: base changing}), we get the left side of (\ref{eq: localization isomorphism with flavour 2}).
+
+The isomorphism (\ref{eq: localization isomorphism with flavour 2}) again respects $X_\ast(\mathbf F)$-gradings. Let us restrict it to the direct sum of all graded pieces of degrees $n \varkappa \in X_\ast(\mathbf F)$, where $n\geq 0$, and then take $\operatorname{Proj}$ of both sides. On the right side we obtain $\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t$. On the left side we obtain the base change of $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})_t$ along $\operatorname{Spec} \mathbb{C}[\mathfrak t]^{W_t}_t \rightarrow \operatorname{Spec} \mathbb{C}[\mathfrak t]^{W}_t$, because of (\ref{eq: base change}). This establishes the desired Cartesian diagram.
+
+Finally, \'etale morphisms are stable under base change \cite[\href{https://stacks.math.columbia.edu/tag/02GO}{Tag 02GO}]{stacks-project}, as are surjective morphisms \cite[\href{https://stacks.math.columbia.edu/tag/01S1}{Tag 01S1}]{stacks-project}, so it suffices to prove that the bottom horizontal arrow above is \'etale and surjective. To this end we observe that the natural map $\mathfrak t \sslash W_t \rightarrow \mathfrak t \sslash W$ is \'etale at $t$, and so the map of local rings $\mathbb{C}[\mathfrak t]^{W}_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t$ is \'etale. It is also surjective, so we are done.
+\end{statement}
+
+Since \'etale maps preserve smoothness and normality, we immediately obtain the following:
+\begin{statement}{corollary}
+\label{cor: etale smooth}
+$\mathcal{M}_C^\varkappa (\mathbf G, \mathbf{N})_t$ is smooth (resp.~normal) iff $\mathcal{M}_C^\varkappa (Z_\mathbf G(t),\mathbf{N}^t)_t$ is smooth (resp.~normal).
+\end{statement}
+
+The benefit of this result is that the theory $(Z_\mathbf G(t), \mathbf{N}^t)$ is often far simpler than the original theory $(\mathbf G, \mathbf{N})$, and in particular the corresponding Coulomb branch may be better understood.
+
+Next, we give a generalization of \cite[Corollary 5.12]{BFN1}:
+\begin{statement}{lemma}
+\label{cor: integral}
+$\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is an integral scheme.
+\end{statement}
+\begin{statement}{proof}
+It suffices to prove that $H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}})$ is a domain, since $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is defined as the $\operatorname{Proj}$ of its subalgebra. We will use a variation on the top row of \cite[Equation (5.24)]{BFN1}:
+
+\begin{display}\begin{diagram}{tikzcd}
+\mathbb{C}[\mathfrak t \times \widetilde{\mathbf{T}}^\vee] = H_\ast^{\mathbf{T}_\mathcal{O}}(\mathsf{Gr}_{\widetilde{\mathbf{T}}}) & H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf{T}},\mathbf{N}}) \ar[l,"\mathbf{z}^\ast"'] \ar[r,"\iota_\ast"] & H_\ast^{\mathbf{T}_\mathcal{O}}(\mathbf{R}_{\widetilde{\mathbf G},\mathbf{N}})
+\end{diagram}\end{display}
+
+By the localization theorem, the resulting morphisms become isomorphisms over $\mathbb{C}(\mathfrak t)$. Since $H_\ast^{\mathbf{T}_\mathcal{O}}(\mathbf{R}_{\widetilde{\mathbf G},\mathbf{N}})$ is free over $\mathbb{C}[\mathfrak t]$, it follows that there is an injection
+
+\begin{display}\mathbf{z}^\ast (\iota_\ast)^{-1}: H_\ast^{\mathbf{T}_\mathcal{O}}(\mathbf{R}_{\widetilde{\mathbf G},\mathbf{N}}) \lhook\joinrel\rightarrow \mathbb{C}[\mathfrak t \times \widetilde{\mathbf{T}}^\vee]\otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}(\mathfrak t)\end{display}
+
+Next, as in \cite[Lemma 5.3]{BFN1} we have
+
+\begin{display}H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}}) \cong H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}})^W \lhook\joinrel\rightarrow H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}}),\end{display}
+
+Altogether, we see that $H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} )$ embeds into the domain $\mathbb{C}[\mathfrak t\times \widetilde{\mathbf{T}}^\vee] \otimes_{\mathbb{C}[\mathfrak t]}\mathbb{C}(\mathfrak t)$.
+\end{statement}
+
+\begin{statement}{proposition}
+\label{Prop: Poisson maps}
+The morphism $\mathcal{M}_C^\varkappa(Z_\mathbf G(t),\mathbf{N}^t)_t \rightarrow \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})_t$ is Poisson.
+\end{statement}
+\begin{statement}{proof}
+The following commutative square relates those from (\ref{eq: fibers map 2}) and Theorem \ref{prop: fibers via centralizers and fixed}:
+
+\begin{display}\begin{diagram}{tikzcd}
+\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t \ar[r] \ar[d] & \mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N})_t \ar[d] \\
+\mathcal{M}_C(Z_\mathbf G(t), \mathbf{N}^t)_t \ar[r]& \mathcal{M}_C(\mathbf G, \mathbf{N})_t
+\end{diagram}\end{display}
+
+The vertical arrows are Poisson by Remark \ref{rem: hamiltonian reduction}, and birational by \cite[Remark 1.1]{BFN4}. Moreover all the objects above are integral schemes. Therefore, by a similar argument to \cite[Lemma 4.12]{KPW}, to prove that the top arrow is Poisson, it suffices to prove that the bottom arrow is Poisson.
+
+Because of the commutativity of the diagram \cite[Equation (5.24)]{BFN1}, there is a triangle
+
+\begin{display}\begin{diagram}{tikzcd}[sep = tiny]
+ H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W}_t \ar[dr,hook] \ar[rr,hook] & & H_\ast^{{Z_{\mathbf G}(t)}_\mathcal{O}} (\mathcal{R}_{Z_{{\mathbf G}}(t), \mathbf{N}^t} )\otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t \ar[dl,hook']\\
+ & \mathbb{C}[\mathfrak t \times {\mathbf{T}}]\otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}(\mathfrak t) &
+\end{diagram}\end{display}
+
+The horizontal arrow comes from (\ref{eq: fibers BFN iso}), while the downward arrows are both defined as in the proof of Proposition \ref{cor: integral}. Both downward embeddings can be quantized, see \cite[Remark 5.23]{BFN1}, and in particular they are Poisson. This implies that the horizontal arrow is also Poisson, as claimed.
+\end{statement}
+
+\subsection{Symplectic singularities}
+\label{section: SS}
+
+Let $X$ be a normal Poisson algebraic variety over $\mathbb{C}$, such that the restriction of its Poisson structure to the smooth locus $X^{reg}$ is non-degenerate. Denote the corresponding symplectic form on $X^{reg}$ by $\omega^{reg}$. Following \cite[Def.~1.1]{Beauville}, we say that $X$ has symplectic singularities if for some (equivalently, any) resolution of singularities $\pi : Y \rightarrow X$, the form $\pi^\ast(\omega^{reg})$ extends to a regular 2-form on all of $Y$. See \cite{Fu,Bellamy} for excellent overviews of these varieties and related topics.
+
+The next result is inspired by \cite[Prop.~6.12, 6.15]{BFN1} as well as \cite[Prop.~2.8]{BFM}.
+\begin{statement}{theorem}
+\label{criterion: normal symplectic}
+Fix $\varkappa \in X_\ast(\mathbf F)$. Suppose that $\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t$ is normal, and that its Poisson structure is symplectic on its smooth locus, for all $t\in \mathfrak t \setminus \mathfrak t^{(2)}$. Then $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is normal, and its Poisson structure is symplectic on its smooth locus.
+\end{statement}
+\begin{statement}{proof}
+Consider the open subscheme $U = (\varpi^{\varkappa})^{-1}((\mathfrak t \setminus \mathfrak t^{(2)})\sslash W)$. Under our assumptions, Corollary \ref{cor: etale smooth} and Proposition \ref{Prop: Poisson maps} imply that $U$ is normal, and symplectic on its smooth locus. If $\mathfrak t^{(2)} = \emptyset$, then $U = \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ and we are done. Otherwise $\mathfrak t^{(2)} \neq \emptyset$, so $\operatorname{codim} \mathfrak t^{(2)} = 2$. The map $\varpi^\varkappa$ is faithfully flat by Lemma \ref{lemma: faithfully flat}, so the complement of $U$ has codimension $2$ by \cite[Cor~6.1.4]{EGAIV2}.
+Looking at smooth loci, it follows that $U^{reg}$ has complement of codimension $\geq 2$ inside $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg}$. The degeneracy locus of the Poisson bivector on $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg}$ is a divisor, if non-empty. But $U^{reg}$ is symplectic, so the degeneracy locus must be trivial. Therefore $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg}$ is symplectic.
+
+Next, we show that every open affine $V \subset \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is normal. Note that $U\cap V$ is normal, and the complement of $U\cap V$ in $V$ has codimension $\geq 2$. We claim that every regular function on $U\cap V$ extends to $V$. Assuming this claim, \cite[Lemma 6.13]{BFN1} implies that $V$ is normal.
+
+To prove the claim, consider the restricted map $\varpi^\varkappa|_V: V\rightarrow \mathfrak t\sslash W$. It is flat, since $V\subset \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is open and the morphism $\varpi^\varkappa$ is flat by Lemma \ref{lemma: faithfully flat}. Thus $\mathcal{F} = (\varpi^\varkappa|_V)_\ast \mathcal{O}_V$ is a flat quasi-coherent sheaf on $\mathfrak t\sslash W$. Note that $\mathfrak t\sslash W$ is normal, and $\mathfrak t^{(2)}\sslash W$ has codimension 2. By a version of the algebraic Hartogs's theorem, it follows that under the inclusion $j: (\mathfrak t\setminus \mathfrak t^{(2)})\sslash W \hookrightarrow \mathfrak t \sslash W$, the natural map $\mathcal{F} \stackrel{\sim}{\rightarrow} j_\ast j^\ast \mathcal{F}$ is an isomorphism. This is precisely the claimed extension property.
+\end{statement}
+
+Finally, we obtain a criterion for proving that a Coulomb branch has symplectic singularities:
+\begin{statement}{theorem}
+\label{criterion}
+Fix $\varkappa \in X_\ast(\mathbf F)$. Suppose that $\mathcal{M}^\varkappa_{C}( Z_\mathbf G(t), \mathbf{N}^t)_t$ is smooth and symplectic for all $t\in \mathfrak t \setminus \mathfrak t^{(4)}$. Then $\mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N})$ and $\mathcal{M}_C(\mathbf G, \mathbf{N})$ have symplectic singularities. In this case $\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})$ has terminal singularities, and its singular locus has codimension $\geq 4$.
+\end{statement}
+\begin{statement}{proof}
+Under these assumptions Theorem \ref{criterion: normal symplectic} implies that $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is normal, and symplectic on its smooth locus. Moreover, Corollary \ref{cor: etale smooth} and Proposition \ref{Prop: Poisson maps} imply that the preimage
+
+\begin{display}U = (\varpi^\varkappa)^{-1}((\mathfrak t \setminus \mathfrak t^{(4)})\sslash W)\subset \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})\end{display}
+
+is smooth and symplectic. If $\mathfrak t^{(4)} = \emptyset$ then $U = \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ is itself smooth and symplectic.
+
+Otherwise $\operatorname{codim} \mathfrak t^{(4)} = 4$. As in the proof of the previous theorem, we conclude that the complement of $U$ has codimension $4$. Therefore the singular locus of $\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})$ has codimension $\geq 4$. By a result of Flenner \cite{Flenner}, it follows that for any resolution of singularities $\pi:Y\rightarrow \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ and any 2-form $\omega$ on the smooth locus $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg}$, the pull-back $\pi^\ast \omega$ extends to a regular 2-form on $Y$. In particular this applies to $\omega = \omega^{reg}$ the symplectic form on $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg}$, which shows that $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ has symplectic singularities.
+
+Since $\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})$ has symplectic singularities and its singular locus has codimension $\geq 4$, it has terminal singularities by \cite[Cor.~1]{Namikawa}.
+
+In either case, since $\pi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G,\mathbf{N})\rightarrow \mathcal{M}_C(\mathbf G,\mathbf{N})$ is a proper birational Poisson map, we conclude that $\mathcal{M}_C(\mathbf G, \mathbf{N})$ has symplectic singularities by \cite[Lemma 6.12]{BS}.
+\end{statement}
+
+\section{Quiver gauge theories}
+\subsection{Definition}
+\label{sec: QGT}
+Let $Q = (I, E)$ be a quiver with vertices $I$ and arrows $E$. For $e\in E$ we denote by $s(e), t(e) \in I$ its source and target . Let $\mathbf{v}, \mathbf{w} \in \mathbb{Z}_{\geq 0}^I$ be two dimension vectors, to which we associate the vector spaces $V_i = \mathbb{C}^{\mathbf{v}_i}, W_i = \mathbb{C}^{\mathbf{w}_i}$ for each $i\in I$. To the datum $(Q, \mathbf{v}, \mathbf{w})$ we associate the pair
+\label{groups from quiver data}
+\begin{display}\mathbf G = \prod_{i\in I} \operatorname{GL}(\mathbf{v}_i), \mathbf{N} = \bigoplus_{e\in E} \operatorname{Hom}( V_{s(e)}, V_{t(e)} ) \oplus \bigoplus_{i \in I} \operatorname{Hom}( W_i, V_i)\end{display}
+The group $\mathbf G$ naturally acts on $\mathbf{N}$, and we call $(\mathbf G, \mathbf{N})$ a quiver gauge theory datum of type $Q$, even if some $\mathbf{v}_i$ or $\mathbf{w}_i$ are zero. We will always assume that $Q$ is simple: that its underlying graph has no loops or multiple edges. We denote the corresponding Coulomb branch by
+\begin{display}\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) = \mathcal{M}_C(\mathbf G, \mathbf{N})\end{display}
+
+\begin{statement}{remark}
+\label{remark: no summand}
+If for some $i\in I$ we have $\mathbf{w}_i \neq 0$ but $\mathbf{v}_i = 0$, then the corresponding summand $\operatorname{Hom}(W_i,V_i) = 0$ in (\ref{groups from quiver data}). Note that in this case we obtain the same pair $(\mathbf G, \mathbf{N})$ by setting $\mathbf{w}_i = 0$.
+\end{statement}
+
+\begin{statement}{remark}
+Up to isomorphism, $\mathcal{M}_C(Q,\mathbf{v},\mathbf{w})$ does not depend on the orientation of the quiver $Q$, see \cite[§ 6(viii)]{BFN1}.
+\end{statement}
+
+\begin{statement}{remark}
+It is convenient to encode the datum $(Q, \mathbf{v}, \mathbf{w})$ diagrammatically. For example, if we let $Q$ be the oriented $A_3$ quiver $1\rightarrow 2 \leftarrow 3$ with dimension vectors $\mathbf{v} = (3,1,2)$, $\mathbf{w} = (4,0,1)$, we get the diagram
+
+\begin{display}\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| 4 \ar[d] & & |[draw=black, rectangle]| 1 \ar[d] \\
+3 \ar[r] & 1 & 2 \ar[l]
+\end{diagram}\end{display}
+
+Circled nodes encode the dimensions $\mathbf{v}_i$, and boxed nodes the $\mathbf{w}_i$. We often omit nodes where $\mathbf{v}_i=0$ or $\mathbf{w}_i = 0$.
+In particular, an isolated node $\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+n
+\end{diagram} $ corresponds to the ``pure'' theory $(\mathbf G, \mathbf{N}) = (\operatorname{GL}(n), 0)$.
+\end{statement}
+
+\begin{statement}{remark}
+The corresponding Higgs branch $\mathcal{M}_H(Q, \mathbf{v}, \mathbf{w})$ is a Nakajima quiver variety, as first defined in \cite{Nak3}: it is the Hamiltonian reduction $T^\ast \mathbf{N} \ssslash \mathbf G$. These varieties have symplectic singularities \cite[Theorem 1.2]{BS}, and often have symplectic resolutions.
+\end{statement}
+
+\subsubsection{Flavour symmetry}
+Given $(Q, \mathbf{v}, \mathbf{w})$ as above, we consider the flavour symmetry group
+\label{eq: flavour symmetry group}
+\begin{display}\mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w}) = \prod_{\substack{e \in E, \\ \mathbf{v}_{s(e)}\mathbf{v}_{t(e)} \neq 0}} \mathbb{C}^\times \times \prod_{\substack{i\in I,\\ \mathbf{w}_i \mathbf{v}_i \neq 0}} ( \mathbb{C}^\times)^{\mathbf{w}_i},\end{display}
+We think of this group as consisting of a dilating $\mathbb{C}^\times$ factor for each arrow $e \in E$, along with the diagonal maximal torus $ (\mathbb{C}^\times)^{\mathbf{w}_i} \subset \operatorname{GL}(\mathbf{w}_i)$ for each $i\in I$ . Thus the group $\mathbf F$ acts on $\mathbf{N}$ as follows: for $e\in E$ the factor of $\mathbb{C}^\times$ scales $\operatorname{Hom}(V_{s(e)}, V_{t(e)})$ with weight 1, while for $i\in I$ the torus $(\mathbb{C}^\times)^{\mathbf{w}_i}$ acts on $W_i = \mathbb{C}^{\mathbf{w}_i}$ in the natural way.
+
+The actions of $\mathbf G$ and $\mathbf F$ commute, and we set
+\begin{display}\widetilde{\mathbf G} = \mathbf G \times \mathbf F\end{display}
+with its natural action on $\mathbf{N}$.
+
+The center $Z(\mathbf G) \cong \prod_{i \in I} \mathbb{C}^\times$ consists of tuples of scalar matrices, and an element $z = (z_i)_{i\in I} \in \prod_{i \in I} \mathbb{C}^\times$ acts on $\operatorname{Hom}(V_{s(e)}, V_{t(e)})$ by $z_{t(e)} z_{s(e)}^{-1}$ and on $\operatorname{Hom}(W_i, V_i)$ by $z_i$. This is equal to the action of the element $( (z_{t(e)} z_{s(e)}^{-1}), (z_i^{-1},…,z_i^{-1}) ) \in \mathbf F$, and this correspondence defines a homomorphism $\phi: Z(\mathbf G) \rightarrow \mathbf F$ such that the action of $Z(\mathbf G)$ on $\mathbf{N}$ factors through $\phi$. Via this homomorphism $\phi$, cocharacters of $Z(\mathbf G)$ give cocharacters of $\mathbf F$.
+
+\begin{statement}{lemma}
+Let $\varkappa, \varkappa' \in X_\ast(\mathbf F)$. If $\varkappa - \varkappa' = \phi(\rho)$ for a cocharacter $\rho$ of $Z(\mathbf G)$, then
+
+\begin{display}\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w}) \cong \mathcal{M}_C^{\varkappa'}(Q, \mathbf{v}, \mathbf{w})\end{display}
+
+\end{statement}
+
+\begin{statement}{proof}
+Define $\widetilde{\mathbf G}_\varkappa = \mathbf G \times \mathbb{C}^\times$, which acts on $\mathbf{N}$ via the map $\widetilde{\mathbf G}_\varkappa \rightarrow \widetilde{\mathbf G}$ defined by $(g, s) \mapsto (g, \varkappa(s))$. At the level of $\mathbb{C}$-points it is straightforward to see that $\mathcal{R}_{\widetilde{\mathbf G}_\varkappa, \mathbf{N}}(n) \cong \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}}(n \varkappa)$, where $n\in \mathbb{Z}$ is thought of as a cocharacter of the flavour symmetry group $\mathbb{C}^\times$ of $\widetilde{\mathbf G}_\varkappa$. This extends to the diagram defining the convolution product \cite[§ 3(i)]{BFN1}, and so there is an isomorphism of varieties
+
+\begin{display}\mathcal{M}_C^1( \widetilde{\mathbf G}_\varkappa, \mathbf{N}) \cong \mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})\end{display}
+
+Now assume that $\varkappa = \varkappa' + \phi(\rho)$. Then there is an isomorphism $\widetilde{\mathbf G}_{\varkappa} \cong \widetilde{\mathbf G}_{\varkappa'}$ defined by $(g, s) \mapsto (\rho(s)^{-1} g, s)$. It intertwines their actions on $\mathbf{N}$, and induces the identity map on their flavour symmetry groups. Thus $\mathcal{M}_C^1( \widetilde{\mathbf G}_\varkappa, \mathbf{N}) \cong \mathcal{M}_C^1( \widetilde{\mathbf G}_{\varkappa'}, \mathbf{N})$.
+
+Altogether, we get a chain of isomorphisms which proves the claim:
+
+\begin{display}\mathcal{M}_C^\varkappa(Q, \mathbf{v},\mathbf{w}) \cong \mathcal{M}_C^1( \widetilde{\mathbf G}_\varkappa, \mathbf{N}) \cong \mathcal{M}_C^1( \widetilde{\mathbf G}_{\varkappa'}, \mathbf{N}) \cong \mathcal{M}_C^{\varkappa'}(Q, \mathbf{v},\mathbf{w})\end{display}
+
+\end{statement}
+
+We will call $\varkappa, \varkappa'$ equivalent if $\varkappa - \varkappa' = \phi(\rho)$ as in the above lemma. It will be useful to write this notion out more explicitly. Denote the components of our coweight $\varkappa$ of $\mathbf F$ by
+\begin{display}\varkappa = ( (\varkappa_e)_{e\in E}, (\varkappa_{i,1},…, \varkappa_{i, \mathbf{w}_i})_{i\in I} ),\end{display}
+and those of the coweight $\rho$ of $Z(\mathbf G) \cong \prod_i \mathbb{C}^\times$ by $\rho = (\rho_i)_{i\in I} \in \mathbb{Z}^I$. From the definition of the homomorphism $\phi$, we see that $\varkappa$ is equivalent to
+\label{eq: equivalence}
+\begin{display}\varkappa' = \varkappa- \phi(\rho) = ( (\varkappa_e-\rho_{t(e)} + \rho_{s(e)})_{e\in E}, (\varkappa_{i,1} +\rho_i,…, \varkappa_{i, \mathbf{w}_i}+\rho_i)_{i\in I})\end{display}
+
+\subsection{Examples}
+\label{examples}
+We now recall some important examples of the varieties $\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})$, which have been studied by Braverman-Finkelberg-Nakajima and Nakajima-Takayama \cite{BFN2, NakTak,BFN4}.
+
+\subsubsection{Finite ADE types}
+\label{example 1}
+If $Q$ is an orientation of a Dynkin diagram of finite ADE type, then
+
+\begin{display}\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) \cong \overline{\mathcal{W}}^{\lambda^\ast}_{\mu^\ast}\end{display}
+
+is a generalized affine Grassmannian slice for the corresponding adjoint group $G_Q$ of ADE type \cite[Theorem 3.10]{BFN2} . Up to equivalence as in (\ref{eq: equivalence}), we may assume that $\varkappa_e = 0$ for all $e\in E$. List the $\varkappa_{i,r}$ in decreasing order:
+
+\begin{display}k_1 \geq k_2 \geq … \geq k_N, \text{ where } N = \sum_i \mathbf{w}_i\end{display}
+
+If $k_a = \varkappa_{i,r}$ then we denote the corresponding fundamental coweight of $G_Q$ by $\lambda_a = \varpi_i$. We get a tuple $\underline{\lambda} = (\lambda_1,…,\lambda_N)$. Thinking of $ (k_1,…,k_n)$ as a cocharacter of $(\mathbb{C}^\times)^N \cong \prod_i (\mathbb{C}^\times)^{\mathbf{w}_i}$, by construction it lies in the cone $\varkappa \in \Lambda_F^{++}$ from \cite[§ 5(ii)]{BFN4}. Thus by \cite[§ 5(v)]{BFN4}, if $k_1> … > k_N$ are distinct (i.e.~if the $\varkappa_{i,r}$ are distinct), then
+\begin{display}\mathcal{M}^\varkappa_C(Q, \mathbf{v}, \mathbf{w}) \cong \widetilde{\mathcal{W}}^{\underline{\lambda}^\ast}_{\mu^\ast}\end{display}
+where the right-hand side is defined as in \cite[§ 5(i)]{BFN4}. If the $\lambda_a$ are all minuscule, then this variety is smooth and symplectic.
+This can be proven similarly to the main theorem of \cite{MuthiahWeekes}, cf.~also \cite[Theorem 2.9]{KWWY}.
+
+In particular, in finite type A, the variety $\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})$ is smooth and symplectic so long as $\varkappa$ does not lie on a finite collection of hyperplanes. This clearly remains true even if we do not impose that $\varkappa_e = 0$.
+
+\subsubsection{Affine type A}
+\label{example 2}
+In affine type A, $\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})$ is isomorphic to a bow variety by \cite[Theorem 6.18]{NakTak}. Label the vertices by $I = \mathbb{Z} / n \mathbb{Z}$, and pick the orientation $Q$ where $i\rightarrow i+1$ for $0\leq i <n$. Up to equivalence, we may assume that $\varkappa_e = 0$ except for $e$ the arrow $n-1 \rightarrow 0$. Then for $\varkappa$ satisfying the inequality \cite[(4.4)]{BFN4}, the variety $\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})$ is identified with a partially resolved bow variety. For generic $\varkappa$ this variety is smooth and symplectic, see \cite[§ 6.2]{NakTak}.
+
+\subsection{Hyperplane arrangement}
+Our next task will be to understand the pairs $(Z_\mathbf G(t), \mathbf{N}^t)$ that can arise for quiver gauge theories, where $t \in \mathfrak t$. First some terminology: we call $(Q, \mathbf{v}, \mathbf{w})$ connected if $\{i \in I:\mathbf{v}_i \neq 0\}$ is a connected subset of $Q$, and if $\mathbf{w}_i \neq 0$ implies $\mathbf{v}_i \neq 0$ for all $i\in I$.
+
+For a given $(Q,\mathbf{v},\mathbf{w})$ and $t\in \mathfrak t$, we'll denote $\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}} (t) = \operatorname{codim}_{\mathbf G, \mathbf{N}}(t)$ where the latter is defined as in (\ref{eq: codim function}).
+
+\begin{statement}{proposition}
+\label{lemma: components}
+Let $(Q, \mathbf{v}, \mathbf{w})$ be fixed, with corresponding $(\mathbf G,\mathbf{N})$. For any $t \in \mathfrak t$ there exists a decomposition
+
+\begin{display}\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)\cong\mathcal{M}^\varkappa_C(Q,\mathbf{v}^{(1)}, \mathbf{w}^{(1)}) \times … \times \mathcal{M}^\varkappa_C(Q, \mathbf{v}^{(m)}, \mathbf{w}^{(m)}),\end{display}
+
+which holds for all $\varkappa \in X_\ast(\mathbf F)$, and where the data $(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})$ are all connected. Moreover,
+\begin{list}{enumerate}
+\item[(i)] $\mathbf{v} = \sum_\ell \mathbf{v}^{(\ell)}$,
+\item[(ii)] for each $i \in I$ there is at most one $\ell$ with $\mathbf{w}_i^{(\ell)} \neq 0$, and in this case $\mathbf{w}_i^{(\ell)} = \mathbf{w}_i$,
+\item[(iii)] for each $\ell$, the restriction map on flavour symmetry groups
+
+\begin{display}\mathbf F(Q, \mathbf{v}, \mathbf{w}) \twoheadrightarrow \mathbf F(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})\end{display}
+
+is the obvious surjection respecting the factors in (\ref{eq: flavour symmetry group}),
+\item[(iv)] $ \operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}} (t) = \sum_\ell \operatorname{codim}_{Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}}(0)$
+\end{list}
+\end{statement}
+\begin{statement}{proof}
+We may think of $t \in \operatorname{Lie}\mathbf G = \bigoplus_i \operatorname{End}(V_i)$. Denote the $\lambda$--eigenspace of $t$ on $V_i$ by $V_i(\lambda)$. Then we can identify
+\begin{display}Z_\mathbf G(t) & = \prod_\lambda \prod_i \operatorname{GL}(V_i(\lambda)), \\
+\mathbf{N}^t & = (\bigoplus_\lambda \bigoplus_{e \in E} \operatorname{Hom}(V_{s(e)}(\lambda), V_{t(e)}(\lambda) )) \oplus \bigoplus_{i \in I} \operatorname{Hom}( W_i, V_i(0))\end{display}
+For each $\lambda$, consider the subgroup $\mathbf G_\lambda \subset Z_\mathbf G(t)$ corresponding to factors labelled by $\lambda$ above, and $\mathbf{N}_\lambda \subset \mathbf{N}^t$ corresponding to the summands labelled by $\lambda$. (In particular, the framing $W$ only contributes $\mathbf{N}_\lambda$ for $\lambda = 0$.) Then $Z_\mathbf G(t) = \prod_\lambda \mathbf G_\lambda$ and $\mathbf{N}^t = \bigoplus_\lambda \mathbf{N}_\lambda$, with $\mathbf G_\lambda$ acting trivially on $\mathbf{N}_\mu$ unless $\lambda = \mu$.
+
+By construction each $(\mathbf G_\lambda,\mathbf{N}_\lambda)$ corresponds to a quiver gauge theory datum $(Q,\mathbf{v}_\lambda,\mathbf{w}_\lambda)$, but might not be connected. So we will make a further refinement. First, if for some $\lambda, i$ we have $(\mathbf{w}_\lambda)_i \neq 0$ and $(\mathbf{v}_\lambda)_i = 0$, then we may set $(\mathbf{w}_\lambda)_i = 0$ by Remark \ref{remark: no summand}. (Note that this can only happen for $\lambda = 0$.) Next, for each connected component $X$ of $\{i \in I : (\mathbf{v}_\lambda)_i \neq 0\}$ there is a corresponding $\mathbf G_\lambda^X = \prod_{i\in X} \operatorname{GL}(V_i(\lambda)) \subset \mathbf G_\lambda$ and $\mathbf{N}_\lambda^X \subset \mathbf{N}_\lambda$. Then $Z_\mathbf G(t) = \prod_{\lambda, X} \mathbf G_\lambda^X$ and $\mathbf{N}^t = \bigoplus_{\lambda,X} \mathbf{N}_\lambda^X$. By construction, each $(\mathbf G_\lambda^X, \mathbf{N}_\lambda^X)$ corresponds to a connected quiver datum, as desired.
+
+Only finitely many pairs $(\lambda, X)$ ever contribute non-trivially, so we may relabel the above decompositions simply by $Z_\mathbf G(t) = \prod_{\ell=1}^m \mathbf G^{(\ell)}$ and $\mathbf{N}^t = \bigoplus_{\ell=1}^m \mathbf{N}^{(\ell)}$. Each $(\mathbf G^{(\ell)}, \mathbf{N}^{(\ell)})$ corresponds to some connected quiver datum $(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})$. Tracing through the construction, we see that the group $\mathbf F$ respects these decompositions. Therefore Lemma \ref{lemma: segre} applies, which shows that
+
+\begin{display}\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)\cong\mathcal{M}^\varkappa_C(Q,\mathbf{v}^{(1)}, \mathbf{w}^{(1)}) \times … \times \mathcal{M}^\varkappa_C(Q, \mathbf{v}^{(m)}, \mathbf{w}^{(m)})\end{display}
+
+Parts (i), (ii), (iii) follow easily from the above construction. Finally, the formula (iv) follows from (\ref{eq: codim = codim}) together with our decomposition of $(Z_\mathbf G(t), \mathbf{N}^t)$.
+\end{statement}
+
+Next, we classify quivers with $\operatorname{codim}_{Q, \mathbf{v}, \mathbf{w}} (0) \leq 3$.
+\begin{statement}{lemma}
+\label{lemma: classification}
+Let $(Q, \mathbf{v}, \mathbf{w})$ be connected. Then
+
+\begin{display}\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) = \{ \begin{grid}{array}\sum_i \mathbf{v}_i, & \text{if some } \mathbf{w}_i \neq 0 \\ \sum_i \mathbf{v}_i - 1, & \text{if all } \mathbf{w}_i = 0\end{grid} \end{display}
+
+In particular, Figure \ref{figure} gives a complete list of connected $(Q,\mathbf{v},\mathbf{w})$ with $\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(0) \leq 3$.
+\end{statement}
+This dichotomy corresponds to whether $\mathbf G$ acts on $\mathbf{N}$ faithfully (some $\mathbf{w}_i \neq 0$) or not (all $\mathbf{w}_i = 0 $).
+\begin{statement}{proof}
+Let $x\in \mathfrak t$. If all generalized roots vanish at $x$, then this forces all components of $x$ to be equal (with respect to the standard bases of the $V_i = \mathbb{C}^{\mathbf{v}_i}$). If there is no framing then there is no further constraint, so the vanishing locus is 1-dimensional. If there is framing, then this further forces $x=0$. This proves the formula for the codimension.
+
+The classification in Figure \ref{figure} is now straightforward: if there is no framing then we demand $\sum_i \mathbf{v}_i -1 \leq 3$, so in particular there are at most 4 vertices. If there is framing, then we instead demand $\sum_i \mathbf{v}_i \leq 3$, so there are at most 3 vertices.
+\end{statement}
+
+Up to orientation, the list of all connected quiver gauge theory data with $\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) \leq 3$. The framing dimensions $n,m,p \geq 0$. Note that we consider only simple quivers.
+
+\subsection{The proof of Theorem \ref{main thm}}
+\label{section: proof}
+
+We will apply Theorem \ref{criterion}. Recall that $t \in \mathfrak t \setminus \mathfrak t^{(4)}$ means that $\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) \leq 3$. By combining Proposition \ref{lemma: components} and Lemma \ref{lemma: classification}, we see that for $t \in \mathfrak t \setminus \mathfrak t^{(4)}$
+\label{eq: decomp main proof}
+\begin{display}\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) \cong \mathcal{M}^\varkappa_C(Q,\mathbf{v}^{(1)}, \mathbf{w}^{(1)}) \times … \times \mathcal{M}^\varkappa_C(Q, \mathbf{v}^{(m)}, \mathbf{w}^{(m)})\end{display}
+where all factors on the right hand side are from Figure \ref{figure}, and where
+
+\begin{display}\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{codim}_{Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}}(0) \leq 3\end{display}
+
+We claim that any particular factor $\mathcal{M}_C^\varkappa(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})$ above is smooth so long as $\varkappa$ avoids a finite set of hyperplanes. Assuming this claim for the moment, this implies that $\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)$ is smooth so long as $\varkappa$ avoids the (still finite) union over $\ell$ of these sets of hyperplanes. Note also that as we vary $t\in \mathfrak t \setminus \mathfrak t^{(4)}$, only finitely many decompositions (\ref{eq: decomp main proof}) can arise. Therefore for a generic choice of $\varkappa$, the space $\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t$ is smooth for all $t\in\mathfrak t\setminus \mathfrak t^{(4)}$. So $\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})$ has symplectic singularities by Theorem \ref{criterion}.
+
+To prove the claim, by part (iii) of Proposition \ref{lemma: components} we can reduce to the case where $(Q, \mathbf{v}, \mathbf{w})$ is one of the quivers in Figure \ref{figure}, with the intrinsic flavour symmetry group $\mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w})$.
+
+Note that many of the quivers in Figure \ref{figure} have all $\mathbf{v}_i =1$, and so correspond to toric hyperk\"ahler varieties \cite[§ 4(vii)]{BFN1}. The flavour symmetry $\mathbf F$ for the quiver (defined as in (\ref{eq: flavour symmetry group})) surjects onto the full Abelian flavour symmetry group: $\mathbf F$ contains subtori which dilate each edge independently, with weight 1. Thus we can appeal to the unimodularity criterion for existence of resolutions given in \cite[Proposition 4.11]{BellamyKuwabara}. This is easy to verify, and proves the claim in these cases.
+
+For the remaining quivers in Figure \ref{figure} where some $\mathbf{v}_i \geq 2$, all but one (see below) are of finite type A, so the claim in these cases follows from the results of \cite[§ 5]{BFN4} discussed in § \ref{example 1}. This leaves one quiver which is of affine type A, as discussed in § \ref{example 2}. Thus the claim holds in all cases, which completes the proof of the theorem.
+
+\begin{statement}{remark}
+\label{remark: qfactterm}
+We also conclude from Theorem \ref{criterion} that $\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})$ has terminal singularities, for generic $\varkappa$. We optimistically conjecture that it is a $\mathbb{Q}$--factorial terminalization of $\mathcal{M}_C(Q,\mathbf{v},\mathbf{w})$.
+\end{statement}
+
+\begin{statement}{remark}
+\label{rem: quiver manipulations}
+The affine type A quiver discussed in the proof above is also isomorphic to a product of finite type A cases:
+\label{eq: isom of quiver data}
+\begin{display}\begin{diagram}{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+&2 \ar[dr]& \\
+1 \ar[ur] & & 1 \ar[ll]
+\end{diagram}
+
+\cong
+
+\begin{diagram}{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| 1 & |[draw=black, rectangle]| 1 \ar[d] & \\
+2 \ar[u] & 1 \ar[l] & 1
+\end{diagram}\end{display}
+More precisely, the left side has $\mathbf G = \operatorname{GL}(2) \times \mathbb{C}^\times \times \mathbb{C}^\times$ with factors corresponding to the vertices in clockwise order. Consider the automorphism of $\mathbf G$ defined by $(g, s, t) \mapsto (g s^{-1} t, s^{-1} t, t)$. The pull-back of the left side quiver datum under this isomorphism is the right side quiver datum. This map also induces an isomorphism on flavour symmetry.
+\end{statement}
+
+Using a similar argument, we also obtain the following generalization of Theorem \ref{thm: BFN theorem}:
+\begin{statement}{theorem}
+\label{thm: BFN theorem for resolutions}
+For any $\varkappa \in X_\ast(\mathbf F)$, the variety $\mathcal{M}_C^\varkappa(Q,\mathbf{v},\mathbf{w})$ is irreducible, normal, and its Poisson structure is symplectic on its smooth locus.
+\end{statement}
+\begin{statement}{proof}
+Note that irreducibility follows from Lemma \ref{cor: integral}. The proof of the remaining properties is similar to the proof of Theorem \ref{section: proof} above, but appealing now to Theorem \ref{criterion: normal symplectic}. We must study $t \in \mathfrak t \setminus \mathfrak t^{(2)}$, and show that in the product decomposition from Proposition \ref{lemma: components}, all factors $\mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})$ are normal and symplectic on their smooth loci. Recall that $t \in \mathfrak t \setminus \mathfrak t^{(2)}$ means that $\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{codim}_{Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}}(0)\leq 1$. By Lemma \ref{lemma: classification}, we see that all $(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)})$ belong to the following short list:
+
+\begin{display}\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| n \ar[d] \\
+1
+\end{diagram}
+
+\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+2
+\end{diagram}
+
+\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+1 \ar[r] & 1
+\end{diagram}\end{display}
+
+Thus all $\mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)})$ are partially resolved bow varieties, as discussed in § \ref{example 2}. Thus they are normal, and symplectic on their smooth loci, by the results of \cite{NakTak}. (One can also deduce these properties from the finite type A perspective of § \ref{example 1}.) This completes the proof.
+\end{statement}
+
+\subsection{Extension to all quivers}
+\label{section: extending}
+
+It is natural to ask whether the proofs given above extend to all quiver gauge theories, allowing loops and/or multiple edges. The required steps are simple to state: first, we must allow multiple edges and/or loops wherever possible for all quivers in Figure \ref{figure}. For each resulting quiver, we should show that $\mathcal{M}_C^\varkappa(\mathbf{v}, \mathbf{w})$ is smooth and symplectic for generic $\varkappa$ (or at least that it is normal, symplectic on its smooth locus, and has singular locus of codimension $\geq 4$).
+
+By a similar argument to Remark \ref{rem: quiver manipulations}, we can rewrite each of these new quivers in terms of products of simpler ones: toric hyperk\"ahler varieties (which we omit), or one of
+
+\begin{display}\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| n \ar[d] \\
+2 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "r"]
+\end{diagram}
+\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| n \ar[d] \\
+3 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "r"]
+\end{diagram}
+\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+4 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "r"]
+\end{diagram}
+\begin{diagram}{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+|[draw=black, rectangle]| n \ar[d] & |[draw=black, rectangle]| m \ar[d] \\
+2 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "r"]
+\ar[r,bend left =30] \ar[r, bend right=30] \arrow[r,phantom,shift left =0.5ex,"⋮"] & 1
+\end{diagram}
+\
+\begin{diagram}{tikzcd}[cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]
+2 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "r"]
+\ar[r,bend left =25] \ar[r, bend right=25] \arrow[r,phantom,shift left =0.5ex,"⋮"]&
+2 \arrow[out=-50,in=-130,loop,distance = 3em, start anchor={south east}, end anchor = {south west}, "s"]
+\end{diagram}\end{display}
+Dots denote multiple edges, $r,s \geq 0$ indicate multiple loops, and the framing dimensions $n, m \geq 0$. Proving appropriate smoothness for the above quivers would extend our result to all quivers.
+
+\begin{statement}{remark}
+The Coulomb branches for the first and second ``multiloop'' quivers above are denoted $\mathcal{M}_C(r,2,n)$ and $\mathcal{M}_C(r,3,n)$ in \cite{FinkGon}. There, Finkelberg and Goncharov conjecture that these varieties all admit symplectic resolutions, and prove this conjecture for the cases $\mathcal{M}_C(r,2,1)$.
+\end{statement}

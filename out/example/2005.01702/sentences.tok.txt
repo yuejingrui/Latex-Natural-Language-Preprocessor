@@ -1,0 +1,357 @@
+Braverman , Finkelberg and Nakajima have recently given a mathematical construction of the Coulomb branches for a large class of MATH1 MATH2 gauge theories , as algebraic varieties with Poisson structure .
+They conjecture that these varieties have symplectic singularities .
+We confirm this conjecture for all quiver gauge theories without loops or multiple edges , which in particular implies that the corresponding Coulomb branches have finitely many symplectic leaves and have rational Gorenstein singularities .
+We also give a criterion for proving that any particular Coulomb branch has symplectic singularities , and discuss the possible extension of our results to quivers with loops and / or multiple edges .
+Braverman , Finkelberg and Nakajima have proposed a mathematical definition for the Coulomb branches of a large class of MATH3 MATH4 gauge theories REF1 .
+Their work has attracted considerable interest due to its origin in quantum field theory , and also because Coulomb branches - along with their duals , Higgs branches - play a natural role in the mathematical theory of symplectic duality REF2 .
+They define Coulomb branches as algebraic varieties with Poisson structures over MATH5 ( in fact , they are defined over MATH6 ) , and conjecture REF3 that Coulomb branches have symplectic singularities in the sense of Beauville REF4 .
+This is a natural conjecture from the point of view of the symplectic duality program , but remains unknown outside of a limited number of cases .
+Quiver gauge theories form a particularly interesting family of MATH7 MATH8 gauge theories , whose Higgs branches are Nakajima quiver varieties .
+Their Coulomb branches are also important spaces in geometric representation theory : in finite ADE types they are generalized affine Grassmannian slices REF5 , while in affine type A they are Cherkis bow varieties REF6 .
+In general , the Coulomb branch for a quiver gauge theory without loops can be thought of as a generalized affine Grassmannian slice for the corresponding symmetric Kac-Moody group REF7 .
+These varieties are suggested as a possible setting in which to generalize the geometric Satake correspondence , see REF8 and REF9 .
+Given a quiver MATH9 along with dimension vectors MATH10 , we denote the corresponding Coulomb branch by MATH11 .
+Throughout most of this note , we assume that MATH12 is a simple quiver : that its underlying graph has no loops or multiple edges ( although cycles are still allowed ) .
+For any simple quiver , MATH13 has symplectic singularities .
+This result is already known in certain cases .
+In affine type A it follows from the work of Nakajima and Takayama , since bow varieties admit symplectic resolutions REF10 .
+In finite ADE types , recall that MATH14 is a generalized affine Grassmannian slice .
+These varieties have symplectic singularities by the recent work of Zhou REF11 .
+Zhou 's result subsumes several previous results for finite ADE types : If MATH15 is dominant then it is an ordinary affine Grassmannian slice , so the above theorem is part of REF12 .
+When MATH16 or equivalently MATH17 , then MATH18 is an open Zastava space REF13 , which is smooth REF14 and symplectic REF15 .
+Finally , if MATH19 is minuscule and MATH20 , then MATH21 is smooth and symplectic by REF16 , and in fact its symplectic structure can be identified with the standard one on MATH22 .
+We develop a criterion ( Theorem REF17 ) for showing that a given Coulomb branch has symplectic singularities .
+Applying this criterion in the case of quiver gauge theories , the proof of Theorem REF18 reduces to the study of several simple quivers , see Figure REF19 .
+In § REF20 we list those additional cases which would be necessary and sufficient in order to extend the main theorem to all quivers , i.e. to allow loops and / or multiple edges .
+In addition to providing a definition of Coulomb branches in their foundational paper REF22 , Braverman , Finkelberg and Nakajima also developed several techniques which are crucial in the present work .
+The most important is a construction of partial resolutions of Coulomb branches using flavour symmetry , see § REF21 .
+This construction can be interpreted as a GIT quotient , allowing for variation of GIT arguments .
+In the case of simple quivers , we show that for generic GIT parameters these partial resolutions have terminal singularities , and we optimistically expect that they are MATH23-factorial terminalizations , see Remark REF23 .
+In this paper we will not make use of the physical meaning of Coulomb branches , and refer the reader to REF24 for more details and further references .
+We note that the symplectic singularities and resolutions of Coulomb branches have been studied in physics , for example by Hanany and collaborators REF25 .
+By REF27 , REF28 and REF29 , Theorem REF26 has several immediate consequences :
+For any simple quiver :
+( a ) MATH24 has rational Gorenstein singularities .
+( b ) MATH25 has finitely many ( holomorphic ) symplectic leaves .
+Moreover , the symplectic leaves are the irreducible components of the smooth loci MATH26 for the stratification MATH27 , where MATH28 is the singular locus of MATH29 .
+( c ) The symplectic leaves of MATH30 are smooth connected locally-closed subvarieties .
+In finite ADE type MATH31 has an explicit decomposition into symplectic leaves by REF30 , REF31 , and in affine type A by REF32 .
+These decompositions are very natural from the point of view of affine Grassmannian slices ( resp. bow varieties ) , and are of representation-theoretic significance .
+Some predictions in general are given in REF33 , REF34 .
+This work owes its existence to Braverman , Finkelberg , and Nakajima , and their groundbreaking work on Coulomb branches .
+It also would not have been possible without discussions with Gwyn Bellamy , Michael Finkelberg , Dinakar Muthiah , Hiraku Nakajima , Travis Schedler and Oded Yacobi .
+I am grateful to them for their many helpful suggestions and comments .
+Finally , I would like to thank my anonymous referees for their careful reading and feedback .
+We briefly overview the construction of Coulomb branches due to Braverman , Finkelberg , and Nakajima , referring the reader to REF35 for more details and properties .
+Let MATH32 be a connected reductive group over MATH33 , and let MATH34 be a representation of MATH35 over MATH36 .
+It will be convenient to fix a maximal torus MATH37 , with Lie algebra MATH38 and Weyl group MATH39 .
+To the datum MATH40 there is an associated moduli space MATH41 REF36 , consisting of triples MATH42 where ( i ) MATH43 is principal MATH44-bundle on the formal disk MATH45 , ( ii ) MATH46 a trivialization over the formal punctured disk , and ( iii ) MATH47 is a section of the associated bundle MATH48 such that MATH49 is regular .
+Its equivariant Borel-Moore homology MATH50 has a commutative ring structure by REF37 , and the corresponding affine scheme MATH51 is called the Coulomb branch associated to MATH52 REF38 .
+We will always take Borel-Moore homology with coefficients in MATH53 , and think of MATH54 as a scheme over MATH55 .
+Some key examples of Coulomb branches are recalled in § REF39 .
+For now , we summarize several important properties :
+MATH56 is an irreducible normal affine variety of dimension MATH57 .
+It has a Poisson structure which is symplectic on its smooth locus .
+The Poisson structure on MATH58 is defined by considering MATH59 , where the group MATH60 acts on MATH61 via loop rotation of the disc MATH62 .
+This Borel-Moore homology again carries an algebra structure , and is a non-commutative deformation of MATH63 , see REF40 .
+This naturally endows MATH64 with a Poisson structure .
+One further property of MATH65 that we will need is described in REF41 : suppose that MATH66 and MATH67 , where MATH68 is a representation of MATH69 alone .
+Then MATH70
+An important structure for Coulomb branches is the notion of flavour symmetry , this lively terminology coming from physics .
+For the purposes of this paper we will only consider the following situation : that MATH71 fits into an exact sequence of connected reductive groups MATH72 such that MATH73 the action of MATH74 on MATH75 extends to an action of the larger group MATH76 , and MATH77 MATH78 is a torus .
+In particular , MATH79 is a normal subgroup of MATH80 .
+We call MATH81 a flavour symmetry group .
+We will denote a maximal torus by MATH82 , and its Lie algebra by MATH83 .
+The flavour symmetry group MATH84 can be used to construct partial resolutions of the Coulomb branch , as well as to construct associated line bundles , following REF42 and REF43 .
+For these partial resolutions we should consider the moduli space MATH85 for the pair MATH86 .
+It admits a map MATH87 to the affine Grassmannian MATH88 for the group MATH89 .
+For any coweight MATH90 of MATH91 we define MATH92 to be the preimage of the point MATH93 .
+In particular MATH94 .
+There is a corresponding grading on the equivariant homology ring : MATH95
+Now , for a fixed coweight MATH96 define : MATH97
+In particular , MATH98 .
+Note that we omit MATH99 from our notation , though it is important in the definition of MATH100 .
+There is a natural projective morphism MATH101 , which is birational by REF46 .
+In good cases this map will be a symplectic resolution , see e.g. § REF44 , REF45 .
+As explained in REF47 , this construction can be naturally identified with a Hamiltonian reduction : MATH102
+Here MATH103 is the dual torus to MATH104 , and MATH105 is thought of as a GIT parameter for MATH106 .
+In particular , this perspective shows that MATH107 is finite type , and that the map MATH108 is Poisson .
+The MATH109 are irreducible varieties by Lemma REF48 below .
+We expect that they are also normal , and symplectic on their smooth loci .
+In Theorem REF49 , we will prove that these properties hold in the case of quiver gauge theories for simple quivers .
+We now consider a flavoured generalization of ( REF50 ) .
+Following the same notation , suppose that the theories MATH110 both admit the same flavour symmetry group MATH111 .
+Then so does MATH112 : MATH113
+That is , we define MATH114 as the preimage of the diagonal MATH115 .
+Since MATH116 naturally acts on MATH117 , so does its subgroup MATH118 .
+With the above choice of MATH119 , for any MATH120 we have MATH121
+This is a Segre product : by REF51 , it suffices to show that for MATH122 MATH123
+By Künneth 's theorem , this follows from MATH124 , which in turn follows from the definitions .
+We will freely identify equivariant cohomology rings with the coordinate rings of quotients of Cartan subalgebras , for example : MATH125
+There is an inclusion of rings MATH126 by REF52 , which induces a morphism MATH127
+Composing with MATH128 we obtain a map MATH129 .
+The maps MATH130 are integrable systems for the Poisson structure , in that MATH131 is a maximal Poisson-commutative subalgebra by REF53 .
+The morphisms MATH132 are faithfully flat .
+REF54 shows that MATH133 is free over MATH134 .
+More precisely , there is a non-canonical isomorphism of MATH135-modules ( c.f. also REF55 , REF56 ) MATH136 , where MATH137 runs over dominant coweights of MATH138 .
+Here MATH139 denotes the preimage in MATH140 of the MATH141-orbit MATH142 .
+Up to a grading shift , there is an isomorphism MATH143 , where MATH144 is a partial flag variety corresponding to MATH145 .
+Each MATH146-module MATH147 is free , which proves that MATH148 is free .
+In particular , the map MATH149 is faithfully flat .
+For any MATH150 , the MATH151-module MATH152 has a decomposition analogous to ( REF57 ) , but where the sum runs over coweights MATH153 of MATH154 which are lifts of MATH155 .
+By similar reasoning as above , this proves that MATH156 is free over MATH157 .
+Consequently the morphism MATH158 is flat REF58 .
+But MATH159 is also surjective : we know already that this is true of MATH160 , while MATH161 is surjective since it is proper and dominant .
+Following REF59 , a generalized root for MATH162 is an element of MATH163 which is either ( I ) a non-zero weight of MATH164 or ( II ) a root of MATH165 .
+Let MATH166 be the distinct generalized roots for MATH167 .
+For any MATH168 , define MATH169
+Here MATH170 denotes the vanishing locus of a function MATH171 on MATH172 .
+Note that the intersection on the right-hand side above is simply the intersection of all generalized root hyperplanes containing MATH173 .
+For any MATH174 , we define a subvariety of MATH175 by MATH176
+It is not hard to see that MATH177 is a Zariski closed subset : it is the union of all codimension MATH178 intersections of generalized root hyperplanes .
+In particular MATH179 may be empty , but if MATH180 then MATH181 .
+Up to a minor discrepancy when MATH182 , in the notation of REF60 MATH183
+Let MATH184 .
+Let MATH185 be the centralizer of MATH186 , and MATH187 the subspace of MATH188-invariants .
+Then MATH189 is a maximal torus of MATH190 , and the Weyl group of MATH191 is the stabilizer MATH192 of MATH193 .
+Note that MATH194 .
+Also note that MATH195
+As explained in REF61 , there is an isomorphism of rings MATH196
+Here MATH197 denotes the localization of MATH198 at the maximal ideal corresponding to the image of MATH199 under MATH200 .
+Similarly , we ' ll write MATH201 for localization of MATH202 at MATH203 , and MATH204 for the localization of MATH205 at the image of MATH206 under MATH207 .
+The group MATH208 acts on MATH209 with invariants MATH210 , as follows from the fact that MATH211 .
+Since MATH212 , by composition we obtain from ( REF62 ) a map of rings MATH213
+Denote the corresponding affine schemes by MATH214 and MATH215 , respectively .
+Then we can rephrase ( REF63 ) as a Cartesian diagram of schemes : MATH216
+This picture extends to include flavour resolutions .
+In the notation of Section REF64 , first observe that there is a corresponding exact sequence of centralizer subgroups MATH217
+In particular , for any MATH218 there is a corresponding variety MATH219 .
+Note that MATH220 is a graded algebra over MATH221 , which lies in degree zero .
+Thus MATH222 is compatible with base change to any trivially graded MATH223-algebra , see REF65 , and in particular : MATH224
+We denote this scheme by MATH225 .
+Similarly , we write MATH226 for an analogous base change along MATH227 .
+The following result directly generalizes ( REF66 ) :
+For any MATH228 and MATH229 , there is a Cartesian diagram of schemes : MATH230
+Moreover , the horizontal arrows are both étale and surjective .
+By a variation on the far right column of the diagram REF67 , there is a diagram of MATH231-algebras MATH232
+Both maps respect gradings by coweights MATH233 , defined as in ( REF68 ) , since they are induced by maps of spaces over MATH234 .
+Both maps also respect natural MATH235-actions , by REF69 .
+Finally , by the localization theorem both maps become isomorphisms over MATH236 .
+Therefore , the map MATH237 induces a MATH238-equivariant isomorphism of MATH239-graded algebras MATH240
+Taking MATH241-invariants on both sides , we claim that we obtain an isomorphism MATH242
+To prove this claim , we identify the left side of ( REF70 ) with the MATH243-invariants of the left side of the preceding equation ; a similar argument applies to the right side .
+We have MATH244 by REF71 , and therefore MATH245
+By the proof of Lemma REF72 , MATH246 is free over MATH247 .
+Both carry trivial actions of MATH248 , while MATH249 .
+Taking MATH250-invariants on the right side of ( REF73 ) , we get the left side of ( REF74 ) .
+The isomorphism ( REF75 ) again respects MATH251-gradings .
+Let us restrict it to the direct sum of all graded pieces of degrees MATH252 , where MATH253 , and then take MATH254 of both sides .
+On the right side we obtain MATH255 .
+On the left side we obtain the base change of MATH256 along MATH257 , because of ( REF76 ) .
+This establishes the desired Cartesian diagram .
+Finally , étale morphisms are stable under base change REF77 , as are surjective morphisms REF78 , so it suffices to prove that the bottom horizontal arrow above is étale and surjective .
+To this end we observe that the natural map MATH258 is étale at MATH259 , and so the map of local rings MATH260 is étale .
+It is also surjective , so we are done .
+Since étale maps preserve smoothness and normality , we immediately obtain the following :
+MATH261 is smooth ( resp. normal ) iff MATH262 is smooth ( resp. normal ) .
+The benefit of this result is that the theory MATH263 is often far simpler than the original theory MATH264 , and in particular the corresponding Coulomb branch may be better understood .
+Next , we give a generalization of REF79 :
+MATH265 is an integral scheme .
+It suffices to prove that MATH266 is a domain , since MATH267 is defined as the MATH268 of its subalgebra .
+We will use a variation on the top row of REF80 : MATH269
+By the localization theorem , the resulting morphisms become isomorphisms over MATH270 .
+Since MATH271 is free over MATH272 , it follows that there is an injection MATH273
+Next , as in REF81 we have MATH274
+Altogether , we see that MATH275 embeds into the domain MATH276 .
+The morphism MATH277 is Poisson .
+The following commutative square relates those from ( REF82 ) and Theorem REF83 : MATH278
+The vertical arrows are Poisson by Remark REF84 , and birational by REF85 .
+Moreover all the objects above are integral schemes .
+Therefore , by a similar argument to REF86 , to prove that the top arrow is Poisson , it suffices to prove that the bottom arrow is Poisson .
+Because of the commutativity of the diagram REF87 , there is a triangle MATH279
+The horizontal arrow comes from ( REF88 ) , while the downward arrows are both defined as in the proof of Proposition REF89 .
+Both downward embeddings can be quantized , see REF90 , and in particular they are Poisson .
+This implies that the horizontal arrow is also Poisson , as claimed .
+Let MATH280 be a normal Poisson algebraic variety over MATH281 , such that the restriction of its Poisson structure to the smooth locus MATH282 is non-degenerate .
+Denote the corresponding symplectic form on MATH283 by MATH284 .
+Following REF91 , we say that MATH285 has symplectic singularities if for some ( equivalently , any ) resolution of singularities MATH286 , the form MATH287 extends to a regular 2 - form on all of MATH288 .
+See REF92 for excellent overviews of these varieties and related topics .
+The next result is inspired by REF93 as well as REF94 .
+Fix MATH289 .
+Suppose that MATH290 is normal , and that its Poisson structure is symplectic on its smooth locus , for all MATH291 .
+Then MATH292 is normal , and its Poisson structure is symplectic on its smooth locus .
+Consider the open subscheme MATH293 .
+Under our assumptions , Corollary REF95 and Proposition REF96 imply that MATH294 is normal , and symplectic on its smooth locus .
+If MATH295 , then MATH296 and we are done .
+Otherwise MATH297 , so MATH298 .
+The map MATH299 is faithfully flat by Lemma REF97 , so the complement of MATH300 has codimension MATH301 by REF98 .
+Looking at smooth loci , it follows that MATH302 has complement of codimension MATH303 inside MATH304 .
+The degeneracy locus of the Poisson bivector on MATH305 is a divisor , if non-empty .
+But MATH306 is symplectic , so the degeneracy locus must be trivial .
+Therefore MATH307 is symplectic .
+Next , we show that every open affine MATH308 is normal .
+Note that MATH309 is normal , and the complement of MATH310 in MATH311 has codimension MATH312 .
+We claim that every regular function on MATH313 extends to MATH314 .
+Assuming this claim , REF99 implies that MATH315 is normal .
+To prove the claim , consider the restricted map MATH316 .
+It is flat , since MATH317 is open and the morphism MATH318 is flat by Lemma REF100 .
+Thus MATH319 is a flat quasi-coherent sheaf on MATH320 .
+Note that MATH321 is normal , and MATH322 has codimension 2 .
+By a version of the algebraic Hartogs 's theorem , it follows that under the inclusion MATH323 , the natural map MATH324 is an isomorphism .
+This is precisely the claimed extension property .
+Finally , we obtain a criterion for proving that a Coulomb branch has symplectic singularities :
+Fix MATH325 .
+Suppose that MATH326 is smooth and symplectic for all MATH327 .
+Then MATH328 and MATH329 have symplectic singularities .
+In this case MATH330 has terminal singularities , and its singular locus has codimension MATH331 .
+Under these assumptions Theorem REF101 implies that MATH332 is normal , and symplectic on its smooth locus .
+Moreover , Corollary REF102 and Proposition REF103 imply that the preimage MATH333 is smooth and symplectic .
+If MATH334 then MATH335 is itself smooth and symplectic .
+Otherwise MATH336 .
+As in the proof of the previous theorem , we conclude that the complement of MATH337 has codimension MATH338 .
+Therefore the singular locus of MATH339 has codimension MATH340 .
+By a result of Flenner REF104 , it follows that for any resolution of singularities MATH341 and any 2 - form MATH342 on the smooth locus MATH343 , the pull-back MATH344 extends to a regular 2 - form on MATH345 .
+In particular this applies to MATH346 the symplectic form on MATH347 , which shows that MATH348 has symplectic singularities .
+Since MATH349 has symplectic singularities and its singular locus has codimension MATH350 , it has terminal singularities by REF105 .
+In either case , since MATH351 is a proper birational Poisson map , we conclude that MATH352 has symplectic singularities by REF106 .
+Let MATH353 be a quiver with vertices MATH354 and arrows MATH355 .
+For MATH356 we denote by MATH357 its source and target .
+Let MATH358 be two dimension vectors , to which we associate the vector spaces MATH359 for each MATH360 .
+To the datum MATH361 we associate the pair MATH362
+The group MATH363 naturally acts on MATH364 , and we call MATH365 a quiver gauge theory datum of type MATH366 , even if some MATH367 or MATH368 are zero .
+We will always assume that MATH369 is simple : that its underlying graph has no loops or multiple edges .
+We denote the corresponding Coulomb branch by MATH370
+If for some MATH371 we have MATH372 but MATH373 , then the corresponding summand MATH374 in ( REF107 ) .
+Note that in this case we obtain the same pair MATH375 by setting MATH376 .
+Up to isomorphism , MATH377 does not depend on the orientation of the quiver MATH378 , see REF108 .
+It is convenient to encode the datum MATH379 diagrammatically .
+For example , if we let MATH380 be the oriented MATH381 quiver MATH382 with dimension vectors MATH383 , MATH384 , we get the diagram MATH385
+Circled nodes encode the dimensions MATH386 , and boxed nodes the MATH387 .
+We often omit nodes where MATH388 or MATH389 .
+In particular , an isolated node MATH390 corresponds to the " pure " theory MATH391 .
+The corresponding Higgs branch MATH392 is a Nakajima quiver variety , as first defined in REF109 : it is the Hamiltonian reduction MATH393 .
+These varieties have symplectic singularities REF110 , and often have symplectic resolutions .
+Given MATH394 as above , we consider the flavour symmetry group MATH395
+We think of this group as consisting of a dilating MATH396 factor for each arrow MATH397 , along with the diagonal maximal torus MATH398 for each MATH399 .
+Thus the group MATH400 acts on MATH401 as follows : for MATH402 the factor of MATH403 scales MATH404 with weight 1 , while for MATH405 the torus MATH406 acts on MATH407 in the natural way .
+The actions of MATH408 and MATH409 commute , and we set MATH410 with its natural action on MATH411 .
+The center MATH412 consists of tuples of scalar matrices , and an element MATH413 acts on MATH414 by MATH415 and on MATH416 by MATH417 .
+This is equal to the action of the element MATH418 , and this correspondence defines a homomorphism MATH419 such that the action of MATH420 on MATH421 factors through MATH422 .
+Via this homomorphism MATH423 , cocharacters of MATH424 give cocharacters of MATH425 .
+Let MATH426 .
+If MATH427 for a cocharacter MATH428 of MATH429 , then MATH430
+Define MATH431 , which acts on MATH432 via the map MATH433 defined by MATH434 .
+At the level of MATH435-points it is straightforward to see that MATH436 , where MATH437 is thought of as a cocharacter of the flavour symmetry group MATH438 of MATH439 .
+This extends to the diagram defining the convolution product REF111 , and so there is an isomorphism of varieties MATH440
+Now assume that MATH441 .
+Then there is an isomorphism MATH442 defined by MATH443 .
+It intertwines their actions on MATH444 , and induces the identity map on their flavour symmetry groups .
+Thus MATH445 .
+Altogether , we get a chain of isomorphisms which proves the claim : MATH446
+We will call MATH447 equivalent if MATH448 as in the above lemma .
+It will be useful to write this notion out more explicitly .
+Denote the components of our coweight MATH449 of MATH450 by MATH451 , and those of the coweight MATH452 of MATH453 by MATH454 .
+From the definition of the homomorphism MATH455 , we see that MATH456 is equivalent to MATH457
+We now recall some important examples of the varieties MATH458 , which have been studied by Braverman-Finkelberg-Nakajima and Nakajima-Takayama REF112 .
+If MATH459 is an orientation of a Dynkin diagram of finite ADE type , then MATH460 is a generalized affine Grassmannian slice for the corresponding adjoint group MATH461 of ADE type REF114 .
+Up to equivalence as in ( REF113 ) , we may assume that MATH462 for all MATH463 .
+List the MATH464 in decreasing order : MATH465
+If MATH466 then we denote the corresponding fundamental coweight of MATH467 by MATH468 .
+We get a tuple MATH469 .
+Thinking of MATH470 as a cocharacter of MATH471 , by construction it lies in the cone MATH472 from REF115 .
+Thus by REF116 , if MATH473 are distinct ( i.e. if the MATH474 are distinct ) , then MATH475 where the right-hand side is defined as in REF117 .
+If the MATH476 are all minuscule , then this variety is smooth and symplectic .
+This can be proven similarly to the main theorem of REF118 , cf. also REF119 .
+In particular , in finite type A , the variety MATH477 is smooth and symplectic so long as MATH478 does not lie on a finite collection of hyperplanes .
+This clearly remains true even if we do not impose that MATH479 .
+In affine type A , MATH480 is isomorphic to a bow variety by REF120 .
+Label the vertices by MATH481 , and pick the orientation MATH482 where MATH483 for MATH484 .
+Up to equivalence , we may assume that MATH485 except for MATH486 the arrow MATH487 .
+Then for MATH488 satisfying the inequality REF121 , the variety MATH489 is identified with a partially resolved bow variety .
+For generic MATH490 this variety is smooth and symplectic , see REF122 .
+Our next task will be to understand the pairs MATH491 that can arise for quiver gauge theories , where MATH492 .
+First some terminology : we call MATH493 connected if MATH494 is a connected subset of MATH495 , and if MATH496 implies MATH497 for all MATH498 .
+For a given MATH499 and MATH500 , we ' ll denote MATH501 where the latter is defined as in ( REF123 ) .
+Let MATH502 be fixed , with corresponding MATH503 .
+For any MATH504 there exists a decomposition MATH505 , which holds for all MATH506 , and where the data MATH507 are all connected .
+Moreover ,
+( i ) MATH508 ,
+( ii ) for each MATH509 there is at most one MATH510 with MATH511 , and in this case MATH512 ,
+( iii ) for each MATH513 , the restriction map on flavour symmetry groups MATH514 is the obvious surjection respecting the factors in ( REF124 ) ,
+( iv ) MATH515
+We may think of MATH516 .
+Denote the MATH517-eigenspace of MATH518 on MATH519 by MATH520 .
+Then we can identify MATH521
+For each MATH522 , consider the subgroup MATH523 corresponding to factors labelled by MATH524 above , and MATH525 corresponding to the summands labelled by MATH526 .
+( In particular , the framing MATH527 only contributes MATH528 for MATH529. )
+Then MATH530 and MATH531 , with MATH532 acting trivially on MATH533 unless MATH534 .
+By construction each MATH535 corresponds to a quiver gauge theory datum MATH536 , but might not be connected .
+So we will make a further refinement .
+First , if for some MATH537 we have MATH538 and MATH539 , then we may set MATH540 by Remark REF125 .
+( Note that this can only happen for MATH541. )
+Next , for each connected component MATH542 of MATH543 there is a corresponding MATH544 and MATH545 .
+Then MATH546 and MATH547 .
+By construction , each MATH548 corresponds to a connected quiver datum , as desired .
+Only finitely many pairs MATH549 ever contribute non-trivially , so we may relabel the above decompositions simply by MATH550 and MATH551 .
+Each MATH552 corresponds to some connected quiver datum MATH553 .
+Tracing through the construction , we see that the group MATH554 respects these decompositions .
+Therefore Lemma REF126 applies , which shows that MATH555
+Parts ( i ) , ( ii ) , ( iii ) follow easily from the above construction .
+Finally , the formula ( iv ) follows from ( REF127 ) together with our decomposition of MATH556 .
+Next , we classify quivers with MATH557 .
+Let MATH558 be connected .
+Then MATH559
+In particular , Figure REF128 gives a complete list of connected MATH560 with MATH561 .
+This dichotomy corresponds to whether MATH562 acts on MATH563 faithfully ( some MATH564 ) or not ( all MATH565 ) .
+Let MATH566 .
+If all generalized roots vanish at MATH567 , then this forces all components of MATH568 to be equal ( with respect to the standard bases of the MATH569 ) .
+If there is no framing then there is no further constraint , so the vanishing locus is 1 - dimensional .
+If there is framing , then this further forces MATH570 .
+This proves the formula for the codimension .
+The classification in Figure REF129 is now straightforward : if there is no framing then we demand MATH571 , so in particular there are at most 4 vertices .
+If there is framing , then we instead demand MATH572 , so there are at most 3 vertices .
+Up to orientation , the list of all connected quiver gauge theory data with MATH573 .
+The framing dimensions MATH574 .
+Note that we consider only simple quivers .
+We will apply Theorem REF130 .
+Recall that MATH575 means that MATH576 .
+By combining Proposition REF131 and Lemma REF132 , we see that for MATH577 MATH578 where all factors on the right hand side are from Figure REF133 , and where MATH579
+We claim that any particular factor MATH580 above is smooth so long as MATH581 avoids a finite set of hyperplanes .
+Assuming this claim for the moment , this implies that MATH582 is smooth so long as MATH583 avoids the ( still finite ) union over MATH584 of these sets of hyperplanes .
+Note also that as we vary MATH585 , only finitely many decompositions ( REF134 ) can arise .
+Therefore for a generic choice of MATH586 , the space MATH587 is smooth for all MATH588 .
+So MATH589 has symplectic singularities by Theorem REF135 .
+To prove the claim , by part ( iii ) of Proposition REF136 we can reduce to the case where MATH590 is one of the quivers in Figure REF137 , with the intrinsic flavour symmetry group MATH591 .
+Note that many of the quivers in Figure REF138 have all MATH592 , and so correspond to toric hyperkähler varieties REF139 .
+The flavour symmetry MATH593 for the quiver ( defined as in ( REF140 ) ) surjects onto the full Abelian flavour symmetry group : MATH594 contains subtori which dilate each edge independently , with weight 1 .
+Thus we can appeal to the unimodularity criterion for existence of resolutions given in REF141 .
+This is easy to verify , and proves the claim in these cases .
+For the remaining quivers in Figure REF142 where some MATH595 , all but one ( see below ) are of finite type A , so the claim in these cases follows from the results of REF145 discussed in § REF143 .
+This leaves one quiver which is of affine type A , as discussed in § REF144 .
+Thus the claim holds in all cases , which completes the proof of the theorem .
+We also conclude from Theorem REF146 that MATH596 has terminal singularities , for generic MATH597 .
+We optimistically conjecture that it is a MATH598-factorial terminalization of MATH599 .
+The affine type A quiver discussed in the proof above is also isomorphic to a product of finite type A cases : MATH600
+More precisely , the left side has MATH601 with factors corresponding to the vertices in clockwise order .
+Consider the automorphism of MATH602 defined by MATH603 .
+The pull-back of the left side quiver datum under this isomorphism is the right side quiver datum .
+This map also induces an isomorphism on flavour symmetry .
+Using a similar argument , we also obtain the following generalization of Theorem REF147 :
+For any MATH604 , the variety MATH605 is irreducible , normal , and its Poisson structure is symplectic on its smooth locus .
+Note that irreducibility follows from Lemma REF148 .
+The proof of the remaining properties is similar to the proof of Theorem REF149 above , but appealing now to Theorem REF150 .
+We must study MATH606 , and show that in the product decomposition from Proposition REF151 , all factors MATH607 are normal and symplectic on their smooth loci .
+Recall that MATH608 means that MATH609 .
+By Lemma REF152 , we see that all MATH610 belong to the following short list : MATH611
+Thus all MATH612 are partially resolved bow varieties , as discussed in § REF153 .
+Thus they are normal , and symplectic on their smooth loci , by the results of REF155 .
+( One can also deduce these properties from the finite type A perspective of § REF154. )
+This completes the proof .
+It is natural to ask whether the proofs given above extend to all quiver gauge theories , allowing loops and / or multiple edges .
+The required steps are simple to state : first , we must allow multiple edges and / or loops wherever possible for all quivers in Figure REF156 .
+For each resulting quiver , we should show that MATH613 is smooth and symplectic for generic MATH614 ( or at least that it is normal , symplectic on its smooth locus , and has singular locus of codimension MATH615 ) .
+By a similar argument to Remark REF157 , we can rewrite each of these new quivers in terms of products of simpler ones : toric hyperkähler varieties ( which we omit ) , or one of MATH616
+Dots denote multiple edges , MATH617 indicate multiple loops , and the framing dimensions MATH618 .
+Proving appropriate smoothness for the above quivers would extend our result to all quivers .
+The Coulomb branches for the first and second " multiloop " quivers above are denoted MATH619 and MATH620 in REF158 .
+There , Finkelberg and Goncharov conjecture that these varieties all admit symplectic resolutions , and prove this conjecture for the cases MATH621 .
