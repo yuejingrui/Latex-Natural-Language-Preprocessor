@@ -9,12 +9,14 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GTED = os.path.dirname(os.path.dirname(HERE))
 # the same file runs inside the repository (nlprep/tests) and inside the
-# standalone splitting package (tests/ + scripts/)
-SCRIPTS = os.path.join(GTED, "nlprep", "scripts")
+# standalone splitting package (tests/ + scripts/).  The package comes first:
+# a checkout of the package that happens to sit next to the repository must
+# test its own scripts, or a probe reports on code it does not ship.
+SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
 if not os.path.isdir(SCRIPTS):
-    SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
+    SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(HERE)),
+                           "nlprep", "scripts")
 sys.path.insert(0, SCRIPTS)
 import latex2nl as L  # noqa: E402
 import normalize as N  # noqa: E402
@@ -122,6 +124,40 @@ for label, tex, want in COMMENT_CASES:
     conv.canonical = True
     got = len(conv.convert(norm)["sentences"])
     check(label, got == want, "%d sentences, want %d" % (got, want))
+
+# ---- what follows a display decides the boundary ------------------------
+# The lookahead used to stop at the backslash of a \\label or at the opening
+# bracket of an aside, and called the boundary unclear: 43 displays over the 21
+# papers plus danmark were left undecided, and an undecided boundary keeps a
+# paper at exit code 3.
+DISPLAY_CASES = [
+    ("a block after a display starts a new unit",
+     "Text before.\n\\[ a=b \\]\n\\[ c=d \\]\nAfter.",
+     ["Text before.", "MATH1", "MATH2", "After."]),
+    ("a list after a display starts a new unit",
+     "Text before.\n\\[ a=b \\]\n\\begin{enumerate}\\item one\\item two\\end{enumerate}",
+     ["Text before.", "MATH1", "1. one", "2. two"]),
+    ("a label prints nothing, so the next word decides",
+     "Text before.\n\\[ a=b \\]\n\\label{eq:x} holds for every $x$.",
+     ["Text before.", "MATH1", "holds for every MATH2."]),
+    ("a lower-case aside continues the sentence",
+     "Text before.\n\\[ a=b \\]\n(obtained by composing) and more.",
+     ["Text before.", "MATH1 (obtained by composing) and more."]),
+    ("an enumerated item after a display is new",
+     "Text before.\n\\[ a=b \\]\n(b) Let $x$ be a set.",
+     ["Text before.", "MATH1", "(b) Let MATH2 be a set."]),
+]
+L.use_canonical_names()          # the package's own environment names
+for label, tex, want in DISPLAY_CASES:
+    conv = L.LatexToNL()
+    conv.canonical = True
+    doc = conv.convert(N.Normalizer().normalize(
+        "\\documentclass{article}\n\\begin{document}\n" + tex
+        + "\n\\end{document}\n"))
+    got = [x["text"] for x in doc["sentences"]]
+    unclear = [f["id"] for f in doc["formulas"]
+               if "sentence_end_unclear" in (f.get("flags") or [])]
+    check(label, got == want and not unclear, "%r unclear=%s" % (got, unclear))
 
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))

@@ -126,6 +126,10 @@ def check_parses(out: str, sentences) -> List[dict]:
     return hits
 
 
+#: an enumerated label at the head of a sentence: "(b) Let ...", "iv) The ..."
+ITEM_LABEL = re.compile(r"^\s*[\[(]?\s*(?:[0-9]+|[a-zA-Z]|[ivxIVX]+)\s*[\]).:]\s")
+
+
 def check_c1(doc) -> List[dict]:
     """A sentence cut in the middle: no terminal punctuation, and the next
     sentence starts in lower case.
@@ -152,6 +156,11 @@ def check_c1(doc) -> List[dict]:
         if "/item" in (sents[i + 1].get("unit") or ""):
             continue
         if not nxt:
+            continue
+        # a new enumerated item is never a continuation: "(a) ..." ends where
+        # "(b) ..." starts, however the first half is punctuated.  The items of
+        # a theorem are not list units, so the `/item` test above misses them.
+        if ITEM_LABEL.match(nxt):
             continue
         first = next((ch for ch in nxt if ch.isalpha()), "")
         if first and first.islower():
@@ -628,6 +637,17 @@ def self_test() -> int:
     check("a registered kind is recorded", issues.counts() == {"check:C1": 1},
           str(issues.counts()))
     check("a hard kind is counted as hard", len(issues.hard()) == 1)
+
+    # C1: an enumerated run is not a cut, however the first item is punctuated
+    doc = {"sentences": [
+        {"sid": "s1", "unit": "thm#1", "text": "(a) The functors agree, MATH1"},
+        {"sid": "s2", "unit": "thm#1", "text": "(b) Let MATH2 be a set."}],
+        "formulas": []}
+    check("C1 leaves an enumerated run alone", check_c1(doc) == [],
+          str(check_c1(doc)))
+    doc["sentences"][1]["text"] = "and the conclusion follows."
+    check("C1 still reports a lower-case continuation",
+          len(check_c1(doc)) == 1, str(check_c1(doc)))
     return 1 if failures else 0
 
 

@@ -3510,6 +3510,21 @@ class LatexToNL:
         else:
             item["count"] += 1
 
+    #: commands that print nothing, so the character after them is the one the
+    #: reader sees.  Without this the lookahead stopped at the backslash of a
+    #: ``\label`` and called the boundary unclear (43 times over 22 papers).
+    INVISIBLE_AFTER_DISPLAY = re.compile(
+        r"\s*(?:%(?:[^\n]*\n\s*)|(?:\\(?:label|index|protect|nolinebreak"
+        r"|allowbreak|ignorespaces|relax|noindent)\b\s*(?:\{[^{}]*\}|\[[^\]]*\])?"
+        r"\s*))+")
+    #: a block that starts after a display is a new unit, never a continuation
+    BLOCK_AFTER_DISPLAY = re.compile(
+        r"\s*(?:\\begin\{(?:display|list|statement|grid|diagram)\}|"
+        r"\\begin\{(?:equation|align|gather|multline|eqnarray)\*?\})")
+    #: an enumerated item: "(b) Let ...", "(iv) The ...", "1. Let ..."
+    ITEM_LABEL_AFTER_DISPLAY = re.compile(
+        r"\s*[\[(]?\s*(?:[0-9]+|[a-zA-Z]|[ivxIVX]+)\s*[\]).:]\s")
+
     def _display_end(self, rest: str, trailing: str,
                      rec: FormulaRecord) -> Tuple[bool, bool]:
         """Does a display formula end its sentence?  (break, drop the mark)
@@ -3518,7 +3533,31 @@ class LatexToNL:
         inside the formula is what the author wrote and is the fallback.  They
         disagree about three times in two thousand displays, and both signals
         are kept so the disagreement can be reviewed.
+
+        Only what the reader sees counts: a ``\label`` between the display and
+        the next word prints nothing, and a block that follows the display
+        (another display, a list, a theorem) always starts a new unit.
         """
+        while True:
+            trimmed = self.INVISIBLE_AFTER_DISPLAY.sub("", rest, count=1)
+            if trimmed == rest:
+                break
+            rest = trimmed
+        if not re.search(r"[^\s~]", rest):
+            return False, False          # end of the paragraph: nothing to cut
+        if self.BLOCK_AFTER_DISPLAY.match(rest):
+            return True, False
+        if self.ITEM_LABEL_AFTER_DISPLAY.match(rest):
+            return True, False
+        # a bracketed aside or heading: judge by the first letter inside it
+        opening = re.match(r"\s*[\[(]\s*", rest)
+        if opening:
+            inner = rest[opening.end():]
+            first = re.search(r"[^\s~{]", inner)
+            if first and inner[first.start()].isupper():
+                return True, False
+            if first and inner[first.start()].islower():
+                return False, False
         m = re.search(r"[^\s~]", rest)
         nxt = rest[m.start()] if m else ""
         if not nxt:
