@@ -72,6 +72,30 @@ check("the figure body is preserved as pending",
       any(b['status'] == 'pending' and 'includegraphics' in b['raw']
           for b in doc['content_blocks']), doc['content_blocks'])
 
+# F2 (MERGE-PLAN 3): a group that spanned two units leaves one brace half
+norm, doc = run("\\begin{definition}\\rm{Let $x$ be a set.\n"
+                "\\begin{itemize}\\item a\\end{itemize} Then $x$ is fine.}"
+                "\\end{definition}\n")
+check("no sentence keeps a stray brace",
+      not any(("{" in s["text"] or "}" in s["text"]) for s in doc["sentences"]),
+      texts(doc))
+
+# F1 (MERGE-PLAN 3): a placeholder with an affix still belongs to the sentence
+for body, want in (("We write $n$th.\n", "MATH1th"),
+                   ("These are $X$-Segal.\n", "MATH1-Segal"),
+                   ("The map $f$push exists.\n", "MATH1push")):
+    norm, doc = run(body)
+    sent = doc["sentences"]
+    ok = bool(sent) and sent[0]["formulas"] == ["MATH1"] and want in sent[0]["text"]
+    check("affix %r is registered" % want, ok,
+          str([(x["text"], x["formulas"]) for x in sent]))
+
+# a placeholder right after a letter is still one id (not a longer number)
+norm, doc = run("We write CYMATH1729 here.\n")
+check("a placeholder after a letter is still found",
+      any(s["formulas"] for s in doc["sentences"]),
+      str([(s["text"], s["formulas"]) for s in doc["sentences"]]))
+
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
 sys.exit(1 if bad else 0)

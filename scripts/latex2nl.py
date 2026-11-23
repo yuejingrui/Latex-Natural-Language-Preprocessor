@@ -236,7 +236,9 @@ def delim_direction(body: str, after: int) -> int:
                 return -1
     return 0
 
-PLACEHOLDER_RE = re.compile(r"\b(MATH\d+|REF\d+)\b")
+# a placeholder may carry an affix ("$n$th" -> MATH971th) or sit right after a
+# letter ("CY" + MATH1729): only a digit would make it a different id
+PLACEHOLDER_RE = re.compile(r"(?<![0-9])(MATH\d+|REF\d+)(?!\d)")
 
 #: control words whose arguments are pure document machinery
 META_CMDS = (
@@ -3180,6 +3182,18 @@ class LatexToNL:
                 for sent in self._join_sentences(split_sentences(chunk), unit):
                     if not sent:
                         continue
+                    # A group that spanned two units can leave one half of a
+                    # brace pair in a sentence.  Strip it (and count it) before
+                    # the payload test: this guard was lost when the sentence
+                    # filter was rewritten (MERGE-PLAN F2).
+                    if "{" in sent or "}" in sent:
+                        cleaned = re.sub(r"(?<!\\)[{}]", "", sent)
+                        if cleaned != sent:
+                            self.brace_unwrapped += 1
+                            _issues.record("sentence:brace_unwrapped",
+                                           "latex2nl._process_unit",
+                                           where=sent[:80], size=len(sent) - len(cleaned))
+                            sent = cleaned
                     # Formula-only and non-Latin content are valid units.  Only
                     # punctuation/spacing without a payload may be discarded.
                     residue = PLACEHOLDER_RE.sub(" ", sent)

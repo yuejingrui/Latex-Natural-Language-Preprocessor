@@ -191,6 +191,11 @@
       "route": "check",
       "gate": "soft",
       "about": "Content or decisions remain unprocessed; strict mode returns 3."
+    },
+    "sentence:brace_unwrapped": {
+      "gate": "soft",
+      "route": "ledger",
+      "note": "one half of a brace pair left in a sentence was stripped"
     }
   }
 }
