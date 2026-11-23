@@ -3527,7 +3527,7 @@ class LatexToNL:
 
     def _display_end(self, rest: str, trailing: str,
                      rec: FormulaRecord) -> Tuple[bool, bool]:
-        """Does a display formula end its sentence?  (break, drop the mark)
+        r"""Does a display formula end its sentence?  (break, drop the mark)
 
         The character after the formula answers the question; the punctuation
         inside the formula is what the author wrote and is the fallback.  They
