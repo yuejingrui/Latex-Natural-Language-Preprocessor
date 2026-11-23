@@ -1,18 +1,20 @@
 {
  "_about": "Every place the pipeline let something through, one entry per site, with the destination fixed in data/issue_kinds.json.",
  "counts": {
-  "check:C4": 3,
-  "check:C13": 96,
+  "check:C4": 4,
+  "check:C13": 8,
   "unresolved:line": 6,
   "drop:footnote": 1,
-  "drop:float": 1
+  "drop:float": 1,
+  "check:pending": 8
  },
  "sizes": {
-  "check:C4": 3,
-  "check:C13": 96,
+  "check:C4": 4,
+  "check:C13": 8,
   "unresolved:line": 6,
   "drop:footnote": 595,
-  "drop:float": 3499
+  "drop:float": 3499,
+  "check:pending": 8
  },
  "hard": 0,
  "kinds": {
@@ -25,6 +27,11 @@
    "route": "check",
    "gate": "soft",
    "about": "a sentence of at most two tokens with no terminal punctuation (D7)."
+  },
+  "check:pending": {
+   "route": "check",
+   "gate": "soft",
+   "about": "Content or decisions remain unprocessed; strict mode returns 3."
   },
   "drop:float": {
    "route": "code",
@@ -68,675 +75,11 @@
    "size": 1
   },
   {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF1 -> Nak6,BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF2 -> BLPW, BDGH, Web3, BF2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF3 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF4 -> Beauville",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF5 -> BFN2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF6 -> NakTak",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF7 -> FinkICM",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF8 -> Nak8",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF9 -> BFN2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF10 -> NakTak",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF11 -> Zhou",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF12 -> KWWY",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF13 -> BFN2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF14 -> Finkelberg-Mirkovic",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF15 -> FKMM",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF16 -> KryPer",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF19 -> figure",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF22 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF24 -> BDG, Nak6",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF25 -> HananySperling,Hetal,GrimmingerHanany",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF27 -> Beauville",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF28 -> Kaledin",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF29 -> Brown-Gordon",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF30 -> MuthiahWeekes",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF31 -> KWWY",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF32 -> NakTak",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF33 -> Nak7",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF34 -> Hetal,GrimmingerHanany",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF35 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF36 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF37 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF38 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF40 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF41 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF42 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF43 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF46 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF47 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF51 -> Hartshorne",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF52 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF53 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF54 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF55 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF56 -> BFM",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF58 -> stacks-project",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF59 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF60 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF61 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF65 -> stacks-project",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF67 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF69 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF71 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF77 -> stacks-project",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF78 -> stacks-project",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF79 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF80 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF81 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF85 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF86 -> KPW",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF87 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF90 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF91 -> Beauville",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF92 -> Fu,Bellamy",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF93 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF94 -> BFM",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF98 -> EGAIV2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF99 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF104 -> Flenner",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF105 -> Namikawa",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF106 -> BS",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF108 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF109 -> Nak3",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF110 -> BS",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF111 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF112 -> BFN2, NakTak,BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF114 -> BFN2",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF115 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF116 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF117 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF118 -> MuthiahWeekes",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF119 -> KWWY",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF120 -> NakTak",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF121 -> BFN4",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
+   "kind": "check:C4",
+   "site": "verify_output.C4",
    "route": "check",
    "gate": "soft",
-   "where": "REF122 -> NakTak",
+   "where": "s313 'REF4'",
    "size": 1
   },
   {
@@ -744,7 +87,7 @@
    "site": "verify_output.C13",
    "route": "check",
    "gate": "soft",
-   "where": "REF128 -> figure",
+   "where": "REF23 -> figure",
    "size": 1
   },
   {
@@ -752,7 +95,7 @@
    "site": "verify_output.C13",
    "route": "check",
    "gate": "soft",
-   "where": "REF129 -> figure",
+   "where": "REF132 -> figure",
    "size": 1
   },
   {
@@ -776,23 +119,7 @@
    "site": "verify_output.C13",
    "route": "check",
    "gate": "soft",
-   "where": "REF138 -> figure",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF139 -> BFN1",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF141 -> BellamyKuwabara",
+   "where": "REF141 -> figure",
    "size": 1
   },
   {
@@ -808,7 +135,7 @@
    "site": "verify_output.C13",
    "route": "check",
    "gate": "soft",
-   "where": "REF145 -> BFN4",
+   "where": "REF146 -> figure",
    "size": 1
   },
   {
@@ -816,23 +143,7 @@
    "site": "verify_output.C13",
    "route": "check",
    "gate": "soft",
-   "where": "REF155 -> NakTak",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF156 -> figure",
-   "size": 1
-  },
-  {
-   "kind": "check:C13",
-   "site": "verify_output.C13",
-   "route": "check",
-   "gate": "soft",
-   "where": "REF158 -> FinkGon",
+   "where": "REF160 -> figure",
    "size": 1
   },
   {
@@ -904,13 +215,77 @@
    "gate": "soft",
    "where": "figure",
    "size": 3499
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "content (1)",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "content content4",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "content_todo.json (1)",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "ledger drop:float",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "ledger drop:footnote",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "ledger unresolved:line",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "unresolved (3)",
+   "size": 1
+  },
+  {
+   "kind": "check:pending",
+   "site": "verify_output.pending",
+   "route": "check",
+   "gate": "soft",
+   "where": "unresolved.log",
+   "size": 1
   }
  ],
  "checks": {
   "C1": 0,
   "C2": 0,
   "C3": 0,
-  "C4": 3,
+  "C4": 4,
   "C5": 0,
   "C6": 0,
   "C7": 0,
@@ -919,8 +294,43 @@
   "C10": 0,
   "C11": 0,
   "C12": 0,
-  "C13": 96,
+  "C13": 8,
   "C14": 0,
   "C16": 0
- }
+ },
+ "scope": "splitting",
+ "status": "pending",
+ "pending": [
+  "content (1)",
+  "content content4",
+  "content_todo.json (1)",
+  "ledger drop:float",
+  "ledger drop:footnote",
+  "ledger unresolved:line",
+  "unresolved (3)",
+  "unresolved.log"
+ ],
+ "downstream_diagnostics": [
+  {
+   "formula": "MATH102",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\ssslash"
+   ]
+  },
+  {
+   "formula": "MATH393",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\ssslash"
+   ]
+  },
+  {
+   "formula": "MATH559",
+   "kind": "unclassified_text_slot",
+   "detail": "text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'"
+  }
+ ]
 }

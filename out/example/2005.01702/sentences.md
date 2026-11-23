@@ -1,13 +1,13 @@
-# 2005.01702-current 逐句
+# 2005.01702 逐句
 
 由 `sentences.jsonl` + `formulas.json` 生成，**未手改**。
 
 | 项 | 值 |
 |:--|:--|
-| 句子 | 357 |
-| 公式 | 779（inline 564、ref 158、display 57） |
-| 角色 | term 557、proposition 195、constraint 18、modifier 7、sequence 2 |
-| 环境 | prose 178、proof 117、remark 27、theorem 13、lemma 8、proposition 8、corollary 6 |
+| 句子 | 362 |
+| 公式 | 795（inline 574、ref 164、display 57） |
+| 角色 | term 564、proposition 201、constraint 19、modifier 7、opaque 2、sequence 2 |
+| 环境 | prose 176、proof 117、remark 27、theorem 13、lemma 8、proposition 8、corollary 6、footnote 4、caption 3 |
 
 读法：`### sN` 后是句子编号与所属单元；引用块是原句（公式处保留 `MATHn`）；其下的表给出该句用到的公式；再下面一行是**公式已内联**的可读版本。
 
@@ -44,36 +44,36 @@
 
 ### s5 · prose#2 · prose · 25 词
 
-> Braverman, Finkelberg and Nakajima have proposed a mathematical definition for the Coulomb branches of a large class of MATH3 MATH4 gauge theories REF1.
+> Braverman, Finkelberg and Nakajima have proposed a mathematical definition for the Coulomb branches of a large class of MATH3 MATH4 gauge theories REF5.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH3 | inline | term | 3d |
 | MATH4 | inline | proposition | \mathcal{N}=4 |
-| REF1 | ref | term | \cite{Nak6,BFN1} |
+| REF5 | ref | term | \cite{Nak6,BFN1} |
 
 内联：Braverman, Finkelberg and Nakajima have proposed a mathematical definition for the Coulomb branches of a large class of `3d` `\mathcal{N}=4` gauge theories `\cite{Nak6,BFN1}`.
 
 ### s6 · prose#2 · prose · 42 词
 
-> Their work has attracted considerable interest due to its origin in quantum field theory, and also because Coulomb branches - along with their duals, Higgs branches - play a natural role in the mathematical theory of symplectic duality REF2.
+> Their work has attracted considerable interest due to its origin in quantum field theory, and also because Coulomb branches - along with their duals, Higgs branches - play a natural role in the mathematical theory of symplectic duality REF6.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF2 | ref | term | \cite{BLPW, BDGH, Web3, BF2} |
+| REF6 | ref | term | \cite{BLPW, BDGH, Web3, BF2} |
 
 内联：Their work has attracted considerable interest due to its origin in quantum field theory, and also because Coulomb branches - along with their duals, Higgs branches - play a natural role in the mathematical theory of symplectic duality `\cite{BLPW, BDGH, Web3, BF2}`.
 
 ### s7 · prose#2 · prose · 39 词
 
-> They define Coulomb branches as algebraic varieties with Poisson structures over MATH5 (in fact, they are defined over MATH6), and conjecture REF3 that Coulomb branches have symplectic singularities in the sense of Beauville REF4.
+> They define Coulomb branches as algebraic varieties with Poisson structures over MATH5 (in fact, they are defined over MATH6), and conjecture REF7 that Coulomb branches have symplectic singularities in the sense of Beauville REF8.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH5 | inline | term | \mathbb{C} |
 | MATH6 | inline | term | \mathbb{Z} |
-| REF3 | ref | term | \cite[§ 3(iv)]{BFN1} |
-| REF4 | ref | term | \cite{Beauville} |
+| REF7 | ref | term | \cite[§ 3(iv)]{BFN1} |
+| REF8 | ref | term | \cite{Beauville} |
 
 内联：They define Coulomb branches as algebraic varieties with Poisson structures over `\mathbb{C}` (in fact, they are defined over `\mathbb{Z}`), and conjecture `\cite[§ 3(iv)]{BFN1}` that Coulomb branches have symplectic singularities in the sense of Beauville `\cite{Beauville}`.
 
@@ -96,33 +96,33 @@
 
 ### s10 · prose#3 · prose · 36 词
 
-> Their Coulomb branches are also important spaces in geometric representation theory: in finite ADE types they are generalized affine Grassmannian slices REF5, while in affine type A they are Cherkis bow varieties REF6.
+> Their Coulomb branches are also important spaces in geometric representation theory: in finite ADE types they are generalized affine Grassmannian slices REF9, while in affine type A they are Cherkis bow varieties REF10.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF5 | ref | term | \cite[Theorem 3.10]{BFN2} |
-| REF6 | ref | term | \cite[Theorem 6.18]{NakTak} |
+| REF9 | ref | term | \cite[Theorem 3.10]{BFN2} |
+| REF10 | ref | term | \cite[Theorem 6.18]{NakTak} |
 
 内联：Their Coulomb branches are also important spaces in geometric representation theory: in finite ADE types they are generalized affine Grassmannian slices `\cite[Theorem 3.10]{BFN2}`, while in affine type A they are Cherkis bow varieties `\cite[Theorem 6.18]{NakTak}`.
 
 ### s11 · prose#3 · prose · 31 词
 
-> In general, the Coulomb branch for a quiver gauge theory without loops can be thought of as a generalized affine Grassmannian slice for the corresponding symmetric Kac-Moody group REF7.
+> In general, the Coulomb branch for a quiver gauge theory without loops can be thought of as a generalized affine Grassmannian slice for the corresponding symmetric Kac-Moody group REF11.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF7 | ref | term | \cite{FinkICM} |
+| REF11 | ref | term | \cite{FinkICM} |
 
 内联：In general, the Coulomb branch for a quiver gauge theory without loops can be thought of as a generalized affine Grassmannian slice for the corresponding symmetric Kac-Moody group `\cite{FinkICM}`.
 
 ### s12 · prose#3 · prose · 22 词
 
-> These varieties are suggested as a possible setting in which to generalize the geometric Satake correspondence, see REF8 and REF9.
+> These varieties are suggested as a possible setting in which to generalize the geometric Satake correspondence, see REF12 and REF13.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF8 | ref | term | \cite{Nak8} |
-| REF9 | ref | term | \cite[§ 3(viii)]{BFN2} |
+| REF12 | ref | term | \cite{Nak8} |
+| REF13 | ref | term | \cite[§ 3(viii)]{BFN2} |
 
 内联：These varieties are suggested as a possible setting in which to generalize the geometric Satake correspondence, see `\cite{Nak8}` and `\cite[§ 3(viii)]{BFN2}`.
 
@@ -166,11 +166,11 @@
 
 ### s17 · prose#6 · prose · 22 词
 
-> In affine type A it follows from the work of Nakajima and Takayama, since bow varieties admit symplectic resolutions REF10.
+> In affine type A it follows from the work of Nakajima and Takayama, since bow varieties admit symplectic resolutions REF14.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF10 | ref | term | \cite[§ 6.2]{NakTak} |
+| REF14 | ref | term | \cite[§ 6.2]{NakTak} |
 
 内联：In affine type A it follows from the work of Nakajima and Takayama, since bow varieties admit symplectic resolutions `\cite[§ 6.2]{NakTak}`.
 
@@ -186,102 +186,102 @@
 
 ### s19 · prose#6 · prose · 13 词
 
-> These varieties have symplectic singularities by the recent work of Zhou REF11.
+> These varieties have symplectic singularities by the recent work of Zhou REF15.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF11 | ref | term | \cite[Theorem 4.7]{Zhou} |
+| REF15 | ref | term | \cite[Theorem 4.7]{Zhou} |
 
 内联：These varieties have symplectic singularities by the recent work of Zhou `\cite[Theorem 4.7]{Zhou}`.
 
 ### s20 · prose#6 · prose · 34 词
 
-> Zhou's result subsumes several previous results for finite ADE types: If MATH15 is dominant then it is an ordinary affine Grassmannian slice, so the above theorem is part of REF12.
+> Zhou's result subsumes several previous results for finite ADE types: If MATH15 is dominant then it is an ordinary affine Grassmannian slice, so the above theorem is part of REF16.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH15 | inline | term | \mu^\ast |
-| REF12 | ref | term | \cite[Theorem 2.7]{KWWY} |
+| REF16 | ref | term | \cite[Theorem 2.7]{KWWY} |
 
 内联：Zhou's result subsumes several previous results for finite ADE types: If `\mu^\ast` is dominant then it is an ordinary affine Grassmannian slice, so the above theorem is part of `\cite[Theorem 2.7]{KWWY}`.
 
 ### s21 · prose#6 · prose · 23 词
 
-> When MATH16 or equivalently MATH17, then MATH18 is an open Zastava space REF13, which is smooth REF14 and symplectic REF15.
+> When MATH16 or equivalently MATH17, then MATH18 is an open Zastava space REF17, which is smooth REF18 and symplectic REF19.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH16 | inline | proposition | \lambda^\ast = 0 |
 | MATH17 | inline | proposition | \mathbf{w} = 0 |
 | MATH18 | inline | term | \overline{\mathcal{W}}_{\mu^\ast}^0 |
-| REF13 | ref | term | \cite[Theorem 3.1]{BFN2} |
-| REF14 | ref | term | \cite[Prop.~3.5]{Finkelberg-Mirkovic} |
-| REF15 | ref | term | \cite[Corollary 1]{FKMM} |
+| REF17 | ref | term | \cite[Theorem 3.1]{BFN2} |
+| REF18 | ref | term | \cite[Prop.~3.5]{Finkelberg-Mirkovic} |
+| REF19 | ref | term | \cite[Corollary 1]{FKMM} |
 
 内联：When `\lambda^\ast = 0` or equivalently `\mathbf{w} = 0`, then `\overline{\mathcal{W}}_{\mu^\ast}^0` is an open Zastava space `\cite[Theorem 3.1]{BFN2}`, which is smooth `\cite[Prop.~3.5]{Finkelberg-Mirkovic}` and symplectic `\cite[Corollary 1]{FKMM}`.
 
 ### s22 · prose#6 · prose · 34 词
 
-> Finally, if MATH19 is minuscule and MATH20, then MATH21 is smooth and symplectic by REF16, and in fact its symplectic structure can be identified with the standard one on MATH22.
+> Finally, if MATH19 is minuscule and MATH20, then MATH21 is smooth and symplectic by REF20, and in fact its symplectic structure can be identified with the standard one on MATH22.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH19 | inline | term | \lambda^\ast |
 | MATH20 | inline | proposition | \mu^\ast \in W \lambda^\ast |
 | MATH21 | inline | proposition | \overline{\mathcal{W}}_{\mu^\ast}^{\lambda^\ast} \cong \mathbb{A}^{2 \langle \r… |
-| REF16 | ref | term | \cite[Theorem 2.9]{KryPer} |
+| REF20 | ref | term | \cite[Theorem 2.9]{KryPer} |
 | MATH22 | inline | proposition | \mathbb{A}^{2 \langle \rho, \lambda^\ast - \mu^\ast\rangle} \cong T^\ast \mathb… |
 
 内联：Finally, if `\lambda^\ast` is minuscule and `\mu^\ast \in W \lambda^\ast`, then `\overline{\mathcal{W}}_{\mu^\ast}^{\lambda^\ast} \cong \mathbb{A}^{2 \langle \rho, \lambda^\ast - \mu^\ast\rangle}` is smooth and symplectic by `\cite[Theorem 2.9]{KryPer}`, and in fact its symplectic structure can be identified with the standard one on `\mathbb{A}^{2 \langle \rho, \lambda^\ast - \mu^\ast\rangle} \cong T^\ast \mathbb{A}^{\langle \rho, \lambda^\ast - \mu^\ast\rangle}`.
 
 ### s23 · prose#7 · prose · 19 词
 
-> We develop a criterion (Theorem REF17) for showing that a given Coulomb branch has symplectic singularities.
+> We develop a criterion (Theorem REF21) for showing that a given Coulomb branch has symplectic singularities.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF17 | ref | term | \ref{criterion} |
+| REF21 | ref | term | \ref{criterion} |
 
 内联：We develop a criterion (Theorem `\ref{criterion}`) for showing that a given Coulomb branch has symplectic singularities.
 
 ### s24 · prose#7 · prose · 29 词
 
-> Applying this criterion in the case of quiver gauge theories, the proof of Theorem REF18 reduces to the study of several simple quivers, see Figure REF19.
+> Applying this criterion in the case of quiver gauge theories, the proof of Theorem REF22 reduces to the study of several simple quivers, see Figure REF23.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF18 | ref | term | \ref{main thm} |
-| REF19 | ref | term | \ref{figure} |
+| REF22 | ref | term | \ref{main thm} |
+| REF23 | ref | term | \ref{figure} |
 
 内联：Applying this criterion in the case of quiver gauge theories, the proof of Theorem `\ref{main thm}` reduces to the study of several simple quivers, see Figure `\ref{figure}`.
 
 ### s25 · prose#7 · prose · 35 词
 
-> In § REF20 we list those additional cases which would be necessary and sufficient in order to extend the main theorem to all quivers, i.e. to allow loops and/or multiple edges.
+> In § REF24 we list those additional cases which would be necessary and sufficient in order to extend the main theorem to all quivers, i.e. to allow loops and/or multiple edges.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF20 | ref | term | \ref{section: extending} |
+| REF24 | ref | term | \ref{section: extending} |
 
 内联：In § `\ref{section: extending}` we list those additional cases which would be necessary and sufficient in order to extend the main theorem to all quivers, i.e. to allow loops and/or multiple edges.
 
 ### s26 · prose#8 · prose · 32 词
 
-> In addition to providing a definition of Coulomb branches in their foundational paper REF22, Braverman, Finkelberg and Nakajima also developed several techniques which are crucial in the present work.
+> In addition to providing a definition of Coulomb branches in their foundational paper REF26, Braverman, Finkelberg and Nakajima also developed several techniques which are crucial in the present work.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF22 | ref | term | \cite{BFN1} |
+| REF26 | ref | term | \cite{BFN1} |
 
 内联：In addition to providing a definition of Coulomb branches in their foundational paper `\cite{BFN1}`, Braverman, Finkelberg and Nakajima also developed several techniques which are crucial in the present work.
 
 ### s27 · prose#8 · prose · 20 词
 
-> The most important is a construction of partial resolutions of Coulomb branches using flavour symmetry, see §REF21.
+> The most important is a construction of partial resolutions of Coulomb branches using flavour symmetry, see §REF25.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF21 | ref | term | \ref{section: flavour resolutions} |
+| REF25 | ref | term | \ref{section: flavour resolutions} |
 
 内联：The most important is a construction of partial resolutions of Coulomb branches using flavour symmetry, see §`\ref{section: flavour resolutions}`.
 
@@ -293,45 +293,45 @@
 
 ### s29 · prose#8 · prose · 35 词
 
-> In the case of simple quivers, we show that for generic GIT parameters these partial resolutions have terminal singularities, and we optimistically expect that they are MATH23-factorial terminalizations, see Remark REF23.
+> In the case of simple quivers, we show that for generic GIT parameters these partial resolutions have terminal singularities, and we optimistically expect that they are MATH23-factorial terminalizations, see Remark REF27.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH23 | inline | term | \mathbb{Q} |
-| REF23 | ref | term | \ref{remark: qfactterm} |
+| REF27 | ref | term | \ref{remark: qfactterm} |
 
 内联：In the case of simple quivers, we show that for generic GIT parameters these partial resolutions have terminal singularities, and we optimistically expect that they are `\mathbb{Q}`-factorial terminalizations, see Remark `\ref{remark: qfactterm}`.
 
 ### s30 · prose#9 · prose · 29 词
 
-> In this paper we will not make use of the physical meaning of Coulomb branches, and refer the reader to REF24 for more details and further references.
+> In this paper we will not make use of the physical meaning of Coulomb branches, and refer the reader to REF28 for more details and further references.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF24 | ref | term | \cite{BDG, Nak6} |
+| REF28 | ref | term | \cite{BDG, Nak6} |
 
 内联：In this paper we will not make use of the physical meaning of Coulomb branches, and refer the reader to `\cite{BDG, Nak6}` for more details and further references.
 
 ### s31 · prose#9 · prose · 25 词
 
-> We note that the symplectic singularities and resolutions of Coulomb branches have been studied in physics, for example by Hanany and collaborators REF25.
+> We note that the symplectic singularities and resolutions of Coulomb branches have been studied in physics, for example by Hanany and collaborators REF29.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF25 | ref | term | \cite{HananySperling,Hetal,GrimmingerHanany} |
+| REF29 | ref | term | \cite{HananySperling,Hetal,GrimmingerHanany} |
 
 内联：We note that the symplectic singularities and resolutions of Coulomb branches have been studied in physics, for example by Hanany and collaborators `\cite{HananySperling,Hetal,GrimmingerHanany}`.
 
 ### s32 · prose#10 · prose · 14 词
 
-> By REF27, REF28 and REF29, Theorem REF26 has several immediate consequences:
+> By REF31, REF32 and REF33, Theorem REF30 has several immediate consequences:
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF27 | ref | term | \cite[Prop.~1.3]{Beauville} |
-| REF28 | ref | term | \cite[Theorem 2.3]{Kaledin} |
-| REF29 | ref | term | \cite[Prop.~3.7]{Brown-Gordon} |
-| REF26 | ref | term | \ref{main thm} |
+| REF31 | ref | term | \cite[Prop.~1.3]{Beauville} |
+| REF32 | ref | term | \cite[Theorem 2.3]{Kaledin} |
+| REF33 | ref | term | \cite[Prop.~3.7]{Brown-Gordon} |
+| REF30 | ref | term | \ref{main thm} |
 
 内联：By `\cite[Prop.~1.3]{Beauville}`, `\cite[Theorem 2.3]{Kaledin}` and `\cite[Prop.~3.7]{Brown-Gordon}`, Theorem `\ref{main thm}` has several immediate consequences:
 
@@ -386,14 +386,14 @@
 
 ### s38 · prose#12 · prose · 25 词
 
-> In finite ADE type MATH31 has an explicit decomposition into symplectic leaves by REF30, REF31, and in affine type A by REF32.
+> In finite ADE type MATH31 has an explicit decomposition into symplectic leaves by REF34, REF35, and in affine type A by REF36.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH31 | inline | term | \mathcal{M}_C(Q, \mathbf{v},\mathbf{w}) |
-| REF30 | ref | term | \cite{MuthiahWeekes} |
-| REF31 | ref | term | \cite[Theorem~2.5]{KWWY} |
-| REF32 | ref | term | \cite[§ 4.1]{NakTak} |
+| REF34 | ref | term | \cite{MuthiahWeekes} |
+| REF35 | ref | term | \cite[Theorem~2.5]{KWWY} |
+| REF36 | ref | term | \cite[§ 4.1]{NakTak} |
 
 内联：In finite ADE type `\mathcal{M}_C(Q, \mathbf{v},\mathbf{w})` has an explicit decomposition into symplectic leaves by `\cite{MuthiahWeekes}`, `\cite[Theorem~2.5]{KWWY}`, and in affine type A by `\cite[§ 4.1]{NakTak}`.
 
@@ -405,12 +405,12 @@
 
 ### s40 · prose#12 · prose · 11 词
 
-> Some predictions in general are given in REF33,REF34.
+> Some predictions in general are given in REF37,REF38.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF33 | ref | term | \cite[§ 2(ii)]{Nak7} |
-| REF34 | ref | term | \cite{Hetal,GrimmingerHanany} |
+| REF37 | ref | term | \cite[§ 2(ii)]{Nak7} |
+| REF38 | ref | term | \cite{Hetal,GrimmingerHanany} |
 
 内联：Some predictions in general are given in `\cite[§ 2(ii)]{Nak7}`,`\cite{Hetal,GrimmingerHanany}`.
 
@@ -440,11 +440,11 @@
 
 ### s45 · prose#14 · prose · 28 词
 
-> We briefly overview the construction of Coulomb branches due to Braverman, Finkelberg, and Nakajima, referring the reader to REF35 for more details and properties.
+> We briefly overview the construction of Coulomb branches due to Braverman, Finkelberg, and Nakajima, referring the reader to REF39 for more details and properties.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF35 | ref | term | \cite{BFN1} |
+| REF39 | ref | term | \cite{BFN1} |
 
 内联：We briefly overview the construction of Coulomb branches due to Braverman, Finkelberg, and Nakajima, referring the reader to `\cite{BFN1}` for more details and properties.
 
@@ -476,13 +476,13 @@
 
 ### s48 · prose#16 · prose · 62 词
 
-> To the datum MATH40 there is an associated moduli space MATH41 REF36, consisting of triples MATH42 where (i) MATH43 is principal MATH44-bundle on the formal disk MATH45, (ii) MATH46 a trivialization over the formal punctured disk, and (iii) MATH47 is a section of the associated bundle MATH48 such that MATH49 is regular.
+> To the datum MATH40 there is an associated moduli space MATH41 REF40, consisting of triples MATH42 where (i) MATH43 is principal MATH44-bundle on the formal disk MATH45, (ii) MATH46 a trivialization over the formal punctured disk, and (iii) MATH47 is a section of the associated bundle MATH48 such that MATH49 is regular.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH40 | inline | term | (\mathbf G, \mathbf{N}) |
 | MATH41 | inline | term | \mathcal{R}_{\mathbf G, \mathbf{N}} |
-| REF36 | ref | term | \cite[§ 2(i)]{BFN1} |
+| REF40 | ref | term | \cite[§ 2(i)]{BFN1} |
 | MATH42 | inline | term | (P, \varphi, s) |
 | MATH43 | inline | term | P |
 | MATH44 | inline | term | \mathbf G |
@@ -496,15 +496,15 @@
 
 ### s49 · prose#16 · prose · 29 词
 
-> Its equivariant Borel-Moore homology MATH50 has a commutative ring structure by REF37, and the corresponding affine scheme MATH51 is called the Coulomb branch associated to MATH52 REF38.
+> Its equivariant Borel-Moore homology MATH50 has a commutative ring structure by REF41, and the corresponding affine scheme MATH51 is called the Coulomb branch associated to MATH52 REF42.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH50 | inline | term | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G, \mathbf{N}}) |
-| REF37 | ref | term | \cite[Theorem 3.10]{BFN1} |
+| REF41 | ref | term | \cite[Theorem 3.10]{BFN1} |
 | MATH51 | display | proposition | \mathcal{M}_C(\mathbf G, \mathbf{N}) = \operatorname{Spec} H_\ast^{\mathbf G_\m… |
 | MATH52 | inline | term | (\mathbf G, \mathbf{N}) |
-| REF38 | ref | term | \cite[Definition 3.13]{BFN1} |
+| REF42 | ref | term | \cite[Definition 3.13]{BFN1} |
 
 内联：Its equivariant Borel-Moore homology `H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G, \mathbf{N}})` has a commutative ring structure by `\cite[Theorem 3.10]{BFN1}`, and the corresponding affine scheme `\mathcal{M}_C(\mathbf G, \mathbf{N}) = \operatorname{Spec} H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G, \mathbf{N}})` is called the Coulomb branch associated to `(\mathbf G, \mathbf{N})` `\cite[Definition 3.13]{BFN1}`.
 
@@ -522,11 +522,11 @@
 
 ### s51 · prose#18 · prose · 12 词
 
-> Some key examples of Coulomb branches are recalled in § REF39.
+> Some key examples of Coulomb branches are recalled in § REF43.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF39 | ref | term | \ref{examples} |
+| REF43 | ref | term | \ref{examples} |
 
 内联：Some key examples of Coulomb branches are recalled in § `\ref{examples}`.
 
@@ -569,12 +569,12 @@
 
 ### s56 · prose#20 · prose · 20 词
 
-> This Borel-Moore homology again carries an algebra structure, and is a non-commutative deformation of MATH63, see REF40.
+> This Borel-Moore homology again carries an algebra structure, and is a non-commutative deformation of MATH63, see REF44.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH63 | inline | term | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G,\mathbf{N}}) |
-| REF40 | ref | term | \cite[§ 3(iv)]{BFN1} |
+| REF44 | ref | term | \cite[§ 3(iv)]{BFN1} |
 
 内联：This Borel-Moore homology again carries an algebra structure, and is a non-commutative deformation of `H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\mathbf G,\mathbf{N}})`, see `\cite[§ 3(iv)]{BFN1}`.
 
@@ -590,12 +590,12 @@
 
 ### s58 · prose#21 · prose · 29 词
 
-> One further property of MATH65 that we will need is described in REF41: suppose that MATH66 and MATH67, where MATH68 is a representation of MATH69 alone.
+> One further property of MATH65 that we will need is described in REF45: suppose that MATH66 and MATH67, where MATH68 is a representation of MATH69 alone.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH65 | inline | term | \mathcal{M}_C(\mathbf G,\mathbf{N}) |
-| REF41 | ref | term | \cite[§ 3(vii)(a)]{BFN1} |
+| REF45 | ref | term | \cite[§ 3(vii)(a)]{BFN1} |
 | MATH66 | inline | proposition | \mathbf G = \mathbf G_1 \times \mathbf G_2 |
 | MATH67 | inline | proposition | \mathbf{N} = \mathbf{N}_1\oplus \mathbf{N}_2 |
 | MATH68 | inline | term | \mathbf{N}_i |
@@ -670,13 +670,13 @@
 
 ### s65 · prose#23 · prose · 31 词
 
-> The flavour symmetry group MATH84 can be used to construct partial resolutions of the Coulomb branch, as well as to construct associated line bundles, following REF42 and REF43.
+> The flavour symmetry group MATH84 can be used to construct partial resolutions of the Coulomb branch, as well as to construct associated line bundles, following REF46 and REF47.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH84 | inline | term | \mathbf F |
-| REF42 | ref | term | \cite[§ 3(ix)]{BFN1} |
-| REF43 | ref | term | \cite{BFN4} |
+| REF46 | ref | term | \cite[§ 3(ix)]{BFN1} |
+| REF47 | ref | term | \cite{BFN4} |
 
 内联：The flavour symmetry group `\mathbf F` can be used to construct partial resolutions of the Coulomb branch, as well as to construct associated line bundles, following `\cite[§ 3(ix)]{BFN1}` and `\cite{BFN4}`.
 
@@ -770,34 +770,34 @@
 
 ### s74 · prose#23 · prose · 14 词
 
-> There is a natural projective morphism MATH101, which is birational by REF46.
+> There is a natural projective morphism MATH101, which is birational by REF50.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH101 | display | term | \pi^\varkappa : \mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N}) \rightarrow \mat… |
-| REF46 | ref | term | \cite[Remark 1.1]{BFN4} |
+| REF50 | ref | term | \cite[Remark 1.1]{BFN4} |
 
 内联：There is a natural projective morphism `\pi^\varkappa : \mathcal{M}_C^\varkappa(\mathbf G, \mathbf{N}) \rightarrow \mathcal{M}_C(\mathbf G, \mathbf{N})`, which is birational by `\cite[Remark 1.1]{BFN4}`.
 
 ### s75 · prose#23 · prose · 18 词
 
-> In good cases this map will be a symplectic resolution, see e.g. § REF44, REF45.
+> In good cases this map will be a symplectic resolution, see e.g. § REF48, REF49.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF44 | ref | term | \ref{example 1} |
-| REF45 | ref | term | \ref{example 2} |
+| REF48 | ref | term | \ref{example 1} |
+| REF49 | ref | term | \ref{example 2} |
 
 内联：In good cases this map will be a symplectic resolution, see e.g. § `\ref{example 1}`, `\ref{example 2}`.
 
 ### s76 · rem: hamiltonian reduction · remark · 17 词
 
-> As explained in REF47, this construction can be naturally identified with a Hamiltonian reduction: MATH102
+> As explained in REF51, this construction can be naturally identified with a Hamiltonian reduction: MATH102
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF47 | ref | term | \cite[§ 3(ix)]{BFN1} |
-| MATH102 | display | proposition | \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\… |
+| REF51 | ref | term | \cite[§ 3(ix)]{BFN1} |
+| MATH102 | display | opaque | \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\… |
 
 内联：As explained in `\cite[§ 3(ix)]{BFN1}`, this construction can be naturally identified with a Hamiltonian reduction: `\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\mathbf G}, \mathbf{N})\ssslash_\varkappa \mathbf F^\vee`
 
@@ -827,12 +827,12 @@
 
 ### s79 · remark#25 · remark · 10 词
 
-> The MATH109 are irreducible varieties by Lemma REF48 below.
+> The MATH109 are irreducible varieties by Lemma REF52 below.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH109 | inline | term | \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N}) |
-| REF48 | ref | term | \ref{cor: integral} |
+| REF52 | ref | term | \ref{cor: integral} |
 
 内联：The `\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})` are irreducible varieties by Lemma `\ref{cor: integral}` below.
 
@@ -844,21 +844,21 @@
 
 ### s81 · remark#25 · remark · 22 词
 
-> In Theorem REF49, we will prove that these properties hold in the case of quiver gauge theories for simple quivers.
+> In Theorem REF53, we will prove that these properties hold in the case of quiver gauge theories for simple quivers.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF49 | ref | term | \ref{thm: BFN theorem for resolutions} |
+| REF53 | ref | term | \ref{thm: BFN theorem for resolutions} |
 
 内联：In Theorem `\ref{thm: BFN theorem for resolutions}`, we will prove that these properties hold in the case of quiver gauge theories for simple quivers.
 
 ### s82 · prose#26 · prose · 11 词
 
-> We now consider a flavoured generalization of (REF50).
+> We now consider a flavoured generalization of (REF54).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF50 | ref | term | \ref{eq: product} |
+| REF54 | ref | term | \ref{eq: product} |
 
 内联：We now consider a flavoured generalization of (`\ref{eq: product}`).
 
@@ -921,11 +921,11 @@
 
 ### s88 · proof#28 · proof · 17 词
 
-> This is a Segre product: by REF51, it suffices to show that for MATH122 MATH123
+> This is a Segre product: by REF55, it suffices to show that for MATH122 MATH123
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF51 | ref | term | \cite[Exercise II.5.11]{Hartshorne} |
+| REF55 | ref | term | \cite[Exercise II.5.11]{Hartshorne} |
 | MATH122 | inline | constraint | n\geq 0 |
 | MATH123 | display | proposition | H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}}… |
 
@@ -953,12 +953,12 @@
 
 ### s91 · prose#30 · prose · 15 词
 
-> There is an inclusion of rings MATH126 by REF52, which induces a morphism MATH127
+> There is an inclusion of rings MATH126 by REF56, which induces a morphism MATH127
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH126 | inline | term | \mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathb… |
-| REF52 | ref | term | \cite[§ 3(vi)]{BFN1} |
+| REF56 | ref | term | \cite[§ 3(vi)]{BFN1} |
 | MATH127 | display | term | \varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W |
 
 内联：There is an inclusion of rings `\mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathbf G, \mathbf{N}})` by `\cite[§ 3(vi)]{BFN1}`, which induces a morphism `\varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W`
@@ -976,13 +976,13 @@
 
 ### s93 · prose#30 · prose · 22 词
 
-> The maps MATH130 are integrable systems for the Poisson structure, in that MATH131 is a maximal Poisson-commutative subalgebra by REF53.
+> The maps MATH130 are integrable systems for the Poisson structure, in that MATH131 is a maximal Poisson-commutative subalgebra by REF57.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH130 | inline | term | \varpi, \varpi^\varkappa |
 | MATH131 | inline | term | \mathbb{C}[\mathfrak t]^W |
-| REF53 | ref | term | \cite[Cor.~5.21]{BFN1} |
+| REF57 | ref | term | \cite[Cor.~5.21]{BFN1} |
 
 内联：The maps `\varpi, \varpi^\varkappa` are integrable systems for the Poisson structure, in that `\mathbb{C}[\mathfrak t]^W` is a maximal Poisson-commutative subalgebra by `\cite[Cor.~5.21]{BFN1}`.
 
@@ -998,11 +998,11 @@
 
 ### s95 · eq: decomp into lambdas · proof · 9 词
 
-> REF54 shows that MATH133 is free over MATH134.
+> REF58 shows that MATH133 is free over MATH134.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF54 | ref | term | \cite[Lemma 2.6]{BFN1} |
+| REF58 | ref | term | \cite[Lemma 2.6]{BFN1} |
 | MATH133 | inline | term | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}}) |
 | MATH134 | inline | term | \mathbb{C}[\mathfrak t]^W |
 
@@ -1010,13 +1010,13 @@
 
 ### s96 · eq: decomp into lambdas · proof · 28 词
 
-> More precisely, there is a non-canonical isomorphism of MATH135-modules (c.f. also REF55, REF56) MATH136, where MATH137 runs over dominant coweights of MATH138.
+> More precisely, there is a non-canonical isomorphism of MATH135-modules (c.f. also REF59, REF60) MATH136, where MATH137 runs over dominant coweights of MATH138.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH135 | inline | term | \mathbb{C}[\mathfrak t]^W |
-| REF55 | ref | term | \cite[§ 6(i)]{BFN1} |
-| REF56 | ref | term | \cite[Lemma 6.2]{BFM} |
+| REF59 | ref | term | \cite[§ 6(i)]{BFN1} |
+| REF60 | ref | term | \cite[Lemma 6.2]{BFM} |
 | MATH136 | display | proposition | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{{\mathbf G}, \mathbf{N}}) \cong \bi… |
 | MATH137 | inline | term | \lambda |
 | MATH138 | inline | term | \mathbf G |
@@ -1072,14 +1072,14 @@
 
 ### s101 · eq: decomp into lambdas · proof · 32 词
 
-> For any MATH150, the MATH151-module MATH152 has a decomposition analogous to (REF57), but where the sum runs over coweights MATH153 of MATH154 which are lifts of MATH155.
+> For any MATH150, the MATH151-module MATH152 has a decomposition analogous to (REF61), but where the sum runs over coweights MATH153 of MATH154 which are lifts of MATH155.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH150 | inline | term | n |
 | MATH151 | inline | modifier | \mathbb{C}[\mathfrak t]^W |
 | MATH152 | inline | term | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} … |
-| REF57 | ref | term | \ref{eq: decomp into lambdas} |
+| REF61 | ref | term | \ref{eq: decomp into lambdas} |
 | MATH153 | inline | term | \tilde{\lambda} |
 | MATH154 | inline | term | \widetilde{\mathbf G} |
 | MATH155 | inline | term | n \varkappa |
@@ -1099,12 +1099,12 @@
 
 ### s103 · eq: decomp into lambdas · proof · 8 词
 
-> Consequently the morphism MATH158 is flat REF58.
+> Consequently the morphism MATH158 is flat REF62.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH158 | inline | term | \varpi^\varkappa |
-| REF58 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/0D4C}{Tag 0D4C}]{stacks-projec… |
+| REF62 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/0D4C}{Tag 0D4C}]{stacks-projec… |
 
 内联：Consequently the morphism `\varpi^\varkappa` is flat `\cite[\href{https://stacks.math.columbia.edu/tag/0D4C}{Tag 0D4C}]{stacks-project}`.
 
@@ -1122,11 +1122,11 @@
 
 ### s105 · prose#33 · prose · 33 词
 
-> Following REF59, a generalized root for MATH162 is an element of MATH163 which is either (I) a non-zero weight of MATH164 or (II) a root of MATH165.
+> Following REF63, a generalized root for MATH162 is an element of MATH163 which is either (I) a non-zero weight of MATH164 or (II) a root of MATH165.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF59 | ref | term | \cite[Definition 5.2]{BFN1} |
+| REF63 | ref | term | \cite[Definition 5.2]{BFN1} |
 | MATH162 | inline | term | (\mathbf G, \mathbf{N}) |
 | MATH163 | inline | term | \mathfrak t^\ast |
 | MATH164 | inline | term | \mathbf{N} |
@@ -1215,12 +1215,12 @@
 
 ### s113 · remark#34 · remark · 14 词
 
-> Up to a minor discrepancy when MATH182, in the notation of REF60 MATH183
+> Up to a minor discrepancy when MATH182, in the notation of REF64 MATH183
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH182 | inline | proposition | \dim \mathfrak t = 2 |
-| REF60 | ref | term | \cite[§ 5(vi)]{BFN1} |
+| REF64 | ref | term | \cite[§ 5(vi)]{BFN1} |
 | MATH183 | display | proposition | \mathfrak t^{\circ} = \mathfrak t \setminus \mathfrak t^{(1)}, \mathfrak t^• = … |
 
 内联：Up to a minor discrepancy when `\dim \mathfrak t = 2`, in the notation of `\cite[§ 5(vi)]{BFN1}` `\mathfrak t^{\circ} = \mathfrak t \setminus \mathfrak t^{(1)}, \mathfrak t^• = \mathfrak t \setminus \mathfrak t^{(2)}`
@@ -1284,11 +1284,11 @@
 
 ### s119 · prose#36 · prose · 12 词
 
-> As explained in REF61, there is an isomorphism of rings MATH196
+> As explained in REF65, there is an isomorphism of rings MATH196
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF61 | ref | term | \cite[§ 6(v)]{BFN1} |
+| REF65 | ref | term | \cite[§ 6(v)]{BFN1} |
 | MATH196 | display | term | H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{… |
 
 内联：As explained in `\cite[§ 6(v)]{BFN1}`, there is an isomorphism of rings `H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W_t}_t \stackrel{\sim}{\rightarrow} H_\ast^{Z_\mathbf G(t)_\mathcal{O}} (\mathcal{R}_{Z_\mathbf G(t), \mathbf{N}^t} ) \otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t`
@@ -1337,12 +1337,12 @@
 
 ### s123 · prose#37 · prose · 16 词
 
-> Since MATH212, by composition we obtain from (REF62) a map of rings MATH213
+> Since MATH212, by composition we obtain from (REF66) a map of rings MATH213
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH212 | inline | term | \mathbb{C}[\mathfrak t]^W_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t |
-| REF62 | ref | term | \ref{eq: fibers BFN iso} |
+| REF66 | ref | term | \ref{eq: fibers BFN iso} |
 | MATH213 | display | term | H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{… |
 
 内联：Since `\mathbb{C}[\mathfrak t]^W_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t`, by composition we obtain from (`\ref{eq: fibers BFN iso}`) a map of rings `H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\mathbf G, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^{W}_t \lhook\joinrel\rightarrow H_\ast^{Z_\mathbf G(t)_\mathcal{O}} (\mathcal{R}_{Z_\mathbf G(t), \mathbf{N}^t} ) \otimes_{\mathbb{C}[\mathfrak t]^{W_t}} \mathbb{C}[\mathfrak t]^{W_t}_t`
@@ -1360,11 +1360,11 @@
 
 ### s125 · prose#37 · prose · 15 词
 
-> Then we can rephrase (REF63) as a Cartesian diagram of schemes: MATH216
+> Then we can rephrase (REF67) as a Cartesian diagram of schemes: MATH216
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF63 | ref | term | \ref{eq: fibers BFN iso} |
+| REF67 | ref | term | \ref{eq: fibers BFN iso} |
 | MATH216 | display | term | \operatorname{diagram} |
 
 内联：Then we can rephrase (`\ref{eq: fibers BFN iso}`) as a Cartesian diagram of schemes: `\operatorname{diagram}`
@@ -1377,11 +1377,11 @@
 
 ### s127 · prose#38 · prose · 20 词
 
-> In the notation of Section REF64, first observe that there is a corresponding exact sequence of centralizer subgroups MATH217
+> In the notation of Section REF68, first observe that there is a corresponding exact sequence of centralizer subgroups MATH217
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF64 | ref | term | \ref{section: flavour resolutions} |
+| REF68 | ref | term | \ref{section: flavour resolutions} |
 | MATH217 | display | term | 1 \rightarrow Z_\mathbf G(t) \rightarrow Z_{\widetilde{\mathbf G}}(t) \rightarr… |
 
 内联：In the notation of Section `\ref{section: flavour resolutions}`, first observe that there is a corresponding exact sequence of centralizer subgroups `1 \rightarrow Z_\mathbf G(t) \rightarrow Z_{\widetilde{\mathbf G}}(t) \rightarrow \mathbf F \rightarrow 1`
@@ -1410,13 +1410,13 @@
 
 ### s130 · prose#38 · prose · 21 词
 
-> Thus MATH222 is compatible with base change to any trivially graded MATH223-algebra, see REF65, and in particular: MATH224
+> Thus MATH222 is compatible with base change to any trivially graded MATH223-algebra, see REF69, and in particular: MATH224
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH222 | inline | term | \operatorname{Proj} |
 | MATH223 | inline | term | \mathbb{C}[\mathfrak t]^W |
-| REF65 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-projec… |
+| REF69 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-projec… |
 | MATH224 | display | proposition | \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t \sslash W} \… |
 
 内联：Thus `\operatorname{Proj}` is compatible with base change to any trivially graded `\mathbb{C}[\mathfrak t]^W`-algebra, see `\cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-project}`, and in particular: `\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t \sslash W} \operatorname{Spec} \mathbb{C}[\mathfrak t]^W_t \cong \operatorname{Proj} ( \bigoplus_{n \geq 0} H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa)) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^W_t )`
@@ -1444,11 +1444,11 @@
 
 ### s133 · prose#39 · prose · 9 词
 
-> The following result directly generalizes (REF66):
+> The following result directly generalizes (REF70):
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF66 | ref | term | \ref{eq: fibers map 2} |
+| REF70 | ref | term | \ref{eq: fibers map 2} |
 
 内联：The following result directly generalizes (`\ref{eq: fibers map 2}`):
 
@@ -1472,11 +1472,11 @@
 
 ### s136 · eq: localization isomorphism with flavour 2 · proof · 20 词
 
-> By a variation on the far right column of the diagram REF67, there is a diagram of MATH231-algebras MATH232
+> By a variation on the far right column of the diagram REF71, there is a diagram of MATH231-algebras MATH232
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF67 | ref | term | \cite[Equation (5.24)]{BFN1} |
+| REF71 | ref | term | \cite[Equation (5.24)]{BFN1} |
 | MATH231 | inline | term | \mathbb{C}[\mathfrak t] |
 | MATH232 | display | term | \operatorname{diagram} |
 
@@ -1484,24 +1484,24 @@
 
 ### s137 · eq: localization isomorphism with flavour 2 · proof · 26 词
 
-> Both maps respect gradings by coweights MATH233, defined as in (REF68), since they are induced by maps of spaces over MATH234.
+> Both maps respect gradings by coweights MATH233, defined as in (REF72), since they are induced by maps of spaces over MATH234.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH233 | inline | term | X_\ast(\mathbf F) |
-| REF68 | ref | term | \ref{eq: grading by coweights} |
+| REF72 | ref | term | \ref{eq: grading by coweights} |
 | MATH234 | inline | term | \mathsf{Gr}_\mathbf F |
 
 内联：Both maps respect gradings by coweights `X_\ast(\mathbf F)`, defined as in (`\ref{eq: grading by coweights}`), since they are induced by maps of spaces over `\mathsf{Gr}_\mathbf F`.
 
 ### s138 · eq: localization isomorphism with flavour 2 · proof · 10 词
 
-> Both maps also respect natural MATH235-actions, by REF69.
+> Both maps also respect natural MATH235-actions, by REF73.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH235 | inline | term | W_t |
-| REF69 | ref | term | \cite[Lemma 3.19]{BFN1} |
+| REF73 | ref | term | \cite[Lemma 3.19]{BFN1} |
 
 内联：Both maps also respect natural `W_t`-actions, by `\cite[Lemma 3.19]{BFN1}`.
 
@@ -1541,34 +1541,34 @@
 
 ### s142 · eq: localization isomorphism with flavour 2 · proof · 35 词
 
-> To prove this claim, we identify the left side of (REF70) with the MATH243-invariants of the left side of the preceding equation; a similar argument applies to the right side.
+> To prove this claim, we identify the left side of (REF74) with the MATH243-invariants of the left side of the preceding equation; a similar argument applies to the right side.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF70 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
+| REF74 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
 | MATH243 | inline | term | W_t |
 
 内联：To prove this claim, we identify the left side of (`\ref{eq: localization isomorphism with flavour 2}`) with the `W_t`-invariants of the left side of the preceding equation; a similar argument applies to the right side.
 
 ### s143 · eq: localization isomorphism with flavour 2 · proof · 9 词
 
-> We have MATH244 by REF71, and therefore MATH245
+> We have MATH244 by REF75, and therefore MATH245
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH244 | inline | proposition | H_\ast^{\mathbf{T}_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}… |
-| REF71 | ref | term | \cite[Lemma 5.3]{BFN1} |
+| REF75 | ref | term | \cite[Lemma 5.3]{BFN1} |
 | MATH245 | display | proposition | H_\ast^{\mathbf{T}_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N… |
 
 内联：We have `H_\ast^{\mathbf{T}_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \cong H_\ast^{\mathbf G_\mathcal{O}} (\mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]` by `\cite[Lemma 5.3]{BFN1}`, and therefore `H_\ast^{\mathbf{T}_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t \cong H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W}\mathbb{C}[\mathfrak t] \otimes_{\mathbb{C}[\mathfrak t]} \mathbb{C}[\mathfrak t]_t \cong H_\ast^{\mathbf G_\mathcal{O}} ( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]_t`
 
 ### s144 · eq: localization isomorphism with flavour 2 · proof · 13 词
 
-> By the proof of Lemma REF72, MATH246 is free over MATH247.
+> By the proof of Lemma REF76, MATH246 is free over MATH247.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF72 | ref | term | \ref{lemma: faithfully flat} |
+| REF76 | ref | term | \ref{lemma: faithfully flat} |
 | MATH246 | inline | term | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}}) |
 | MATH247 | inline | term | \mathbb{C}[\mathfrak t]^W |
 
@@ -1587,23 +1587,23 @@
 
 ### s146 · eq: localization isomorphism with flavour 2 · proof · 21 词
 
-> Taking MATH250-invariants on the right side of (REF73), we get the left side of (REF74).
+> Taking MATH250-invariants on the right side of (REF77), we get the left side of (REF78).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH250 | inline | term | W_t |
-| REF73 | ref | term | \ref{eq: base changing} |
-| REF74 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
+| REF77 | ref | term | \ref{eq: base changing} |
+| REF78 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
 
 内联：Taking `W_t`-invariants on the right side of (`\ref{eq: base changing}`), we get the left side of (`\ref{eq: localization isomorphism with flavour 2}`).
 
 ### s147 · eq: localization isomorphism with flavour 2 · proof · 9 词
 
-> The isomorphism (REF75) again respects MATH251-gradings.
+> The isomorphism (REF79) again respects MATH251-gradings.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF75 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
+| REF79 | ref | term | \ref{eq: localization isomorphism with flavour 2} |
 | MATH251 | inline | modifier | X_\ast(\mathbf F) |
 
 内联：The isomorphism (`\ref{eq: localization isomorphism with flavour 2}`) again respects `X_\ast(\mathbf F)`-gradings.
@@ -1632,13 +1632,13 @@
 
 ### s150 · eq: localization isomorphism with flavour 2 · proof · 20 词
 
-> On the left side we obtain the base change of MATH256 along MATH257, because of (REF76).
+> On the left side we obtain the base change of MATH256 along MATH257, because of (REF80).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH256 | inline | term | \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})_t |
 | MATH257 | inline | term | \operatorname{Spec} \mathbb{C}[\mathfrak t]^{W_t}_t \rightarrow \operatorname{S… |
-| REF76 | ref | term | \ref{eq: base change} |
+| REF80 | ref | term | \ref{eq: base change} |
 
 内联：On the left side we obtain the base change of `\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})_t` along `\operatorname{Spec} \mathbb{C}[\mathfrak t]^{W_t}_t \rightarrow \operatorname{Spec} \mathbb{C}[\mathfrak t]^{W}_t`, because of (`\ref{eq: base change}`).
 
@@ -1650,12 +1650,12 @@
 
 ### s152 · eq: localization isomorphism with flavour 2 · proof · 33 词
 
-> Finally, étale morphisms are stable under base change REF77, as are surjective morphisms REF78, so it suffices to prove that the bottom horizontal arrow above is étale and surjective.
+> Finally, étale morphisms are stable under base change REF81, as are surjective morphisms REF82, so it suffices to prove that the bottom horizontal arrow above is étale and surjective.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF77 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/02GO}{Tag 02GO}]{stacks-projec… |
-| REF78 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/01S1}{Tag 01S1}]{stacks-projec… |
+| REF81 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/02GO}{Tag 02GO}]{stacks-projec… |
+| REF82 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/01S1}{Tag 01S1}]{stacks-projec… |
 
 内联：Finally, étale morphisms are stable under base change `\cite[\href{https://stacks.math.columbia.edu/tag/02GO}{Tag 02GO}]{stacks-project}`, as are surjective morphisms `\cite[\href{https://stacks.math.columbia.edu/tag/01S1}{Tag 01S1}]{stacks-project}`, so it suffices to prove that the bottom horizontal arrow above is étale and surjective.
 
@@ -1707,11 +1707,11 @@
 
 ### s158 · prose#45 · prose · 9 词
 
-> Next, we give a generalization of REF79:
+> Next, we give a generalization of REF83:
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF79 | ref | term | \cite[Corollary 5.12]{BFN1} |
+| REF83 | ref | term | \cite[Corollary 5.12]{BFN1} |
 
 内联：Next, we give a generalization of `\cite[Corollary 5.12]{BFN1}`:
 
@@ -1739,11 +1739,11 @@
 
 ### s161 · proof#47 · proof · 13 词
 
-> We will use a variation on the top row of REF80: MATH269
+> We will use a variation on the top row of REF84: MATH269
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF80 | ref | term | \cite[Equation (5.24)]{BFN1} |
+| REF84 | ref | term | \cite[Equation (5.24)]{BFN1} |
 | MATH269 | display | term | \operatorname{diagram} |
 
 内联：We will use a variation on the top row of `\cite[Equation (5.24)]{BFN1}`: `\operatorname{diagram}`
@@ -1772,11 +1772,11 @@
 
 ### s164 · proof#47 · proof · 8 词
 
-> Next, as in REF81 we have MATH274
+> Next, as in REF85 we have MATH274
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF81 | ref | term | \cite[Lemma 5.3]{BFN1} |
+| REF85 | ref | term | \cite[Lemma 5.3]{BFN1} |
 | MATH274 | display | proposition | H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}}) … |
 
 内联：Next, as in `\cite[Lemma 5.3]{BFN1}` we have `H_\ast^{\mathbf G_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}}) \cong H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}})^W \lhook\joinrel\rightarrow H_\ast^{\mathbf{T}_\mathcal{O}}(\mathcal{R}_{\widetilde{\mathbf G},\mathbf{N}})`
@@ -1804,24 +1804,24 @@
 
 ### s167 · proof#49 · proof · 15 词
 
-> The following commutative square relates those from (REF82) and Theorem REF83: MATH278
+> The following commutative square relates those from (REF86) and Theorem REF87: MATH278
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF82 | ref | term | \ref{eq: fibers map 2} |
-| REF83 | ref | term | \ref{prop: fibers via centralizers and fixed} |
+| REF86 | ref | term | \ref{eq: fibers map 2} |
+| REF87 | ref | term | \ref{prop: fibers via centralizers and fixed} |
 | MATH278 | display | term | \operatorname{diagram} |
 
 内联：The following commutative square relates those from (`\ref{eq: fibers map 2}`) and Theorem `\ref{prop: fibers via centralizers and fixed}`: `\operatorname{diagram}`
 
 ### s168 · proof#49 · proof · 14 词
 
-> The vertical arrows are Poisson by Remark REF84, and birational by REF85.
+> The vertical arrows are Poisson by Remark REF88, and birational by REF89.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF84 | ref | term | \ref{rem: hamiltonian reduction} |
-| REF85 | ref | term | \cite[Remark 1.1]{BFN4} |
+| REF88 | ref | term | \ref{rem: hamiltonian reduction} |
+| REF89 | ref | term | \cite[Remark 1.1]{BFN4} |
 
 内联：The vertical arrows are Poisson by Remark `\ref{rem: hamiltonian reduction}`, and birational by `\cite[Remark 1.1]{BFN4}`.
 
@@ -1833,43 +1833,43 @@
 
 ### s170 · proof#49 · proof · 29 词
 
-> Therefore, by a similar argument to REF86, to prove that the top arrow is Poisson, it suffices to prove that the bottom arrow is Poisson.
+> Therefore, by a similar argument to REF90, to prove that the top arrow is Poisson, it suffices to prove that the bottom arrow is Poisson.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF86 | ref | term | \cite[Lemma 4.12]{KPW} |
+| REF90 | ref | term | \cite[Lemma 4.12]{KPW} |
 
 内联：Therefore, by a similar argument to `\cite[Lemma 4.12]{KPW}`, to prove that the top arrow is Poisson, it suffices to prove that the bottom arrow is Poisson.
 
 ### s171 · proof#49 · proof · 14 词
 
-> Because of the commutativity of the diagram REF87, there is a triangle MATH279
+> Because of the commutativity of the diagram REF91, there is a triangle MATH279
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF87 | ref | term | \cite[Equation (5.24)]{BFN1} |
+| REF91 | ref | term | \cite[Equation (5.24)]{BFN1} |
 | MATH279 | display | term | \operatorname{diagram} |
 
 内联：Because of the commutativity of the diagram `\cite[Equation (5.24)]{BFN1}`, there is a triangle `\operatorname{diagram}`
 
 ### s172 · proof#49 · proof · 24 词
 
-> The horizontal arrow comes from (REF88), while the downward arrows are both defined as in the proof of Proposition REF89.
+> The horizontal arrow comes from (REF92), while the downward arrows are both defined as in the proof of Proposition REF93.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF88 | ref | term | \ref{eq: fibers BFN iso} |
-| REF89 | ref | term | \ref{cor: integral} |
+| REF92 | ref | term | \ref{eq: fibers BFN iso} |
+| REF93 | ref | term | \ref{cor: integral} |
 
 内联：The horizontal arrow comes from (`\ref{eq: fibers BFN iso}`), while the downward arrows are both defined as in the proof of Proposition `\ref{cor: integral}`.
 
 ### s173 · proof#49 · proof · 17 词
 
-> Both downward embeddings can be quantized, see REF90, and in particular they are Poisson.
+> Both downward embeddings can be quantized, see REF94, and in particular they are Poisson.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF90 | ref | term | \cite[Remark 5.23]{BFN1} |
+| REF94 | ref | term | \cite[Remark 5.23]{BFN1} |
 
 内联：Both downward embeddings can be quantized, see `\cite[Remark 5.23]{BFN1}`, and in particular they are Poisson.
 
@@ -1904,11 +1904,11 @@
 
 ### s177 · prose#51 · prose · 38 词
 
-> Following REF91, we say that MATH285 has symplectic singularities if for some (equivalently, any) resolution of singularities MATH286, the form MATH287 extends to a regular 2-form on all of MATH288.
+> Following REF95, we say that MATH285 has symplectic singularities if for some (equivalently, any) resolution of singularities MATH286, the form MATH287 extends to a regular 2-form on all of MATH288.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF91 | ref | term | \cite[Def.~1.1]{Beauville} |
+| REF95 | ref | term | \cite[Def.~1.1]{Beauville} |
 | MATH285 | inline | term | X |
 | MATH286 | inline | term | \pi : Y \rightarrow X |
 | MATH287 | inline | term | \pi^\ast(\omega^{reg}) |
@@ -1918,22 +1918,22 @@
 
 ### s178 · prose#51 · prose · 12 词
 
-> See REF92 for excellent overviews of these varieties and related topics.
+> See REF96 for excellent overviews of these varieties and related topics.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF92 | ref | term | \cite{Fu,Bellamy} |
+| REF96 | ref | term | \cite{Fu,Bellamy} |
 
 内联：See `\cite{Fu,Bellamy}` for excellent overviews of these varieties and related topics.
 
 ### s179 · prose#52 · prose · 12 词
 
-> The next result is inspired by REF93 as well as REF94.
+> The next result is inspired by REF97 as well as REF98.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF93 | ref | term | \cite[Prop.~6.12, 6.15]{BFN1} |
-| REF94 | ref | term | \cite[Prop.~2.8]{BFM} |
+| REF97 | ref | term | \cite[Prop.~6.12, 6.15]{BFN1} |
+| REF98 | ref | term | \cite[Prop.~2.8]{BFM} |
 
 内联：The next result is inspired by `\cite[Prop.~6.12, 6.15]{BFN1}` as well as `\cite[Prop.~2.8]{BFM}`.
 
@@ -1980,12 +1980,12 @@
 
 ### s184 · proof#54 · proof · 22 词
 
-> Under our assumptions, Corollary REF95 and Proposition REF96 imply that MATH294 is normal, and symplectic on its smooth locus.
+> Under our assumptions, Corollary REF99 and Proposition REF100 imply that MATH294 is normal, and symplectic on its smooth locus.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF95 | ref | term | \ref{cor: etale smooth} |
-| REF96 | ref | term | \ref{Prop: Poisson maps} |
+| REF99 | ref | term | \ref{cor: etale smooth} |
+| REF100 | ref | term | \ref{Prop: Poisson maps} |
 | MATH294 | inline | term | U |
 
 内联：Under our assumptions, Corollary `\ref{cor: etale smooth}` and Proposition `\ref{Prop: Poisson maps}` imply that `U` is normal, and symplectic on its smooth locus.
@@ -2014,15 +2014,15 @@
 
 ### s187 · proof#54 · proof · 21 词
 
-> The map MATH299 is faithfully flat by Lemma REF97, so the complement of MATH300 has codimension MATH301 by REF98.
+> The map MATH299 is faithfully flat by Lemma REF101, so the complement of MATH300 has codimension MATH301 by REF102.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH299 | inline | term | \varpi^\varkappa |
-| REF97 | ref | term | \ref{lemma: faithfully flat} |
+| REF101 | ref | term | \ref{lemma: faithfully flat} |
 | MATH300 | inline | term | U |
 | MATH301 | inline | term | 2 |
-| REF98 | ref | term | \cite[Cor~6.1.4]{EGAIV2} |
+| REF102 | ref | term | \cite[Cor~6.1.4]{EGAIV2} |
 
 内联：The map `\varpi^\varkappa` is faithfully flat by Lemma `\ref{lemma: faithfully flat}`, so the complement of `U` has codimension `2` by `\cite[Cor~6.1.4]{EGAIV2}`.
 
@@ -2104,11 +2104,11 @@
 
 ### s195 · proof#54 · proof · 11 词
 
-> Assuming this claim, REF99 implies that MATH315 is normal.
+> Assuming this claim, REF103 implies that MATH315 is normal.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF99 | ref | term | \cite[Lemma 6.13]{BFN1} |
+| REF103 | ref | term | \cite[Lemma 6.13]{BFN1} |
 | MATH315 | inline | term | V |
 
 内联：Assuming this claim, `\cite[Lemma 6.13]{BFN1}` implies that `V` is normal.
@@ -2125,13 +2125,13 @@
 
 ### s197 · proof#54 · proof · 18 词
 
-> It is flat, since MATH317 is open and the morphism MATH318 is flat by Lemma REF100.
+> It is flat, since MATH317 is open and the morphism MATH318 is flat by Lemma REF104.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH317 | inline | proposition | V\subset \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N}) |
 | MATH318 | inline | term | \varpi^\varkappa |
-| REF100 | ref | term | \ref{lemma: faithfully flat} |
+| REF104 | ref | term | \ref{lemma: faithfully flat} |
 
 内联：It is flat, since `V\subset \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})` is open and the morphism `\varpi^\varkappa` is flat by Lemma `\ref{lemma: faithfully flat}`.
 
@@ -2225,23 +2225,23 @@
 
 ### s207 · proof#57 · proof · 18 词
 
-> Under these assumptions Theorem REF101 implies that MATH332 is normal, and symplectic on its smooth locus.
+> Under these assumptions Theorem REF105 implies that MATH332 is normal, and symplectic on its smooth locus.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF101 | ref | term | \ref{criterion: normal symplectic} |
+| REF105 | ref | term | \ref{criterion: normal symplectic} |
 | MATH332 | inline | term | \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N}) |
 
 内联：Under these assumptions Theorem `\ref{criterion: normal symplectic}` implies that `\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})` is normal, and symplectic on its smooth locus.
 
 ### s208 · proof#57 · proof · 17 词
 
-> Moreover, Corollary REF102 and Proposition REF103 imply that the preimage MATH333 is smooth and symplectic.
+> Moreover, Corollary REF106 and Proposition REF107 imply that the preimage MATH333 is smooth and symplectic.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF102 | ref | term | \ref{cor: etale smooth} |
-| REF103 | ref | term | \ref{Prop: Poisson maps} |
+| REF106 | ref | term | \ref{cor: etale smooth} |
+| REF107 | ref | term | \ref{Prop: Poisson maps} |
 | MATH333 | display | proposition | U = (\varpi^\varkappa)^{-1}((\mathfrak t \setminus \mathfrak t^{(4)})\sslash W)… |
 
 内联：Moreover, Corollary `\ref{cor: etale smooth}` and Proposition `\ref{Prop: Poisson maps}` imply that the preimage `U = (\varpi^\varkappa)^{-1}((\mathfrak t \setminus \mathfrak t^{(4)})\sslash W)\subset \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})` is smooth and symplectic.
@@ -2291,11 +2291,11 @@
 
 ### s213 · proof#57 · proof · 41 词
 
-> By a result of Flenner REF104, it follows that for any resolution of singularities MATH341 and any 2-form MATH342 on the smooth locus MATH343, the pull-back MATH344 extends to a regular 2-form on MATH345.
+> By a result of Flenner REF108, it follows that for any resolution of singularities MATH341 and any 2-form MATH342 on the smooth locus MATH343, the pull-back MATH344 extends to a regular 2-form on MATH345.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF104 | ref | term | \cite{Flenner} |
+| REF108 | ref | term | \cite{Flenner} |
 | MATH341 | inline | term | \pi:Y\rightarrow \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N}) |
 | MATH342 | inline | term | \omega |
 | MATH343 | inline | term | \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})^{reg} |
@@ -2318,25 +2318,25 @@
 
 ### s215 · proof#57 · proof · 20 词
 
-> Since MATH349 has symplectic singularities and its singular locus has codimension MATH350, it has terminal singularities by REF105.
+> Since MATH349 has symplectic singularities and its singular locus has codimension MATH350, it has terminal singularities by REF109.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH349 | inline | term | \mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N}) |
 | MATH350 | inline | proposition | \geq 4 |
-| REF105 | ref | term | \cite[Cor.~1]{Namikawa} |
+| REF109 | ref | term | \cite[Cor.~1]{Namikawa} |
 
 内联：Since `\mathcal{M}_C^\varkappa(\mathbf G,\mathbf{N})` has symplectic singularities and its singular locus has codimension `\geq 4`, it has terminal singularities by `\cite[Cor.~1]{Namikawa}`.
 
 ### s216 · proof#57 · proof · 23 词
 
-> In either case, since MATH351 is a proper birational Poisson map, we conclude that MATH352 has symplectic singularities by REF106.
+> In either case, since MATH351 is a proper birational Poisson map, we conclude that MATH352 has symplectic singularities by REF110.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH351 | inline | term | \pi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G,\mathbf{N})\rightarrow \mathca… |
 | MATH352 | inline | term | \mathcal{M}_C(\mathbf G, \mathbf{N}) |
-| REF106 | ref | term | \cite[Lemma 6.12]{BS} |
+| REF110 | ref | term | \cite[Lemma 6.12]{BS} |
 
 内联：In either case, since `\pi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G,\mathbf{N})\rightarrow \mathcal{M}_C(\mathbf G,\mathbf{N})` is a proper birational Poisson map, we conclude that `\mathcal{M}_C(\mathbf G, \mathbf{N})` has symplectic singularities by `\cite[Lemma 6.12]{BS}`.
 
@@ -2423,7 +2423,7 @@
 
 ### s224 · remark: no summand · remark · 20 词
 
-> If for some MATH371 we have MATH372 but MATH373, then the corresponding summand MATH374 in (REF107).
+> If for some MATH371 we have MATH372 but MATH373, then the corresponding summand MATH374 in (REF111).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
@@ -2431,7 +2431,7 @@
 | MATH372 | inline | proposition | \mathbf{w}_i \neq 0 |
 | MATH373 | inline | proposition | \mathbf{v}_i = 0 |
 | MATH374 | inline | proposition | \operatorname{Hom}(W_i,V_i) = 0 |
-| REF107 | ref | term | \ref{groups from quiver data} |
+| REF111 | ref | term | \ref{groups from quiver data} |
 
 内联：If for some `i\in I` we have `\mathbf{w}_i \neq 0` but `\mathbf{v}_i = 0`, then the corresponding summand `\operatorname{Hom}(W_i,V_i) = 0` in (`\ref{groups from quiver data}`).
 
@@ -2448,13 +2448,13 @@
 
 ### s226 · remark#60 · remark · 19 词
 
-> Up to isomorphism, MATH377 does not depend on the orientation of the quiver MATH378, see REF108.
+> Up to isomorphism, MATH377 does not depend on the orientation of the quiver MATH378, see REF112.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH377 | inline | term | \mathcal{M}_C(Q,\mathbf{v},\mathbf{w}) |
 | MATH378 | inline | term | Q |
-| REF108 | ref | term | \cite[§ 6(viii)]{BFN1} |
+| REF112 | ref | term | \cite[§ 6(viii)]{BFN1} |
 
 内联：Up to isomorphism, `\mathcal{M}_C(Q,\mathbf{v},\mathbf{w})` does not depend on the orientation of the quiver `Q`, see `\cite[§ 6(viii)]{BFN1}`.
 
@@ -2518,23 +2518,23 @@
 
 ### s232 · remark#62 · remark · 24 词
 
-> The corresponding Higgs branch MATH392 is a Nakajima quiver variety, as first defined in REF109: it is the Hamiltonian reduction MATH393.
+> The corresponding Higgs branch MATH392 is a Nakajima quiver variety, as first defined in REF113: it is the Hamiltonian reduction MATH393.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH392 | inline | term | \mathcal{M}_H(Q, \mathbf{v}, \mathbf{w}) |
-| REF109 | ref | term | \cite{Nak3} |
-| MATH393 | inline | term | T^\ast \mathbf{N} \ssslash \mathbf G |
+| REF113 | ref | term | \cite{Nak3} |
+| MATH393 | inline | opaque | T^\ast \mathbf{N} \ssslash \mathbf G |
 
 内联：The corresponding Higgs branch `\mathcal{M}_H(Q, \mathbf{v}, \mathbf{w})` is a Nakajima quiver variety, as first defined in `\cite{Nak3}`: it is the Hamiltonian reduction `T^\ast \mathbf{N} \ssslash \mathbf G`.
 
 ### s233 · remark#62 · remark · 13 词
 
-> These varieties have symplectic singularities REF110, and often have symplectic resolutions.
+> These varieties have symplectic singularities REF114, and often have symplectic resolutions.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF110 | ref | term | \cite[Theorem 1.2]{BS} |
+| REF114 | ref | term | \cite[Theorem 1.2]{BS} |
 
 内联：These varieties have symplectic singularities `\cite[Theorem 1.2]{BS}`, and often have symplectic resolutions.
 
@@ -2549,9 +2549,9 @@
 
 内联：Given `(Q, \mathbf{v}, \mathbf{w})` as above, we consider the flavour symmetry group `\mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w}) = \prod_{\substack{e \in E, \\ \mathbf{v}_{s(e)}\mathbf{v}_{t(e)} \neq 0}} \mathbb{C}^\times \times \prod_{\substack{i\in I,\\ \mathbf{w}_i \mathbf{v}_i \neq 0}} ( \mathbb{C}^\times)^{\mathbf{w}_i}`
 
-### s235 · prose#63 · prose · 28 词
+### s235 · prose#63 · prose · 29 词
 
-> We think of this group as consisting of a dilating MATH396 factor for each arrow MATH397, along with the diagonal maximal torus MATH398 for each MATH399.
+> We think of this group as consisting of a dilating MATH396 factor for each arrow MATH397, along with the diagonal maximal torus MATH398 for each MATH399 REF1.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
@@ -2559,8 +2559,9 @@
 | MATH397 | inline | proposition | e \in E |
 | MATH398 | inline | proposition | (\mathbb{C}^\times)^{\mathbf{w}_i} \subset \operatorname{GL}(\mathbf{w}_i) |
 | MATH399 | inline | constraint | i\in I |
+| REF1 | ref | term |  |
 
-内联：We think of this group as consisting of a dilating `\mathbb{C}^\times` factor for each arrow `e \in E`, along with the diagonal maximal torus `(\mathbb{C}^\times)^{\mathbf{w}_i} \subset \operatorname{GL}(\mathbf{w}_i)` for each `i\in I`.
+内联：We think of this group as consisting of a dilating `\mathbb{C}^\times` factor for each arrow `e \in E`, along with the diagonal maximal torus `(\mathbb{C}^\times)^{\mathbf{w}_i} \subset \operatorname{GL}(\mathbf{w}_i)` for each `i\in I` `REF1`.
 
 ### s236 · prose#63 · prose · 36 词
 
@@ -2685,11 +2686,11 @@
 
 ### s245 · proof#67 · proof · 20 词
 
-> This extends to the diagram defining the convolution product REF111, and so there is an isomorphism of varieties MATH440
+> This extends to the diagram defining the convolution product REF115, and so there is an isomorphism of varieties MATH440
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF111 | ref | term | \cite[§ 3(i)]{BFN1} |
+| REF115 | ref | term | \cite[§ 3(i)]{BFN1} |
 | MATH440 | display | proposition | \mathcal{M}_C^1( \widetilde{\mathbf G}_\varkappa, \mathbf{N}) \cong \mathcal{M}… |
 
 内联：This extends to the diagram defining the convolution product `\cite[§ 3(i)]{BFN1}`, and so there is an isomorphism of varieties `\mathcal{M}_C^1( \widetilde{\mathbf G}_\varkappa, \mathbf{N}) \cong \mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})`
@@ -2791,35 +2792,36 @@
 
 ### s255 · prose#69 · prose · 21 词
 
-> We now recall some important examples of the varieties MATH458, which have been studied by Braverman-Finkelberg-Nakajima and Nakajima-Takayama REF112.
+> We now recall some important examples of the varieties MATH458, which have been studied by Braverman-Finkelberg-Nakajima and Nakajima-Takayama REF116.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH458 | inline | term | \mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) |
-| REF112 | ref | term | \cite{BFN2, NakTak,BFN4} |
+| REF116 | ref | term | \cite{BFN2, NakTak,BFN4} |
 
 内联：We now recall some important examples of the varieties `\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})`, which have been studied by Braverman-Finkelberg-Nakajima and Nakajima-Takayama `\cite{BFN2, NakTak,BFN4}`.
 
-### s256 · prose#70 · prose · 33 词
+### s256 · prose#70 · prose · 34 词
 
-> If MATH459 is an orientation of a Dynkin diagram of finite ADE type, then MATH460 is a generalized affine Grassmannian slice for the corresponding adjoint group MATH461 of ADE type REF114.
+> If MATH459 is an orientation of a Dynkin diagram of finite ADE type, then MATH460 is a generalized affine Grassmannian slice for the corresponding adjoint group MATH461 of ADE type REF118 REF2.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH459 | inline | term | Q |
 | MATH460 | display | proposition | \mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) \cong \overline{\mathcal{W}}^{\lambda^… |
 | MATH461 | inline | term | G_Q |
-| REF114 | ref | term | \cite[Theorem 3.10]{BFN2} |
+| REF118 | ref | term | \cite[Theorem 3.10]{BFN2} |
+| REF2 | ref | term |  |
 
-内联：If `Q` is an orientation of a Dynkin diagram of finite ADE type, then `\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) \cong \overline{\mathcal{W}}^{\lambda^\ast}_{\mu^\ast}` is a generalized affine Grassmannian slice for the corresponding adjoint group `G_Q` of ADE type `\cite[Theorem 3.10]{BFN2}`.
+内联：If `Q` is an orientation of a Dynkin diagram of finite ADE type, then `\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) \cong \overline{\mathcal{W}}^{\lambda^\ast}_{\mu^\ast}` is a generalized affine Grassmannian slice for the corresponding adjoint group `G_Q` of ADE type `\cite[Theorem 3.10]{BFN2}` `REF2`.
 
 ### s257 · prose#70 · prose · 18 词
 
-> Up to equivalence as in (REF113), we may assume that MATH462 for all MATH463.
+> Up to equivalence as in (REF117), we may assume that MATH462 for all MATH463.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF113 | ref | term | \ref{eq: equivalence} |
+| REF117 | ref | term | \ref{eq: equivalence} |
 | MATH462 | inline | proposition | \varkappa_e = 0 |
 | MATH463 | inline | proposition | e\in E |
 
@@ -2860,28 +2862,28 @@
 
 ### s261 · prose#71 · prose · 20 词
 
-> Thinking of MATH470 as a cocharacter of MATH471, by construction it lies in the cone MATH472 from REF115.
+> Thinking of MATH470 as a cocharacter of MATH471, by construction it lies in the cone MATH472 from REF119.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH470 | inline | sequence | (k_1,…,k_n) |
 | MATH471 | inline | proposition | (\mathbb{C}^\times)^N \cong \prod_i (\mathbb{C}^\times)^{\mathbf{w}_i} |
 | MATH472 | inline | proposition | \varkappa \in \Lambda_F^{++} |
-| REF115 | ref | term | \cite[§ 5(ii)]{BFN4} |
+| REF119 | ref | term | \cite[§ 5(ii)]{BFN4} |
 
 内联：Thinking of `(k_1,…,k_n)` as a cocharacter of `(\mathbb{C}^\times)^N \cong \prod_i (\mathbb{C}^\times)^{\mathbf{w}_i}`, by construction it lies in the cone `\varkappa \in \Lambda_F^{++}` from `\cite[§ 5(ii)]{BFN4}`.
 
 ### s262 · prose#71 · prose · 29 词
 
-> Thus by REF116, if MATH473 are distinct (i.e. if the MATH474 are distinct), then MATH475 where the right-hand side is defined as in REF117.
+> Thus by REF120, if MATH473 are distinct (i.e. if the MATH474 are distinct), then MATH475 where the right-hand side is defined as in REF121.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF116 | ref | term | \cite[§ 5(v)]{BFN4} |
+| REF120 | ref | term | \cite[§ 5(v)]{BFN4} |
 | MATH473 | inline | proposition | k_1> … > k_N |
 | MATH474 | inline | term | \varkappa_{i,r} |
 | MATH475 | display | proposition | \mathcal{M}^\varkappa_C(Q, \mathbf{v}, \mathbf{w}) \cong \widetilde{\mathcal{W}… |
-| REF117 | ref | term | \cite[§ 5(i)]{BFN4} |
+| REF121 | ref | term | \cite[§ 5(i)]{BFN4} |
 
 内联：Thus by `\cite[§ 5(v)]{BFN4}`, if `k_1> … > k_N` are distinct (i.e. if the `\varkappa_{i,r}` are distinct), then `\mathcal{M}^\varkappa_C(Q, \mathbf{v}, \mathbf{w}) \cong \widetilde{\mathcal{W}}^{\underline{\lambda}^\ast}_{\mu^\ast}` where the right-hand side is defined as in `\cite[§ 5(i)]{BFN4}`.
 
@@ -2897,12 +2899,12 @@
 
 ### s264 · prose#71 · prose · 16 词
 
-> This can be proven similarly to the main theorem of REF118, cf. also REF119.
+> This can be proven similarly to the main theorem of REF122, cf. also REF123.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF118 | ref | term | \cite{MuthiahWeekes} |
-| REF119 | ref | term | \cite[Theorem 2.9]{KWWY} |
+| REF122 | ref | term | \cite{MuthiahWeekes} |
+| REF123 | ref | term | \cite[Theorem 2.9]{KWWY} |
 
 内联：This can be proven similarly to the main theorem of `\cite{MuthiahWeekes}`, cf. also `\cite[Theorem 2.9]{KWWY}`.
 
@@ -2929,12 +2931,12 @@
 
 ### s267 · prose#73 · prose · 15 词
 
-> In affine type A, MATH480 is isomorphic to a bow variety by REF120.
+> In affine type A, MATH480 is isomorphic to a bow variety by REF124.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH480 | inline | term | \mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) |
-| REF120 | ref | term | \cite[Theorem 6.18]{NakTak} |
+| REF124 | ref | term | \cite[Theorem 6.18]{NakTak} |
 
 内联：In affine type A, `\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})` is isomorphic to a bow variety by `\cite[Theorem 6.18]{NakTak}`.
 
@@ -2965,24 +2967,24 @@
 
 ### s270 · prose#73 · prose · 20 词
 
-> Then for MATH488 satisfying the inequality REF121, the variety MATH489 is identified with a partially resolved bow variety.
+> Then for MATH488 satisfying the inequality REF125, the variety MATH489 is identified with a partially resolved bow variety.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH488 | inline | term | \varkappa |
-| REF121 | ref | term | \cite[(4.4)]{BFN4} |
+| REF125 | ref | term | \cite[(4.4)]{BFN4} |
 | MATH489 | inline | term | \mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w}) |
 
 内联：Then for `\varkappa` satisfying the inequality `\cite[(4.4)]{BFN4}`, the variety `\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})` is identified with a partially resolved bow variety.
 
 ### s271 · prose#73 · prose · 13 词
 
-> For generic MATH490 this variety is smooth and symplectic, see REF122.
+> For generic MATH490 this variety is smooth and symplectic, see REF126.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH490 | inline | term | \varkappa |
-| REF122 | ref | term | \cite[§ 6.2]{NakTak} |
+| REF126 | ref | term | \cite[§ 6.2]{NakTak} |
 
 内联：For generic `\varkappa` this variety is smooth and symplectic, see `\cite[§ 6.2]{NakTak}`.
 
@@ -2997,9 +2999,9 @@
 
 内联：Our next task will be to understand the pairs `(Z_\mathbf G(t), \mathbf{N}^t)` that can arise for quiver gauge theories, where `t \in \mathfrak t`.
 
-### s273 · prose#74 · prose · 26 词
+### s273 · prose#74 · prose · 27 词
 
-> First some terminology: we call MATH493 connected if MATH494 is a connected subset of MATH495, and if MATH496 implies MATH497 for all MATH498.
+> First some terminology: we call MATH493 connected if MATH494 is a connected subset of MATH495, and if MATH496 implies MATH497 for all MATH498 REF3.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
@@ -3009,19 +3011,20 @@
 | MATH496 | inline | proposition | \mathbf{w}_i \neq 0 |
 | MATH497 | inline | proposition | \mathbf{v}_i \neq 0 |
 | MATH498 | inline | proposition | i\in I |
+| REF3 | ref | term |  |
 
-内联：First some terminology: we call `(Q, \mathbf{v}, \mathbf{w})` connected if `\{i \in I:\mathbf{v}_i \neq 0\}` is a connected subset of `Q`, and if `\mathbf{w}_i \neq 0` implies `\mathbf{v}_i \neq 0` for all `i\in I`.
+内联：First some terminology: we call `(Q, \mathbf{v}, \mathbf{w})` connected if `\{i \in I:\mathbf{v}_i \neq 0\}` is a connected subset of `Q`, and if `\mathbf{w}_i \neq 0` implies `\mathbf{v}_i \neq 0` for all `i\in I` `REF3`.
 
 ### s274 · prose#75 · prose · 23 词
 
-> For a given MATH499 and MATH500, we'll denote MATH501 where the latter is defined as in (REF123).
+> For a given MATH499 and MATH500, we'll denote MATH501 where the latter is defined as in (REF127).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH499 | inline | term | (Q,\mathbf{v},\mathbf{w}) |
 | MATH500 | inline | proposition | t\in \mathfrak t |
 | MATH501 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}} (t) = \operatorname{codim}_{\ma… |
-| REF123 | ref | term | \ref{eq: codim function} |
+| REF127 | ref | term | \ref{eq: codim function} |
 
 内联：For a given `(Q,\mathbf{v},\mathbf{w})` and `t\in \mathfrak t`, we'll denote `\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}} (t) = \operatorname{codim}_{\mathbf G, \mathbf{N}}(t)` where the latter is defined as in (`\ref{eq: codim function}`).
 
@@ -3080,13 +3083,13 @@
 
 ### s280 · lemma: components/item4 · proposition · 27 词
 
-> (iii) for each MATH513, the restriction map on flavour symmetry groups MATH514 is the obvious surjection respecting the factors in (REF124),
+> (iii) for each MATH513, the restriction map on flavour symmetry groups MATH514 is the obvious surjection respecting the factors in (REF128),
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH513 | inline | term | \ell |
 | MATH514 | display | term | \mathbf F(Q, \mathbf{v}, \mathbf{w}) \twoheadrightarrow \mathbf F(Q, \mathbf{v}… |
-| REF124 | ref | term | \ref{eq: flavour symmetry group} |
+| REF128 | ref | term | \ref{eq: flavour symmetry group} |
 
 内联：(iii) for each `\ell`, the restriction map on flavour symmetry groups `\mathbf F(Q, \mathbf{v}, \mathbf{w}) \twoheadrightarrow \mathbf F(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})` is the obvious surjection respecting the factors in (`\ref{eq: flavour symmetry group}`),
 
@@ -3193,7 +3196,7 @@
 
 ### s290 · proof#77 · proof · 21 词
 
-> First, if for some MATH537 we have MATH538 and MATH539, then we may set MATH540 by Remark REF125.
+> First, if for some MATH537 we have MATH538 and MATH539, then we may set MATH540 by Remark REF129.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
@@ -3201,7 +3204,7 @@
 | MATH538 | inline | proposition | (\mathbf{w}_\lambda)_i \neq 0 |
 | MATH539 | inline | proposition | (\mathbf{v}_\lambda)_i = 0 |
 | MATH540 | inline | proposition | (\mathbf{w}_\lambda)_i = 0 |
-| REF125 | ref | term | \ref{remark: no summand} |
+| REF129 | ref | term | \ref{remark: no summand} |
 
 内联：First, if for some `\lambda, i` we have `(\mathbf{w}_\lambda)_i \neq 0` and `(\mathbf{v}_\lambda)_i = 0`, then we may set `(\mathbf{w}_\lambda)_i = 0` by Remark `\ref{remark: no summand}`.
 
@@ -3284,11 +3287,11 @@
 
 ### s298 · proof#77 · proof · 9 词
 
-> Therefore Lemma REF126 applies, which shows that MATH555
+> Therefore Lemma REF130 applies, which shows that MATH555
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF126 | ref | term | \ref{lemma: segre} |
+| REF130 | ref | term | \ref{lemma: segre} |
 | MATH555 | display | proposition | \mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)\cong\mathcal{M}^\varkappa… |
 
 内联：Therefore Lemma `\ref{lemma: segre}` applies, which shows that `\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)\cong\mathcal{M}^\varkappa_C(Q,\mathbf{v}^{(1)}, \mathbf{w}^{(1)}) \times … \times \mathcal{M}^\varkappa_C(Q, \mathbf{v}^{(m)}, \mathbf{w}^{(m)})`
@@ -3301,11 +3304,11 @@
 
 ### s300 · proof#77 · proof · 19 词
 
-> Finally, the formula (iv) follows from (REF127) together with our decomposition of MATH556.
+> Finally, the formula (iv) follows from (REF131) together with our decomposition of MATH556.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF127 | ref | term | \ref{eq: codim = codim} |
+| REF131 | ref | term | \ref{eq: codim = codim} |
 | MATH556 | inline | term | (Z_\mathbf G(t), \mathbf{N}^t) |
 
 内联：Finally, the formula (iv) follows from (`\ref{eq: codim = codim}`) together with our decomposition of `(Z_\mathbf G(t), \mathbf{N}^t)`.
@@ -3342,11 +3345,11 @@
 
 ### s304 · lemma: classification · lemma · 15 词
 
-> In particular, Figure REF128 gives a complete list of connected MATH560 with MATH561.
+> In particular, Figure REF132 gives a complete list of connected MATH560 with MATH561.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF128 | ref | term | \ref{figure} |
+| REF132 | ref | term | \ref{figure} |
 | MATH560 | inline | term | (Q,\mathbf{v},\mathbf{w}) |
 | MATH561 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(0) \leq 3 |
 
@@ -3411,11 +3414,11 @@
 
 ### s311 · proof#81 · proof · 29 词
 
-> The classification in Figure REF129 is now straightforward: if there is no framing then we demand MATH571, so in particular there are at most 4 vertices.
+> The classification in Figure REF133 is now straightforward: if there is no framing then we demand MATH571, so in particular there are at most 4 vertices.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF129 | ref | term | \ref{figure} |
+| REF133 | ref | term | \ref{figure} |
 | MATH571 | inline | proposition | \sum_i \mathbf{v}_i -1 \leq 3 |
 
 内联：The classification in Figure `\ref{figure}` is now straightforward: if there is no framing then we demand `\sum_i \mathbf{v}_i -1 \leq 3`, so in particular there are at most 4 vertices.
@@ -3430,461 +3433,519 @@
 
 内联：If there is framing, then we instead demand `\sum_i \mathbf{v}_i \leq 3`, so there are at most 3 vertices.
 
-### s313 · prose#82 · prose · 16 词
+### s313 · prose#82 · prose · 1 词
 
-> Up to orientation, the list of all connected quiver gauge theory data with MATH573.
-
-| 公式 | 类型 | 角色 | 展开 |
-|:--|:--|:--|:--|
-| MATH573 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) \leq 3 |
-
-内联：Up to orientation, the list of all connected quiver gauge theory data with `\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) \leq 3`.
-
-### s314 · prose#82 · prose · 5 词
-
-> The framing dimensions MATH574.
+> REF4
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH574 | inline | proposition | n,m,p \geq 0 |
+| REF4 | ref | term |  |
 
-内联：The framing dimensions `n,m,p \geq 0`.
+内联：`REF4`
 
-### s315 · prose#82 · prose · 8 词
+### s314 · prose#84 · prose · 6 词
 
-> Note that we consider only simple quivers.
-
-（无公式）
-
-### s316 · prose#84 · prose · 6 词
-
-> We will apply Theorem REF130.
+> We will apply Theorem REF134.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF130 | ref | term | \ref{criterion} |
+| REF134 | ref | term | \ref{criterion} |
 
 内联：We will apply Theorem `\ref{criterion}`.
 
-### s317 · prose#84 · prose · 7 词
+### s315 · prose#84 · prose · 7 词
 
-> Recall that MATH575 means that MATH576.
+> Recall that MATH573 means that MATH574.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH575 | inline | proposition | t \in \mathfrak t \setminus \mathfrak t^{(4)} |
-| MATH576 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) \leq 3 |
+| MATH573 | inline | proposition | t \in \mathfrak t \setminus \mathfrak t^{(4)} |
+| MATH574 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) \leq 3 |
 
 内联：Recall that `t \in \mathfrak t \setminus \mathfrak t^{(4)}` means that `\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) \leq 3`.
 
-### s318 · prose#84 · prose · 30 词
+### s316 · prose#84 · prose · 30 词
 
-> By combining Proposition REF131 and Lemma REF132, we see that for MATH577 MATH578 where all factors on the right hand side are from Figure REF133, and where MATH579
+> By combining Proposition REF135 and Lemma REF136, we see that for MATH575 MATH576 where all factors on the right hand side are from Figure REF137, and where MATH577
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF131 | ref | term | \ref{lemma: components} |
-| REF132 | ref | term | \ref{lemma: classification} |
-| MATH577 | inline | constraint | t \in \mathfrak t \setminus \mathfrak t^{(4)} |
-| MATH578 | display | proposition | \mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) \cong \mathcal{M}^\varkap… |
-| REF133 | ref | term | \ref{figure} |
-| MATH579 | display | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{cod… |
+| REF135 | ref | term | \ref{lemma: components} |
+| REF136 | ref | term | \ref{lemma: classification} |
+| MATH575 | inline | constraint | t \in \mathfrak t \setminus \mathfrak t^{(4)} |
+| MATH576 | display | proposition | \mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) \cong \mathcal{M}^\varkap… |
+| REF137 | ref | term | \ref{figure} |
+| MATH577 | display | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{cod… |
 
 内联：By combining Proposition `\ref{lemma: components}` and Lemma `\ref{lemma: classification}`, we see that for `t \in \mathfrak t \setminus \mathfrak t^{(4)}` `\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) \cong \mathcal{M}^\varkappa_C(Q,\mathbf{v}^{(1)}, \mathbf{w}^{(1)}) \times … \times \mathcal{M}^\varkappa_C(Q, \mathbf{v}^{(m)}, \mathbf{w}^{(m)})` where all factors on the right hand side are from Figure `\ref{figure}`, and where `\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{codim}_{Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}}(0) \leq 3`
 
-### s319 · prose#85 · prose · 21 词
+### s317 · prose#85 · prose · 21 词
 
-> We claim that any particular factor MATH580 above is smooth so long as MATH581 avoids a finite set of hyperplanes.
+> We claim that any particular factor MATH578 above is smooth so long as MATH579 avoids a finite set of hyperplanes.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH580 | inline | term | \mathcal{M}_C^\varkappa(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}) |
-| MATH581 | inline | term | \varkappa |
+| MATH578 | inline | term | \mathcal{M}_C^\varkappa(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}) |
+| MATH579 | inline | term | \varkappa |
 
 内联：We claim that any particular factor `\mathcal{M}_C^\varkappa(Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})` above is smooth so long as `\varkappa` avoids a finite set of hyperplanes.
 
-### s320 · prose#85 · prose · 32 词
+### s318 · prose#85 · prose · 32 词
 
-> Assuming this claim for the moment, this implies that MATH582 is smooth so long as MATH583 avoids the (still finite) union over MATH584 of these sets of hyperplanes.
+> Assuming this claim for the moment, this implies that MATH580 is smooth so long as MATH581 avoids the (still finite) union over MATH582 of these sets of hyperplanes.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH582 | inline | term | \mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) |
-| MATH583 | inline | term | \varkappa |
-| MATH584 | inline | term | \ell |
+| MATH580 | inline | term | \mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t) |
+| MATH581 | inline | term | \varkappa |
+| MATH582 | inline | term | \ell |
 
 内联：Assuming this claim for the moment, this implies that `\mathcal{M}^\varkappa_C(Z_\mathbf G(t), \mathbf{N}^t)` is smooth so long as `\varkappa` avoids the (still finite) union over `\ell` of these sets of hyperplanes.
 
-### s321 · prose#85 · prose · 18 词
+### s319 · prose#85 · prose · 18 词
 
-> Note also that as we vary MATH585, only finitely many decompositions (REF134) can arise.
+> Note also that as we vary MATH583, only finitely many decompositions (REF138) can arise.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH585 | inline | proposition | t\in \mathfrak t \setminus \mathfrak t^{(4)} |
-| REF134 | ref | term | \ref{eq: decomp main proof} |
+| MATH583 | inline | proposition | t\in \mathfrak t \setminus \mathfrak t^{(4)} |
+| REF138 | ref | term | \ref{eq: decomp main proof} |
 
 内联：Note also that as we vary `t\in \mathfrak t \setminus \mathfrak t^{(4)}`, only finitely many decompositions (`\ref{eq: decomp main proof}`) can arise.
 
-### s322 · prose#85 · prose · 17 词
+### s320 · prose#85 · prose · 17 词
 
-> Therefore for a generic choice of MATH586, the space MATH587 is smooth for all MATH588.
+> Therefore for a generic choice of MATH584, the space MATH585 is smooth for all MATH586.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH586 | inline | term | \varkappa |
-| MATH587 | inline | term | \mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t |
-| MATH588 | inline | proposition | t\in\mathfrak t\setminus \mathfrak t^{(4)} |
+| MATH584 | inline | term | \varkappa |
+| MATH585 | inline | term | \mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t |
+| MATH586 | inline | proposition | t\in\mathfrak t\setminus \mathfrak t^{(4)} |
 
 内联：Therefore for a generic choice of `\varkappa`, the space `\mathcal{M}_C^\varkappa(Z_\mathbf G(t), \mathbf{N}^t)_t` is smooth for all `t\in\mathfrak t\setminus \mathfrak t^{(4)}`.
 
-### s323 · prose#85 · prose · 9 词
+### s321 · prose#85 · prose · 9 词
 
-> So MATH589 has symplectic singularities by Theorem REF135.
+> So MATH587 has symplectic singularities by Theorem REF139.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH589 | inline | term | \mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) |
-| REF135 | ref | term | \ref{criterion} |
+| MATH587 | inline | term | \mathcal{M}_C(Q, \mathbf{v}, \mathbf{w}) |
+| REF139 | ref | term | \ref{criterion} |
 
 内联：So `\mathcal{M}_C(Q, \mathbf{v}, \mathbf{w})` has symplectic singularities by Theorem `\ref{criterion}`.
 
-### s324 · prose#86 · prose · 38 词
+### s322 · prose#86 · prose · 38 词
 
-> To prove the claim, by part (iii) of Proposition REF136 we can reduce to the case where MATH590 is one of the quivers in Figure REF137, with the intrinsic flavour symmetry group MATH591.
+> To prove the claim, by part (iii) of Proposition REF140 we can reduce to the case where MATH588 is one of the quivers in Figure REF141, with the intrinsic flavour symmetry group MATH589.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF136 | ref | term | \ref{lemma: components} |
-| MATH590 | inline | term | (Q, \mathbf{v}, \mathbf{w}) |
-| REF137 | ref | term | \ref{figure} |
-| MATH591 | inline | proposition | \mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w}) |
+| REF140 | ref | term | \ref{lemma: components} |
+| MATH588 | inline | term | (Q, \mathbf{v}, \mathbf{w}) |
+| REF141 | ref | term | \ref{figure} |
+| MATH589 | inline | proposition | \mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w}) |
 
 内联：To prove the claim, by part (iii) of Proposition `\ref{lemma: components}` we can reduce to the case where `(Q, \mathbf{v}, \mathbf{w})` is one of the quivers in Figure `\ref{figure}`, with the intrinsic flavour symmetry group `\mathbf F = \mathbf F(Q, \mathbf{v}, \mathbf{w})`.
 
-### s325 · prose#87 · prose · 22 词
+### s323 · prose#87 · prose · 22 词
 
-> Note that many of the quivers in Figure REF138 have all MATH592, and so correspond to toric hyperkähler varieties REF139.
+> Note that many of the quivers in Figure REF142 have all MATH590, and so correspond to toric hyperkähler varieties REF143.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF138 | ref | term | \ref{figure} |
-| MATH592 | inline | proposition | \mathbf{v}_i =1 |
-| REF139 | ref | term | \cite[§ 4(vii)]{BFN1} |
+| REF142 | ref | term | \ref{figure} |
+| MATH590 | inline | proposition | \mathbf{v}_i =1 |
+| REF143 | ref | term | \cite[§ 4(vii)]{BFN1} |
 
 内联：Note that many of the quivers in Figure `\ref{figure}` have all `\mathbf{v}_i =1`, and so correspond to toric hyperkähler varieties `\cite[§ 4(vii)]{BFN1}`.
 
-### s326 · prose#87 · prose · 37 词
+### s324 · prose#87 · prose · 37 词
 
-> The flavour symmetry MATH593 for the quiver (defined as in (REF140)) surjects onto the full Abelian flavour symmetry group: MATH594 contains subtori which dilate each edge independently, with weight 1.
+> The flavour symmetry MATH591 for the quiver (defined as in (REF144)) surjects onto the full Abelian flavour symmetry group: MATH592 contains subtori which dilate each edge independently, with weight 1.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH593 | inline | term | \mathbf F |
-| REF140 | ref | term | \ref{eq: flavour symmetry group} |
-| MATH594 | inline | term | \mathbf F |
+| MATH591 | inline | term | \mathbf F |
+| REF144 | ref | term | \ref{eq: flavour symmetry group} |
+| MATH592 | inline | term | \mathbf F |
 
 内联：The flavour symmetry `\mathbf F` for the quiver (defined as in (`\ref{eq: flavour symmetry group}`)) surjects onto the full Abelian flavour symmetry group: `\mathbf F` contains subtori which dilate each edge independently, with weight 1.
 
-### s327 · prose#87 · prose · 16 词
+### s325 · prose#87 · prose · 16 词
 
-> Thus we can appeal to the unimodularity criterion for existence of resolutions given in REF141.
+> Thus we can appeal to the unimodularity criterion for existence of resolutions given in REF145.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF141 | ref | term | \cite[Proposition 4.11]{BellamyKuwabara} |
+| REF145 | ref | term | \cite[Proposition 4.11]{BellamyKuwabara} |
 
 内联：Thus we can appeal to the unimodularity criterion for existence of resolutions given in `\cite[Proposition 4.11]{BellamyKuwabara}`.
 
-### s328 · prose#87 · prose · 14 词
+### s326 · prose#87 · prose · 14 词
 
 > This is easy to verify, and proves the claim in these cases.
 
 （无公式）
 
-### s329 · prose#88 · prose · 41 词
+### s327 · prose#88 · prose · 41 词
 
-> For the remaining quivers in Figure REF142 where some MATH595, all but one (see below) are of finite type A, so the claim in these cases follows from the results of REF145 discussed in § REF143.
+> For the remaining quivers in Figure REF146 where some MATH593, all but one (see below) are of finite type A, so the claim in these cases follows from the results of REF149 discussed in § REF147.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF142 | ref | term | \ref{figure} |
-| MATH595 | inline | proposition | \mathbf{v}_i \geq 2 |
-| REF145 | ref | term | \cite[§ 5]{BFN4} |
-| REF143 | ref | term | \ref{example 1} |
+| REF146 | ref | term | \ref{figure} |
+| MATH593 | inline | proposition | \mathbf{v}_i \geq 2 |
+| REF149 | ref | term | \cite[§ 5]{BFN4} |
+| REF147 | ref | term | \ref{example 1} |
 
 内联：For the remaining quivers in Figure `\ref{figure}` where some `\mathbf{v}_i \geq 2`, all but one (see below) are of finite type A, so the claim in these cases follows from the results of `\cite[§ 5]{BFN4}` discussed in § `\ref{example 1}`.
 
-### s330 · prose#88 · prose · 17 词
+### s328 · prose#88 · prose · 17 词
 
-> This leaves one quiver which is of affine type A, as discussed in § REF144.
+> This leaves one quiver which is of affine type A, as discussed in § REF148.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF144 | ref | term | \ref{example 2} |
+| REF148 | ref | term | \ref{example 2} |
 
 内联：This leaves one quiver which is of affine type A, as discussed in § `\ref{example 2}`.
 
-### s331 · prose#88 · prose · 16 词
+### s329 · prose#88 · prose · 16 词
 
 > Thus the claim holds in all cases, which completes the proof of the theorem.
 
 （无公式）
 
-### s332 · remark: qfactterm · remark · 16 词
+### s330 · remark: qfactterm · remark · 16 词
 
-> We also conclude from Theorem REF146 that MATH596 has terminal singularities, for generic MATH597.
+> We also conclude from Theorem REF150 that MATH594 has terminal singularities, for generic MATH595.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF146 | ref | term | \ref{criterion} |
-| MATH596 | inline | term | \mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w}) |
-| MATH597 | inline | term | \varkappa |
+| REF150 | ref | term | \ref{criterion} |
+| MATH594 | inline | term | \mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w}) |
+| MATH595 | inline | term | \varkappa |
 
 内联：We also conclude from Theorem `\ref{criterion}` that `\mathcal{M}_C^\varkappa(Q, \mathbf{v}, \mathbf{w})` has terminal singularities, for generic `\varkappa`.
 
-### s333 · remark: qfactterm · remark · 12 词
+### s331 · remark: qfactterm · remark · 12 词
 
-> We optimistically conjecture that it is a MATH598-factorial terminalization of MATH599.
+> We optimistically conjecture that it is a MATH596-factorial terminalization of MATH597.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH598 | inline | term | \mathbb{Q} |
-| MATH599 | inline | term | \mathcal{M}_C(Q,\mathbf{v},\mathbf{w}) |
+| MATH596 | inline | term | \mathbb{Q} |
+| MATH597 | inline | term | \mathcal{M}_C(Q,\mathbf{v},\mathbf{w}) |
 
 内联：We optimistically conjecture that it is a `\mathbb{Q}`-factorial terminalization of `\mathcal{M}_C(Q,\mathbf{v},\mathbf{w})`.
 
-### s334 · rem: quiver manipulations · remark · 23 词
+### s332 · rem: quiver manipulations · remark · 23 词
 
-> The affine type A quiver discussed in the proof above is also isomorphic to a product of finite type A cases: MATH600
+> The affine type A quiver discussed in the proof above is also isomorphic to a product of finite type A cases: MATH598
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH600 | display | term | \operatorname{diagram} |
+| MATH598 | display | term | \operatorname{diagram} |
 
 内联：The affine type A quiver discussed in the proof above is also isomorphic to a product of finite type A cases: `\operatorname{diagram}`
 
-### s335 · rem: quiver manipulations · remark · 18 词
+### s333 · rem: quiver manipulations · remark · 18 词
 
-> More precisely, the left side has MATH601 with factors corresponding to the vertices in clockwise order.
+> More precisely, the left side has MATH599 with factors corresponding to the vertices in clockwise order.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH601 | inline | proposition | \mathbf G = \operatorname{GL}(2) \times \mathbb{C}^\times \times \mathbb{C}^\ti… |
+| MATH599 | inline | proposition | \mathbf G = \operatorname{GL}(2) \times \mathbb{C}^\times \times \mathbb{C}^\ti… |
 
 内联：More precisely, the left side has `\mathbf G = \operatorname{GL}(2) \times \mathbb{C}^\times \times \mathbb{C}^\times` with factors corresponding to the vertices in clockwise order.
 
-### s336 · rem: quiver manipulations · remark · 9 词
+### s334 · rem: quiver manipulations · remark · 9 词
 
-> Consider the automorphism of MATH602 defined by MATH603.
+> Consider the automorphism of MATH600 defined by MATH601.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH602 | inline | term | \mathbf G |
-| MATH603 | inline | term | (g, s, t) \mapsto (g s^{-1} t, s^{-1} t, t) |
+| MATH600 | inline | term | \mathbf G |
+| MATH601 | inline | term | (g, s, t) \mapsto (g s^{-1} t, s^{-1} t, t) |
 
 内联：Consider the automorphism of `\mathbf G` defined by `(g, s, t) \mapsto (g s^{-1} t, s^{-1} t, t)`.
 
-### s337 · rem: quiver manipulations · remark · 18 词
+### s335 · rem: quiver manipulations · remark · 18 词
 
 > The pull-back of the left side quiver datum under this isomorphism is the right side quiver datum.
 
 （无公式）
 
-### s338 · rem: quiver manipulations · remark · 10 词
+### s336 · rem: quiver manipulations · remark · 10 词
 
 > This map also induces an isomorphism on flavour symmetry.
 
 （无公式）
 
-### s339 · prose#91 · prose · 15 词
+### s337 · prose#91 · prose · 15 词
 
-> Using a similar argument, we also obtain the following generalization of Theorem REF147:
+> Using a similar argument, we also obtain the following generalization of Theorem REF151:
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF147 | ref | term | \ref{thm: BFN theorem} |
+| REF151 | ref | term | \ref{thm: BFN theorem} |
 
 内联：Using a similar argument, we also obtain the following generalization of Theorem `\ref{thm: BFN theorem}`:
 
-### s340 · thm: BFN theorem for resolutions · theorem · 23 词
+### s338 · thm: BFN theorem for resolutions · theorem · 23 词
 
-> For any MATH604, the variety MATH605 is irreducible, normal, and its Poisson structure is symplectic on its smooth locus.
+> For any MATH602, the variety MATH603 is irreducible, normal, and its Poisson structure is symplectic on its smooth locus.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH604 | inline | proposition | \varkappa \in X_\ast(\mathbf F) |
-| MATH605 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v},\mathbf{w}) |
+| MATH602 | inline | proposition | \varkappa \in X_\ast(\mathbf F) |
+| MATH603 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v},\mathbf{w}) |
 
 内联：For any `\varkappa \in X_\ast(\mathbf F)`, the variety `\mathcal{M}_C^\varkappa(Q,\mathbf{v},\mathbf{w})` is irreducible, normal, and its Poisson structure is symplectic on its smooth locus.
 
-### s341 · proof#93 · proof · 8 词
+### s339 · proof#93 · proof · 8 词
 
-> Note that irreducibility follows from Lemma REF148.
+> Note that irreducibility follows from Lemma REF152.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF148 | ref | term | \ref{cor: integral} |
+| REF152 | ref | term | \ref{cor: integral} |
 
 内联：Note that irreducibility follows from Lemma `\ref{cor: integral}`.
 
-### s342 · proof#93 · proof · 23 词
+### s340 · proof#93 · proof · 23 词
 
-> The proof of the remaining properties is similar to the proof of Theorem REF149 above, but appealing now to Theorem REF150.
+> The proof of the remaining properties is similar to the proof of Theorem REF153 above, but appealing now to Theorem REF154.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF149 | ref | term | \ref{section: proof} |
-| REF150 | ref | term | \ref{criterion: normal symplectic} |
+| REF153 | ref | term | \ref{section: proof} |
+| REF154 | ref | term | \ref{criterion: normal symplectic} |
 
 内联：The proof of the remaining properties is similar to the proof of Theorem `\ref{section: proof}` above, but appealing now to Theorem `\ref{criterion: normal symplectic}`.
 
-### s343 · proof#93 · proof · 28 词
+### s341 · proof#93 · proof · 28 词
 
-> We must study MATH606, and show that in the product decomposition from Proposition REF151, all factors MATH607 are normal and symplectic on their smooth loci.
+> We must study MATH604, and show that in the product decomposition from Proposition REF155, all factors MATH605 are normal and symplectic on their smooth loci.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH604 | inline | proposition | t \in \mathfrak t \setminus \mathfrak t^{(2)} |
+| REF155 | ref | term | \ref{lemma: components} |
+| MATH605 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}) |
+
+内联：We must study `t \in \mathfrak t \setminus \mathfrak t^{(2)}`, and show that in the product decomposition from Proposition `\ref{lemma: components}`, all factors `\mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})` are normal and symplectic on their smooth loci.
+
+### s342 · proof#93 · proof · 7 词
+
+> Recall that MATH606 means that MATH607.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH606 | inline | proposition | t \in \mathfrak t \setminus \mathfrak t^{(2)} |
-| REF151 | ref | term | \ref{lemma: components} |
-| MATH607 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}) |
-
-内联：We must study `t \in \mathfrak t \setminus \mathfrak t^{(2)}`, and show that in the product decomposition from Proposition `\ref{lemma: components}`, all factors `\mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)})` are normal and symplectic on their smooth loci.
-
-### s344 · proof#93 · proof · 7 词
-
-> Recall that MATH608 means that MATH609.
-
-| 公式 | 类型 | 角色 | 展开 |
-|:--|:--|:--|:--|
-| MATH608 | inline | proposition | t \in \mathfrak t \setminus \mathfrak t^{(2)} |
-| MATH609 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{cod… |
+| MATH607 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{cod… |
 
 内联：Recall that `t \in \mathfrak t \setminus \mathfrak t^{(2)}` means that `\operatorname{codim}_{Q,\mathbf{v},\mathbf{w}}(t) = \sum_\ell \operatorname{codim}_{Q, \mathbf{v}^{(\ell)}, \mathbf{w}^{(\ell)}}(0)\leq 1`.
 
-### s345 · proof#93 · proof · 17 词
+### s343 · proof#93 · proof · 17 词
 
-> By Lemma REF152, we see that all MATH610 belong to the following short list: MATH611
+> By Lemma REF156, we see that all MATH608 belong to the following short list: MATH609
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF152 | ref | term | \ref{lemma: classification} |
-| MATH610 | inline | term | (Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)}) |
-| MATH611 | display | term | \operatorname{diagram} |
+| REF156 | ref | term | \ref{lemma: classification} |
+| MATH608 | inline | term | (Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)}) |
+| MATH609 | display | term | \operatorname{diagram} |
 
 内联：By Lemma `\ref{lemma: classification}`, we see that all `(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)})` belong to the following short list: `\operatorname{diagram}`
 
-### s346 · proof#93 · proof · 15 词
+### s344 · proof#93 · proof · 15 词
 
-> Thus all MATH612 are partially resolved bow varieties, as discussed in § REF153.
+> Thus all MATH610 are partially resolved bow varieties, as discussed in § REF157.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH612 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)}) |
-| REF153 | ref | term | \ref{example 2} |
+| MATH610 | inline | term | \mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)}) |
+| REF157 | ref | term | \ref{example 2} |
 
 内联：Thus all `\mathcal{M}_C^\varkappa(Q,\mathbf{v}^{(\ell)},\mathbf{w}^{(\ell)})` are partially resolved bow varieties, as discussed in § `\ref{example 2}`.
 
-### s347 · proof#93 · proof · 18 词
+### s345 · proof#93 · proof · 18 词
 
-> Thus they are normal, and symplectic on their smooth loci, by the results of REF155.
+> Thus they are normal, and symplectic on their smooth loci, by the results of REF159.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF155 | ref | term | \cite{NakTak} |
+| REF159 | ref | term | \cite{NakTak} |
 
 内联：Thus they are normal, and symplectic on their smooth loci, by the results of `\cite{NakTak}`.
 
-### s348 · proof#93 · proof · 17 词
+### s346 · proof#93 · proof · 17 词
 
-> (One can also deduce these properties from the finite type A perspective of § REF154.)
+> (One can also deduce these properties from the finite type A perspective of § REF158.)
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF154 | ref | term | \ref{example 1} |
+| REF158 | ref | term | \ref{example 1} |
 
 内联：(One can also deduce these properties from the finite type A perspective of § `\ref{example 1}`.)
 
-### s349 · proof#93 · proof · 5 词
+### s347 · proof#93 · proof · 5 词
 
 > This completes the proof.
 
 （无公式）
 
-### s350 · prose#95 · prose · 25 词
+### s348 · prose#95 · prose · 25 词
 
 > It is natural to ask whether the proofs given above extend to all quiver gauge theories, allowing loops and/or multiple edges.
 
 （无公式）
 
-### s351 · prose#95 · prose · 28 词
+### s349 · prose#95 · prose · 28 词
 
-> The required steps are simple to state: first, we must allow multiple edges and/or loops wherever possible for all quivers in Figure REF156.
+> The required steps are simple to state: first, we must allow multiple edges and/or loops wherever possible for all quivers in Figure REF160.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF156 | ref | term | \ref{figure} |
+| REF160 | ref | term | \ref{figure} |
 
 内联：The required steps are simple to state: first, we must allow multiple edges and/or loops wherever possible for all quivers in Figure `\ref{figure}`.
 
-### s352 · prose#95 · prose · 41 词
+### s350 · prose#95 · prose · 41 词
 
-> For each resulting quiver, we should show that MATH613 is smooth and symplectic for generic MATH614 (or at least that it is normal, symplectic on its smooth locus, and has singular locus of codimension MATH615).
+> For each resulting quiver, we should show that MATH611 is smooth and symplectic for generic MATH612 (or at least that it is normal, symplectic on its smooth locus, and has singular locus of codimension MATH613).
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH613 | inline | term | \mathcal{M}_C^\varkappa(\mathbf{v}, \mathbf{w}) |
-| MATH614 | inline | term | \varkappa |
-| MATH615 | inline | proposition | \geq 4 |
+| MATH611 | inline | term | \mathcal{M}_C^\varkappa(\mathbf{v}, \mathbf{w}) |
+| MATH612 | inline | term | \varkappa |
+| MATH613 | inline | proposition | \geq 4 |
 
 内联：For each resulting quiver, we should show that `\mathcal{M}_C^\varkappa(\mathbf{v}, \mathbf{w})` is smooth and symplectic for generic `\varkappa` (or at least that it is normal, symplectic on its smooth locus, and has singular locus of codimension `\geq 4`).
 
-### s353 · prose#96 · prose · 37 词
+### s351 · prose#96 · prose · 37 词
 
-> By a similar argument to Remark REF157, we can rewrite each of these new quivers in terms of products of simpler ones: toric hyperkähler varieties (which we omit), or one of MATH616
+> By a similar argument to Remark REF161, we can rewrite each of these new quivers in terms of products of simpler ones: toric hyperkähler varieties (which we omit), or one of MATH614
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| REF157 | ref | term | \ref{rem: quiver manipulations} |
-| MATH616 | display | term | \operatorname{diagram} |
+| REF161 | ref | term | \ref{rem: quiver manipulations} |
+| MATH614 | display | term | \operatorname{diagram} |
 
 内联：By a similar argument to Remark `\ref{rem: quiver manipulations}`, we can rewrite each of these new quivers in terms of products of simpler ones: toric hyperkähler varieties (which we omit), or one of `\operatorname{diagram}`
 
-### s354 · prose#96 · prose · 16 词
+### s352 · prose#96 · prose · 16 词
 
-> Dots denote multiple edges, MATH617 indicate multiple loops, and the framing dimensions MATH618.
+> Dots denote multiple edges, MATH615 indicate multiple loops, and the framing dimensions MATH616.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH617 | inline | proposition | r,s \geq 0 |
-| MATH618 | inline | proposition | n, m \geq 0 |
+| MATH615 | inline | proposition | r,s \geq 0 |
+| MATH616 | inline | proposition | n, m \geq 0 |
 
 内联：Dots denote multiple edges, `r,s \geq 0` indicate multiple loops, and the framing dimensions `n, m \geq 0`.
 
-### s355 · prose#96 · prose · 15 词
+### s353 · prose#96 · prose · 15 词
 
 > Proving appropriate smoothness for the above quivers would extend our result to all quivers.
 
 （无公式）
 
-### s356 · remark#97 · remark · 21 词
+### s354 · remark#97 · remark · 21 词
 
-> The Coulomb branches for the first and second "multiloop" quivers above are denoted MATH619 and MATH620 in REF158.
+> The Coulomb branches for the first and second "multiloop" quivers above are denoted MATH617 and MATH618 in REF162.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH619 | inline | term | \mathcal{M}_C(r,2,n) |
-| MATH620 | inline | term | \mathcal{M}_C(r,3,n) |
-| REF158 | ref | term | \cite{FinkGon} |
+| MATH617 | inline | term | \mathcal{M}_C(r,2,n) |
+| MATH618 | inline | term | \mathcal{M}_C(r,3,n) |
+| REF162 | ref | term | \cite{FinkGon} |
 
 内联：The Coulomb branches for the first and second "multiloop" quivers above are denoted `\mathcal{M}_C(r,2,n)` and `\mathcal{M}_C(r,3,n)` in `\cite{FinkGon}`.
 
-### s357 · remark#97 · remark · 23 词
+### s355 · remark#97 · remark · 23 词
 
-> There, Finkelberg and Goncharov conjecture that these varieties all admit symplectic resolutions, and prove this conjecture for the cases MATH621.
+> There, Finkelberg and Goncharov conjecture that these varieties all admit symplectic resolutions, and prove this conjecture for the cases MATH619.
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH621 | inline | term | \mathcal{M}_C(r,2,1) |
+| MATH619 | inline | term | \mathcal{M}_C(r,2,1) |
 
 内联：There, Finkelberg and Goncharov conjecture that these varieties all admit symplectic resolutions, and prove this conjecture for the cases `\mathcal{M}_C(r,2,1)`.
+
+### s356 · content1 · footnote · 14 词
+
+> We have elected to drop all factors where MATH620 or MATH621, respectively.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH620 | inline | proposition | \operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0 |
+| MATH621 | inline | proposition | \operatorname{Hom}(W_i, V_i) = 0 |
+
+内联：We have elected to drop all factors where `\operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0` or `\operatorname{Hom}(W_i, V_i) = 0`, respectively.
+
+### s357 · content2 · footnote · 13 词
+
+> Following REF163 we denote MATH622, where MATH623 is the longest element.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| REF163 | ref | term | \cite{BFN2} |
+| MATH622 | inline | proposition | \lambda^\ast = - w_0 \lambda |
+| MATH623 | inline | constraint | w_0 \in W |
+
+内联：Following `\cite{BFN2}` we denote `\lambda^\ast = - w_0 \lambda`, where `w_0 \in W` is the longest element.
+
+### s358 · content3 · footnote · 31 词
+
+> Note that the latter condition is very mild: if for some MATH624 we have MATH625 but MATH626, then there is no corresponding summand MATH627 in (REF164).
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH624 | inline | proposition | i\in I |
+| MATH625 | inline | proposition | \mathbf{w}_i \neq 0 |
+| MATH626 | inline | proposition | \mathbf{v}_i = 0 |
+| MATH627 | inline | term | \operatorname{Hom}(W_i, V_i) |
+| REF164 | ref | term | \ref{groups from quiver data} |
+
+内联：Note that the latter condition is very mild: if for some `i\in I` we have `\mathbf{w}_i \neq 0` but `\mathbf{v}_i = 0`, then there is no corresponding summand `\operatorname{Hom}(W_i, V_i)` in (`\ref{groups from quiver data}`).
+
+### s359 · content3 · footnote · 13 词
+
+> Thus in this case we obtain the same MATH628 by setting MATH629.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH628 | inline | term | (\mathbf G, \mathbf{N}) |
+| MATH629 | inline | proposition | \mathbf{w}_i = 0 |
+
+内联：Thus in this case we obtain the same `(\mathbf G, \mathbf{N})` by setting `\mathbf{w}_i = 0`.
+
+### s360 · content4 · caption · 16 词
+
+> Up to orientation, the list of all connected quiver gauge theory data with MATH630.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH630 | inline | proposition | \operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) \leq 3 |
+
+内联：Up to orientation, the list of all connected quiver gauge theory data with `\operatorname{codim}_{Q,\mathbf{v}, \mathbf{w}}(0) \leq 3`.
+
+### s361 · content4 · caption · 5 词
+
+> The framing dimensions MATH631.
+
+| 公式 | 类型 | 角色 | 展开 |
+|:--|:--|:--|:--|
+| MATH631 | inline | proposition | n,m,p \geq 0 |
+
+内联：The framing dimensions `n,m,p \geq 0`.
+
+### s362 · content4 · caption · 8 词
+
+> Note that we consider only simple quivers.
+
+（无公式）

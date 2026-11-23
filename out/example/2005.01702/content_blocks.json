@@ -1,0 +1,90 @@
+[
+  {
+    "body": "We have elected to drop all factors where  $\\operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0$ or $\\operatorname{Hom}(W_i, V_i) = 0$, respectively.",
+    "kind": "footnote",
+    "offset": 46104,
+    "raw": "\\footnote{We have elected to drop all factors where  $\\operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0$ or $\\operatorname{Hom}(W_i, V_i) = 0$, respectively.}",
+    "source_stage": "expanded_body",
+    "status": "parsed",
+    "version": 1,
+    "id": "content1",
+    "anchor_ref": "REF1",
+    "anchor_sids": [
+      "s235"
+    ],
+    "sentence_ids": [
+      "s356"
+    ],
+    "parent_units": [
+      "prose#63"
+    ]
+  },
+  {
+    "body": "Following \\cite{BFN2} we denote $\\lambda^\\ast = - w_0 \\lambda$, where $w_0 \\in W$ is the longest element.",
+    "kind": "footnote",
+    "offset": 50825,
+    "raw": "\\footnote{Following \\cite{BFN2} we denote $\\lambda^\\ast = - w_0 \\lambda$, where $w_0 \\in W$ is the longest element.}",
+    "source_stage": "expanded_body",
+    "status": "parsed",
+    "version": 1,
+    "id": "content2",
+    "anchor_ref": "REF2",
+    "anchor_sids": [
+      "s256"
+    ],
+    "sentence_ids": [
+      "s357"
+    ],
+    "parent_units": [
+      "prose#70"
+    ]
+  },
+  {
+    "body": "Note that the latter condition is very mild: if for some $i\\in I$ we have  $\\mathbf{w}_i \\neq 0$ but $\\mathbf{v}_i = 0$, then there is no corresponding summand $\\operatorname{Hom}(W_i, V_i)$ in (\\ref{groups from quiver data}).  Thus in this case we obtain the same $(\\mathbf G, \\mathbf{N})$ by setting $\\mathbf{w}_i = 0$.",
+    "kind": "footnote",
+    "offset": 53496,
+    "raw": "\\footnote{Note that the latter condition is very mild: if for some $i\\in I$ we have  $\\mathbf{w}_i \\neq 0$ but $\\mathbf{v}_i = 0$, then there is no corresponding summand $\\operatorname{Hom}(W_i, V_i)$ in (\\ref{groups from quiver data}).  Thus in this case we obtain the same $(\\mathbf G, \\mathbf{N})$ by setting $\\mathbf{w}_i = 0$.}",
+    "source_stage": "expanded_body",
+    "status": "parsed",
+    "version": 1,
+    "id": "content3",
+    "anchor_ref": "REF3",
+    "anchor_sids": [
+      "s273"
+    ],
+    "sentence_ids": [
+      "s358",
+      "s359"
+    ],
+    "parent_units": [
+      "prose#74"
+    ]
+  },
+  {
+    "environment": "figure",
+    "kind": "float",
+    "offset": 59727,
+    "previews": [
+      "Up to orientation, the list of all connected quiver gauge theory data with $\\operatorname{codim}_{Q,\\mathbf{v}, \\mathbf{w}}(0) \\leq 3$.    The framing dimensions $n,m,p \\geq 0$.  Note that we consider only simple quivers."
+    ],
+    "raw": "\\begin{figure}\n$$\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n|[draw=black, rectangle]| n \\ar[d] \\\\\n1\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n|[draw=black, rectangle]| n \\ar[d] \\\\\n2\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n|[draw=black, rectangle]| n \\ar[d] \\\\\n3\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n4\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n|[draw=black, rectangle]| n \\ar[d] & |[draw=black, rectangle]| m \\ar[d] \\\\\n1 \\ar[r] & 1\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n|[draw=black, rectangle]| n \\ar[d] & |[draw=black, rectangle]| m \\ar[d] \\\\\n2 \\ar[r] & 1 \n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n2 \\ar[r] & 2\n\\end{tikzcd}\n$$\n\\smallskip\n$$\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n3 \\ar[r] & 1\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n |[draw=black, rectangle]| n \\ar[d] & |[draw=black, rectangle]| m \\ar[d]  & |[draw=black, rectangle]| p \\ar[d] \\\\\n1 \\ar[r]& 1 \\ar[r] & 1\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n& &  |[draw=black, rectangle]|n \\ar[dd]& &\\\\\n& & & &\\\\\n& &1  \\ar[dr]& &\\\\\n& 1 \\ar[ur] & & 1 \\ar[ll]&\\\\\n|[draw=black, rectangle]|m \\ar[ur]  & & & & |[draw=black, rectangle]|p \\ar[ul]\n\\end{tikzcd}\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n2 \\ar[r] & 1 \\ar[r] & 1\n\\end{tikzcd}\n$$\n\\smallskip\n$$\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n1 \\ar[r] & 2 \\ar[r] & 1 \n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n&2  \\ar[dr]& \\\\\n1 \\ar[ur] & & 1  \\ar[ll]\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n1 \\ar[r]& 1 \\ar[r] & 1 \\ar[r]  & 1\n\\end{tikzcd}\n$$\n\\medskip\n$$\n\\begin{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n& 1 \\ar[dd]&\\\\\n& & \\\\\n&1  \\ar[dr]& \\\\\n1 \\ar[ur] & & 1\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=tiny,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n& 1 \\ar[dd]&\\\\\n& & \\\\\n&1  \\ar[dr]& \\\\\n1 \\ar[ur] & & 1 \\ar[ll]\n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n1 \\ar[r] \\ar[d] & 1 \\ar[d] \\\\\n1 \\ar[r] & 1 \n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n1 \\ar[r] \\ar[d] \\ar[dr] & 1 \\ar[d] \\\\\n1 \\ar[r] & 1 \n\\end{tikzcd}\n\\qquad\n\\begin{tikzcd}[sep=small,cells={nodes={draw=black, ellipse,anchor=center,minimum height=2em}}]\n1 \\ar[r]  \\ar[d]\\ar[dr] & 1 \\ar[d] \\\\\n1 \\ar[r] \\arrow[ur, crossing over] & 1 \n\\end{tikzcd}\n$$\n\\caption{Up to orientation, the list of all connected quiver gauge theory data with $\\operatorname{codim}_{Q,\\mathbf{v}, \\mathbf{w}}(0) \\leq 3$.    The framing dimensions $n,m,p \\geq 0$.  Note that we consider only simple quivers.}\n\\label{figure}\n\\end{figure}",
+    "reason": "layout_not_parsed",
+    "source_stage": "expanded_body",
+    "status": "pending",
+    "version": 1,
+    "id": "content4",
+    "anchor_ref": "REF4",
+    "anchor_sids": [
+      "s313"
+    ],
+    "sentence_ids": [],
+    "parent_units": [
+      "prose#82"
+    ],
+    "preview_sentence_ids": [
+      "s360",
+      "s361",
+      "s362"
+    ]
+  }
+]

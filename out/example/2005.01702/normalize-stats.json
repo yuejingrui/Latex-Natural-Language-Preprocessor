@@ -1,24 +1,24 @@
 {
   "kept_macros": {
-    "nc": "\\newcommand",
-    "renc": "\\renewcommand",
-    "acom": "\\todo[inline,color=green!20]{ Alex: #1 }",
-    "ssslash": "/\\mkern-6mu/\\mkern-6mu/",
+    "hooklongleftarrow": "\\longleftarrow\\joinrel\\defparamok",
     "sslash": "/\\mkern-6mu/",
-    "hooklongleftarrow": "\\longleftarrow\\joinrel\\defparamok"
+    "acom": "\\todo[inline,color=green!20]{ Alex: #1 }",
+    "renc": "\\renewcommand",
+    "ssslash": "/\\mkern-6mu/\\mkern-6mu/",
+    "nc": "\\newcommand"
   },
-  "input": "newarticle/2005.01702/SympSing.tex",
+  "input": "/home/roger/gted/newarticle/2005.01702/SympSing.tex",
   "input_chars": 79909,
-  "output_chars": 68911,
+  "output_chars": 80308,
   "stats": {
     "alias:longrightarrow->rightarrow": 16,
-    "caption_kept:figure": 1,
-    "display_bracket": 30,
+    "content_preserved:figure": 1,
+    "content_preserved:footnote": 3,
+    "display_bracket": 26,
     "env_diagram:tikzcd": 19,
     "env_display:align*": 1,
     "env_display:equation": 18,
     "env_display:equation*": 12,
-    "env_dropped:figure": 1,
     "env_grid:array": 1,
     "env_list:enumerate": 2,
     "env_statement:Corollary": 2,
@@ -42,5 +42,7 @@
   "outside_vocabulary": {
     "ssslash": 1
   },
+  "outside_math_vocabulary": {},
+  "vocabulary_scope_version": 2,
   "labels_unrendered": {}
 }

@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "counts": {
+    "sentences": 362,
+    "formulas": 795,
+    "content_blocks": 4
+  },
+  "pending": {
+    "content": 1,
+    "boundaries": 0,
+    "unresolved": 3
+  },
+  "downstream": {
+    "slots": 2,
+    "formula_diagnostics": 3
+  }
+}
