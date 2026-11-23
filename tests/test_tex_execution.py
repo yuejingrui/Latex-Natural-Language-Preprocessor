@@ -17,6 +17,30 @@ import tex_execution as trace
 FIXTURE = ROOT / 'tests' / 'fixtures' / 'tex_execution'
 
 
+def style_present(*names):
+    """Are these .sty files findable by the TeX installation?
+
+    A minimal TeX Live installs the kernel and little else: etoolbox comes with
+    texlive-latex-recommended, comment only with texlive-latex-extra.  A test
+    whose document needs them has to say it is skipped, not fail, or a runner
+    without the package looks like a broken replay.
+    """
+    for name in names:
+        try:
+            found = subprocess.run(['kpsewhich', name], capture_output=True,
+                                   encoding='utf-8', timeout=60)
+        except (OSError, subprocess.SubprocessError):
+            return False
+        if found.returncode or not found.stdout.strip():
+            return False
+    return True
+
+
+NEEDS_EXTRA_PACKAGES = unittest.skipUnless(
+    style_present('comment.sty', 'etoolbox.sty'),
+    'comment/etoolbox unavailable (texlive-latex-extra)')
+
+
 def article(body, pre=''):
     return '\\documentclass{article}\n' + pre + '\n\\begin{document}\n' + body + '\n\\end{document}\n'
 
@@ -89,6 +113,7 @@ class TeXExecution(ProjectCase):
 @unittest.skipUnless(shutil.which('pdflatex') and shutil.which('pdftotext'), 'TeX/PDF tools unavailable')
 class CompiledExecution(ProjectCase):
 
+    @NEEDS_EXTRA_PACKAGES
     def test_hooks_exclusions_and_formula_boundaries_match_pdf(self):
         pre = '\n'.join([r'\pagestyle{empty}\usepackage{comment,etoolbox}',
                          r'\excludecomment{draftonly}\newenvironment{claim}[1]{Given #1. }{}',

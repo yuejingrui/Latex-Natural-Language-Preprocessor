@@ -29,8 +29,12 @@ jobs:
         continue-on-error: true
         run: |
           sudo apt-get update -qq
+          # latex-extra carries comment.sty, which the hook/replay fixture uses;
+          # the test skips itself when a package is missing, so a lean runner
+          # still reports an honest skip instead of a failure.
           sudo apt-get install -y --no-install-recommends \
-            texlive-latex-base texlive-latex-recommended poppler-utils
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+            poppler-utils
       - name: execution-replay tests
         run: |
           python tests/test_tex_execution.py
