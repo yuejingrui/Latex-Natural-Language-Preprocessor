@@ -80,6 +80,19 @@ check("no sentence keeps a stray brace",
       not any(("{" in s["text"] or "}" in s["text"]) for s in doc["sentences"]),
       texts(doc))
 
+# F2 root cause: the group after a font switch belongs to the switch
+for body, want in (
+        ("\\begin{definition} \\rm{Let $x$ be a set.\\begin{itemize}\\item a\\end{itemize}"
+         " Then $x$ is fine.}\\end{definition}\n", "Let $x$ be a set."),
+        ("Text \\bf{bold words} more.\n", "Text bold words more."),
+        ("Text \\bf {two words} more.\n", "Text two words more.")):
+    norm, doc = run(body)
+    body_norm = norm.split("\\begin{document}")[-1]
+    check("a font switch takes the group it is applied to (%r)" % want,
+          want in body_norm and not any(
+              "{" in s["text"] or "}" in s["text"] for s in doc["sentences"]),
+          body_norm.strip()[:120])
+
 # F3 (MERGE-PLAN 3): a note body goes through the same name pass
 norm, doc = run("Text.\\footnotetext{\\emph{Date:} \\today} More text.\n")
 sent = " ".join(texts(doc))

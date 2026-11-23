@@ -1858,6 +1858,22 @@ class Normalizer:
                 code = (m.group(1) if m else "") or ""
                 j = m.end() if m else i + 1
                 if not in_math[i] or code not in self.CODE_TO_COMMAND:
+                    # ``\rm{...}`` is the switch applied to the group, so the
+                    # braces add no grouping of their own and must go with it.
+                    # Leaving them behind put half a group in one sentence and
+                    # the other half in the next -- ``\begin{definition}
+                    # \rm{Let ... \begin{itemize}...}`` produced a sentence
+                    # opening with ``{Let`` and a later one ending with ``.}``
+                    # (2402.19174, C3).  A sentence-level strip only hid it.
+                    k = j
+                    while k < n and text[k] in " \t\n":
+                        k += 1
+                    if k < n and text[k] == "{":
+                        close = L.find_group_end(text, k)
+                        if close is not None:
+                            out.append(self._font_groups(text[k + 1:close - 1]))
+                            i = close
+                            continue
                     # the marker goes, the space after it stays: a switch at the
                     # end of an argument ("{taller}\bfseries Title") separates
                     # two words, and eating the space glued them together
