@@ -2621,6 +2621,7 @@ class LatexToNL:
         body = keeper.execute_document(preamble, body, self.macros, styles)
         body = self.macros.expand(body)
         body = keeper._ifthenelse(body)
+        body = normalize.conditionals.preserve_late_conditions(body)
         body = keeper._preserve_floats(body)
         body = keeper._preserve_notes(body)
         body = preserved.restore_calls(body, keeper.held_calls)
@@ -4080,12 +4081,21 @@ def _self_test() -> int:
             "A second claim.\n\\ifdefined\\SHOWDETAIL\nHidden detail.\n\\fi\n"
             "\\end{document}\n")
     texts = [s["text"] for s in r["sentences"]]
+    import format_names
+    hidden_defined = format_names.lookup('article', ('SHOWDETAIL', 'SHOWPROOFS'), 'SHOWDETAIL')
+    expected = ['A first claim.', 'Proof of it.', 'A second claim.']
+    if hidden_defined is None:
+        expected.append('REF1')
+    elif hidden_defined:
+        expected.append('Hidden detail.')
     check("defined block kept, undefined dropped",
-          texts == ["A first claim.", "Proof of it.", "A second claim."],
+          texts == expected,
           str(texts))
     r = run("\\ifdefined\\A\none\n\\else\ntwo\n\\fi\n")
+    bound = format_names.lookup('kernel', ('A',), 'A')
     check("the else branch wins when the name is undefined",
-          [s["text"] for s in r["sentences"]] == ["two"],
+          [s["text"] for s in r["sentences"]] == [
+              'REF1' if bound is None else 'one' if bound else 'two'],
           str([s["text"] for s in r["sentences"]]))
     r = run("We have\n\\[\\begin{tikzcd} A \\arrow[r] & B \\end{tikzcd}\\]\n"
             "and that is all.")

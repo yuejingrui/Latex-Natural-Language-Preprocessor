@@ -385,6 +385,11 @@ def check_links(doc, normalized):
         ref = by_id.get(b['anchor_ref'], {})
         if ref.get('ref_target') != b['id'] or ref.get('ref_kind') != 'content':
             hit(b['id']+' invalid anchor reference')
+        if b.get('kind') in ('conditional', 'conditional_formula'):
+            if b.get('status') != 'pending' or b.get('sentence_ids'):
+                hit(b['id']+' unresolved conditional emitted as decided text')
+            if ref.get('raw') != b.get('raw'):
+                hit(b['id']+' conditional reference lost source branches')
         anchors = {s['sid'] for s in sents if b['anchor_ref'] in s['formulas']}
         if not anchors or anchors != set(b.get('anchor_sids', [])):
             hit(b['id']+' invalid anchor sentences')
@@ -397,11 +402,31 @@ def check_links(doc, normalized):
             hit(b['id']+' missing preserved source')
     import preserved
     # Top-level capsules must survive even if both the REF and block are removed.
-    source_blocks = Counter(preserved.unpack(m)['raw'] for m in preserved.MARKER.finditer(normalized))
+    source_records = [preserved.unpack(m) for m in preserved.MARKER.finditer(normalized)]
+    source_blocks = Counter(b['raw'] for b in source_records)
     output_blocks = Counter(b['raw'] for b in blocks)
     for raw, count in source_blocks.items():
-        enclosing = sum(b.get('kind') == 'conditional_formula' and raw in b['raw'] for b in blocks)
+        enclosing = sum(b['raw'].count(raw) for b in blocks if b.get('kind') == 'conditional_formula'
+                        and raw != b['raw'])
         if output_blocks[raw] + enclosing < count: hit('source capsule missing from output')
+    # A source question must remain attached to an unresolved output. Keeping
+    # the raw text in an unrelated record cannot justify selecting a branch.
+    for raw, count in Counter(b['raw'] for b in source_records if b['kind'] == 'conditional').items():
+        retained = 0
+        for b in blocks:
+            if b.get('status') != 'pending':
+                continue
+            if b['kind'] == 'conditional' and b['raw'] == raw:
+                retained += 1
+            elif b['kind'] == 'conditional_formula' and raw in b['raw']:
+                components = b.get('components')
+                if components is None:  # Also accept the older formula transport.
+                    retained += b['raw'].count(raw)
+                else:
+                    retained += sum(c.get('kind') == 'conditional' and c.get('raw') == raw
+                                    and c.get('status') == 'pending' for c in components)
+        if retained < count:
+            hit('unresolved source conditional lost its pending record')
     return hits
 
 

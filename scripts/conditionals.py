@@ -10,6 +10,11 @@ from fractions import Fraction
 import preserved
 
 TOKEN = re.compile(r'\\[A-Za-z@]+|\\[^A-Za-z@]|[{}]')
+EXEC_TOKEN = re.compile(TOKEN.pattern + r'|\$\$?')
+MATH_CLOSE = {'$': '$', '$$': '$$', r'\(': r'\)', r'\[': r'\]'}
+REGISTER_DECL = re.compile(r'\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))')
+ALLOCATORS = {'newcount', 'newdimen', 'newskip', 'newmuskip', 'newtoks', 'newbox',
+              'newread', 'newwrite', 'newlength', 'newsavebox'}
 BRACED_IFS = {'iff', 'ifthenelse', 'ifstrequal', 'ifstrempty', 'ifblank', 'ifboolexpr', 'ifdefstring'}
 DEFS = {'newcommand', 'renewcommand', 'providecommand', 'DeclareRobustCommand',
         'newenvironment', 'renewenvironment', 'def', 'gdef', 'edef', 'xdef'}
@@ -71,7 +76,45 @@ def bounds(text, start):
     return cuts, len(text), None
 
 
-def test(text, m, switches, defined):
+def integer(text, pos, values):
+    """Read decimal digits and simple digit macros. An expandable suffix can
+    still supply digits, so an unsupported suffix invalidates the whole test."""
+    number = ''
+    pos += re.match(r'\s*', text[pos:]).end()
+    while pos < len(text):
+        literal = re.match(r'[+-]?[0-9]+' if not number else r'[0-9]+', text[pos:])
+        if literal:
+            number += literal[0]
+            pos += literal.end()
+        elif text[pos] == '\\':
+            cmd = TOKEN.match(text, pos)
+            if cmd is None:
+                return None
+            name = cmd[0][1:]
+            value = values.get(name)
+            if value is None and name in ('relax', 'else', 'fi', 'or'):
+                break
+            if not isinstance(value, Macro) or value.nargs or not re.fullmatch(
+                    r'[+-]?[0-9]+' if not number else r'[0-9]+', value.body):
+                return None
+            number += value.body
+            pos = cmd.end()
+            # TeX discards the separator after a control word at tokenization.
+            pos += re.match(r'[ \t]*(?:\n[ \t]*)?', text[pos:]).end()
+        else:
+            break
+        if len(number.lstrip('+-').lstrip('0')) > 10:
+            return None
+    if not number:
+        return None
+    digits = number.lstrip('+-').lstrip('0') or '0'
+    value = int(digits)
+    if value > 2147483647:
+        return None
+    return (-value if number.startswith('-') else value), pos
+
+
+def test(text, m, switches, defined, values=None):
     name, pos = m.group()[1:], m.end()
     if name == 'iftrue': return True, pos
     if name == 'iffalse': return False, pos
@@ -84,23 +127,39 @@ def test(text, m, switches, defined):
             arg = re.match(r'\s*(?:\\[A-Za-z@]+|\\.|[^\s])', text[pos:])
             if arg: pos += arg.end()
         return None, pos
-    if name in ('ifnum','ifdim'):
-        if name == 'ifnum':
-            arg = re.match(r'\s*([+-]?\d+)\s*([<=>])\s*([+-]?\d+)(?![\d.])', text[pos:])
-            if arg: a, op, b = int(arg[1]), arg[2], int(arg[3])
-        else:
-            arg = re.match(r'\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(pt|pc|in|bp|cm|mm|sp)\s*([<=>])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(pt|pc|in|bp|cm|mm|sp)(?![A-Za-z])', text[pos:])
-            if arg:
-                # TeX dimensions are integer scaled points. Round each operand.
-                a = round(Fraction(arg[1])*UNITS[arg[2]]*65536)
-                b = round(Fraction(arg[4])*UNITS[arg[5]]*65536)
-                op = arg[3]
-        if arg: return {'<':a<b, '>':a>b, '=':a==b}[op], pos+arg.end()
-    if name in ('ifodd','ifcase'):
-        arg = re.match(r'\s*([+-]?\d+)(?![\d.])', text[pos:])
+    if name == 'ifdim':
+        arg = re.match(r'\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(pt|pc|in|bp|cm|mm|sp)\s*([<=>])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(pt|pc|in|bp|cm|mm|sp)(?![A-Za-z])', text[pos:])
         if arg:
-            n = int(arg[1])
-            return (bool(n % 2) if name == 'ifodd' else n), pos+arg.end()
+            # Restrict decisions to exact conversions. TeX truncates at
+            # intermediate steps; Python's round() gives different results.
+            nums = []
+            for i in (1, 4):
+                if len(arg[i]) > 32:
+                    return None, pos
+                scaled = Fraction(arg[i]) * 65536
+                if scaled.denominator != 1:
+                    return None, pos
+                sp = int(scaled * UNITS[arg[i+1]])
+                if abs(sp) >= 2**30:
+                    return None, pos
+                nums.append(sp)
+            a, b = nums
+            op = arg[3]
+        if arg: return {'<':a<b, '>':a>b, '=':a==b}[op], pos+arg.end()
+    if name in ('ifnum', 'ifodd', 'ifcase'):
+        values = values or {}
+        first = integer(text, pos, values)
+        if first is None:
+            return None, pos
+        a, stop = first
+        if name != 'ifnum':
+            return (bool(a % 2) if name == 'ifodd' else a), stop
+        relation = re.match(r'\s*([<=>])', text[stop:])
+        if relation:
+            last = integer(text, stop + relation.end(), values)
+            if last:
+                b, end = last
+                return {'<': a < b, '>': a > b, '=': a == b}[relation[1]], end
     return None, pos
 
 
@@ -134,6 +193,7 @@ class Macro:
 
 UNKNOWN = object()
 ABSENT = object()
+DECLARED = object()
 SIMPLE_CMD = re.compile(r'\\(?:newcommand|renewcommand|providecommand|DeclareRobustCommand)'
                         r'\*?\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))'
                         r'\s*(?:\[(\d)\]\s*)?(?:\[([^\]]*)\]\s*)?\{')
@@ -172,10 +232,11 @@ def alternatives(text, start, cuts, end):
 class Execution:
     """One source-order state, shared by preamble, selected branches and calls."""
 
-    def __init__(self, defined=lambda name: False, skip=(), keep=None, packages=None, defer=None, switch_defaults=None, braced_test=None):
+    def __init__(self, defined=lambda name: False, skip=(), keep=None, packages=None, defer=None, switch_defaults=None, braced_test=None, format_defined=None):
         self.fallback_defined = defined
         self.packages = packages or {}
         self.braced_test = braced_test
+        self.format_defined = format_defined
         self.defer = defer
         self.held = []
         self.switch_defaults = switch_defaults or {}
@@ -200,7 +261,7 @@ class Execution:
             for group in self.groups:
                 group[name] = value
 
-    def defined(self, name):
+    def defined(self, name, query_format=False):
         value = self.values.get(name, ABSENT)
         if value is UNKNOWN:
             return None
@@ -209,6 +270,10 @@ class Execution:
         if name in self.values:
             return value is not ABSENT
         answer = self.fallback_defined(name)
+        if query_format and self.format_defined and answer is not True:
+            if self.values.get('unread_source'):
+                return None
+            return self.format_defined(self.values.get('class_profile', 'kernel'), name)
         return None if answer is False and self.values.get('unread_source') else answer
 
     def switches(self):
@@ -241,10 +306,53 @@ class Execution:
             self.assign(key, True, globally=True)
             self.run(self.packages[name])
 
-    def conditional(self, text, match, active, offset, math):
+    def begin_document(self, preamble, body):
+        self.run(preamble)
+        hooks = self.values.pop('begin_hooks', ())
+        if hooks is UNKNOWN:
+            # Different possible preambles registered different hooks. Their
+            # side effects and any text they produce belong to the document.
+            for key, value in list(self.values.items()):
+                self.values[key] = Switch(None) if isinstance(value, Switch) else UNKNOWN
+            self.values['unread_source'] = True
+            return preserved.pack('conditional', preamble, status='pending',
+                                  reason='undecidable_begin_document_hook') + self.run(body)
+        return ''.join(self.run(hook) for hook in hooks) + self.run(body)
+
+    def stateful_environment(self, text, match, pos, env, spec, active, offset, math):
+        """Execute state-changing begin/end code around the actual body."""
+        import latex2nl as L
+        nargs, default, begin, finish = spec
+        parsed = L.macro_arguments(text, pos, nargs, default)
+        if parsed is None:
+            return None
+        args, start = parsed
+        begin = re.sub(r'#([1-9])', lambda h: args[int(h[1])-1]
+                       if int(h[1]) <= len(args) else h[0], begin)
+        if not any(isinstance(self.values.get(n), (Setter, Macro)) or n in DEFS
+                   or n in ('global', 'newif', 'let', 'csname') or opener(n)
+                   for n in L.control_words(begin+' '+finish)):
+            return None  # Layout-only wrappers retain the existing rendering rules.
+        closing = L.find_env_end(text, start, env)
+        guard = 'env:'+env
+        if closing is None or guard in active:
+            end = closing.end() if closing else len(text)
+            return end, preserved.pack('environment', text[match.start():end], status='pending',
+                                       reason='unresolved_environment_execution')
+        self.groups.append(self.values.copy())
+        replacement = self.run('\n'.join((begin, text[start:closing.start()], finish)),
+                               active+(guard,), offset+start, math)
+        self.values = self.groups.pop()
+        return closing.end(), replacement
+
+    def conditional(self, text, match, active, offset, math, unless=None):
         token = match[0]
         name = token[1:]
-        decision, body_start = test(text, match, self.switches(), self.defined)
+        decision, body_start = test(text, match, self.switches(),
+                                    lambda key: self.defined(key, query_format=True), self.values)
+        start = match.start() if unless is None else unless
+        if unless is not None:
+            decision = not decision if isinstance(decision, bool) else None
         cuts, end, close = bounds(text, body_start)
         branches = alternatives(text, body_start, cuts, end)
         separators = [cut[0] for cut in cuts]
@@ -253,10 +361,10 @@ class Execution:
                      ('or' in separators and name != 'ifcase'))
         pos = len(text) if close is None else close
         if decision is None or malformed:
-            replacement = preserved.pack('conditional', text[match.start():pos], status='pending',
+            replacement = preserved.pack('conditional', text[start:pos], status='pending',
                 reason='unbalanced_conditional' if malformed else 'undecidable_test',
-                conditional=token, test=text[match.start():body_start], source_stage='conditional_input',
-                offset=offset+match.start())
+                conditional=token, test=text[start:body_start], source_stage='conditional_input',
+                offset=offset+start)
             self.merge_branches([branch for _, branch in branches], active)
         else:
             if name == 'ifcase':
@@ -282,7 +390,7 @@ class Execution:
             i = bisect_right(starts, at)-1
             return i >= 0 and at < spans[i].end
 
-        while (m := TOKEN.search(text, pos)):
+        while (m := EXEC_TOKEN.search(text, pos)):
             pos = m.end()
             token, name = m[0], m[0][1:]
             start = m.start()
@@ -291,6 +399,13 @@ class Execution:
                 start = global_start
             global_start = None
             replacement = None
+            if token in MATH_CLOSE or token in (r'\)', r'\]'):
+                if (token, len(self.groups)) == self.values.get('math_closer') and self.groups:
+                    self.values = self.groups.pop()
+                elif token in MATH_CLOSE:
+                    self.groups.append(self.values.copy())
+                    self.values['math_closer'] = (MATH_CLOSE[token], len(self.groups))
+                continue
             if token == '{' or name in ('begingroup', 'bgroup'):
                 self.groups.append(self.values.copy())
                 continue
@@ -299,10 +414,19 @@ class Execution:
                     self.values = self.groups.pop()
                 continue
             if name in ('begin', 'end'):
-                env = re.match(r'\s*\{[\w*@-]+\}', text[pos:])
+                env = re.match(r'\s*\{([\w*@-]+)\}', text[pos:])
                 if env:
                     pos += env.end()
                     if name == 'begin':
+                        spec = self.values.get('env:'+env[1])
+                        if isinstance(spec, tuple):
+                            result = self.stateful_environment(text, m, pos, env[1], spec,
+                                                               active, offset, in_math(m.start()))
+                            if result:
+                                pos, rendered = result
+                                out.extend((text[cursor:m.start()], rendered))
+                                cursor = pos
+                                continue
                         self.groups.append(self.values.copy())
                     elif self.groups:
                         self.values = self.groups.pop()
@@ -326,12 +450,46 @@ class Execution:
                 pos = definition_end(text, m)
                 parsed = ordinary_definition(text, m, pos)
                 if not parsed or parsed[0] in self.skip:
+                    if name in ('newenvironment', 'renewenvironment'):
+                        from normalize import read_env_decls
+                        for key, spec in read_env_decls(text[m.start():pos]).items():
+                            self.assign('env:'+key, spec)
+                        env = re.match(r'\*?\s*\{([A-Za-z@]+)\}', text[m.end():])
+                        if env:
+                            self.assign(env[1], DECLARED)
+                            self.assign('end'+env[1], DECLARED)
+                    # An unsupported replacement or parameter syntax can still
+                    # introduce a known binding, e.g. \edef or a delimited \def.
+                    if name in ('def', 'gdef', 'edef', 'xdef'):
+                        key = re.match(r'\s*\\([A-Za-z@]+)', text[m.end():])
+                        if key:
+                            self.assign(key[1], DECLARED, globally or name in ('gdef', 'xdef'))
                     continue
                 key, spec = parsed
                 self.managed.add(key)
-                if name != 'providecommand' or self.defined(key) is False:
+                previous = self.defined(key, query_format=True) if name == 'providecommand' else False
+                if previous is False:
                     self.assign(key, spec, globally or name == 'gdef')
+                elif previous is None:
+                    # It exists afterwards whichever binding won.
+                    self.assign(key, DECLARED, globally)
                 replacement = ''
+            elif name == 'AtBeginDocument':
+                hook = re.match(r'\s*\{', text[pos:])
+                if hook:
+                    first = pos + hook.end()
+                    end = L.find_group_end(text, first-1)
+                    if end is not None:
+                        hooks = self.values.get('begin_hooks', ())
+                        if hooks is not UNKNOWN:
+                            self.assign('begin_hooks', hooks+(text[first:end-1],), globally=True)
+                        pos, replacement = end, ''
+            elif name == 'documentclass':
+                arg = re.match(r'\s*(\[[^\]]*\]\s*)?\{([^{}]+)\}', text[pos:])
+                if arg:
+                    self.assign('class_profile', None if arg[1] else arg[2])
+                    pos += arg.end()
+                continue
             elif name in ('usepackage', 'RequirePackage'):
                 arg = re.match(r'\s*(?:\[[^\]]*\]\s*)?\{([^{}]+)\}', text[pos:])
                 if arg:
@@ -379,7 +537,7 @@ class Execution:
                     key, target = alias[1], alias[2]
                     value = self.values.get(target, ABSENT)
                     if target not in self.values:
-                        defined = self.defined(target)
+                        defined = self.defined(target, query_format=True)
                         if defined is not False:
                             value = ExternalAlias('\\'+target, defined)
                     self.assign(key, value, globally)
@@ -392,6 +550,25 @@ class Execution:
                     self.assign(alias[1], Macro(0, alias[2], None), globally)
                     self.managed.add(alias[1])
                     pos, replacement = alias.end(), ''
+            elif name in ALLOCATORS:
+                arg = REGISTER_DECL.match(text, pos)
+                if arg:
+                    key = arg[1] or arg[2]
+                    self.assign(key, DECLARED, globally=True)
+                    pos, replacement = arg.end(), ''
+            elif name == 'newcounter':
+                counter = re.match(r'\s*\{([A-Za-z@]+)\}', text[pos:])
+                if counter:
+                    for prefix in ('c@', 'the', 'p@', 'cl@'):
+                        self.assign(prefix+counter[1], DECLARED, globally=True)
+                    pos += counter.end()
+            elif name == 'newtheorem':
+                theorem = re.match(r'\*?\s*\{([A-Za-z@]+)\}', text[pos:])
+                if theorem:
+                    key = theorem[1]
+                    self.assign(key, DECLARED, globally=True)
+                    self.assign('end'+key, DECLARED, globally=True)
+                    pos += theorem.end()
             elif name == 'newif':
                 arg = re.match(r'\s*\\(if[A-Za-z@]+)', text[pos:])
                 if not arg:
@@ -465,6 +642,11 @@ class Execution:
                     else:
                         replacement = self.run(yes if decision == 1 else no, active,
                                                offset+m.start(), in_math(m.start()))
+            elif name == 'unless':
+                nxt = TOKEN.search(text, pos)
+                if nxt and not text[pos:nxt.start()].strip() and opener(nxt[0][1:]):
+                    pos, replacement = self.conditional(text, nxt, active, offset,
+                                                        in_math(m.start()), m.start())
             elif opener(name):
                 pos, replacement = self.conditional(text, m, active, offset, in_math(m.start()))
             elif (self.defer and name and name[0].isalpha() and self.defer(name)
@@ -500,6 +682,32 @@ def switch_option(value):
     if not match:
         raise ValueError('expected ifNAME=true or ifNAME=false')
     return match[1], match[2] == 'true'
+
+
+def preserve_late_conditions(text):
+    """A layout/legacy expansion can reveal a test after its scope is gone."""
+    out, pos, cursor = [], 0, 0
+    while (m := TOKEN.search(text, pos)):
+        name = m[0][1:]
+        pos = m.end()
+        if name in DEFS:
+            pos = definition_end(text, m)
+            continue
+        start = m.start()
+        if name == 'unless':
+            nxt = TOKEN.search(text, pos)
+            if nxt and not text[pos:nxt.start()].strip() and opener(nxt[0][1:]):
+                m, name = nxt, nxt[0][1:]
+        if not opener(name):
+            continue
+        _, after = test(text, m, {}, lambda key: None)
+        _, _, close = bounds(text, after)
+        pos = close or len(text)
+        out.extend((text[cursor:start], preserved.pack(
+            'conditional', text[start:pos], conditional=m[0], source_stage='late_expansion',
+            status='pending', reason='conditional_after_ordered_execution')))
+        cursor = pos
+    return ''.join(out) + text[cursor:]
 
 
 def resolve(text, defined=lambda name: False, switches=None):

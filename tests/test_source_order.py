@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -27,7 +28,8 @@ class SourceOrderTests(unittest.TestCase):
             self.assertEqual([s['text'] for s in result['sentences']], expected)
             self.assertFalse(result['content_blocks'])
 
-    def test_later_definition(self):
+    @patch('format_names.lookup', return_value=False)
+    def test_later_definition(self, _initially_unbound):
         self.sentences(r'\ifdefined\later Wrong.\else Correct.\fi\def\later{X}'
                        r'\ifdefined\later Now defined.\fi', ['Correct.', 'Now defined.'])
 
@@ -99,9 +101,10 @@ class SourceOrderTests(unittest.TestCase):
                                    r'We use \notYet{x} here.'):
             self.assertEqual(result['content_blocks'][0]['raw'], r'\notYet{x}')
 
-    def test_let_and_operator_are_defined_in_order(self):
-        self.sentences(r'\ifdefined\mark Wrong.\else First.\fi \let\mark\relax'
-                       r'\ifdefined\mark Second.\fi \ifdefined\op Wrong.\else Third.\fi '
+    @patch('format_names.lookup', return_value=False)
+    def test_let_and_operator_are_defined_in_order(self, _initially_unbound):
+        self.sentences(r'\ifdefined\paperMarker Wrong.\else First.\fi \let\paperMarker\relax'
+                       r'\ifdefined\paperMarker Second.\fi \ifdefined\op Wrong.\else Third.\fi '
                        r'\DeclareMathOperator{\op}{Op}\ifdefined\op Fourth.\fi',
                        ['First.', 'Second.', 'Third.', 'Fourth.'])
 

@@ -67,6 +67,7 @@ from __future__ import annotations
 
 import preserved
 import conditionals
+import format_names
 import argparse
 import json
 import os
@@ -768,6 +769,7 @@ class Normalizer:
         # before the cleanup passes: the code the paper's own environment
         # inserts must go through the same treatment as the rest
         body = self._expand_declared_envs(body, macros)
+        body = conditionals.preserve_late_conditions(body)
         # Preserve semantic side content before any layout/name cleanup. Shield
         # newly created capsules in this pass as well as ones from prior passes.
         body = self._preserve_floats(body)
@@ -966,8 +968,22 @@ class Normalizer:
         ordinary.update(m[1] for pat in (L.MacroTable.LET_RE, L.MacroTable.LET_CHAR_RE)
                         for m in pat.finditer(declarations) if m[1] not in skip)
         legacy = set(macros.macros) - ordinary
+        queried = set(re.findall(r'\\ifdefined\s*\\([A-Za-z@]+)', declarations))
+        has_defined_test = r'\ifdefined' in declarations
+        if has_defined_test:
+            queried.update(m[2] for m in L.MacroTable.LET_RE.finditer(declarations))
+            queried.update((m[1] or m[2]) for m in conditionals.SIMPLE_CMD.finditer(declarations)
+                           if m[0].startswith(r'\providecommand'))
+        queried = tuple(sorted(queried))
+        def format_defined(profile, key):
+            if key in legacy:
+                return None  # A declaration the ordered reader did not execute.
+            if isinstance(profile, str) and any(os.path.isfile(os.path.join(os.path.dirname(p), profile + '.cls'))
+                                                for p in self.sources):
+                return None
+            return format_names.lookup(profile, queried, key)
         # A name from the paper's future definitions cannot answer \ifdefined.
-        intrinsic = {'def', 'gdef', 'let', 'relax', 'iftrue', 'iffalse', 'ifx',
+        intrinsic = {'def', 'gdef', 'let', 'relax', 'iftrue', 'iffalse', 'ifx', 'ifodd', 'ifcase', 'ifdim',
                      'ifnum', 'ifdefined', 'else', 'fi', 'newcommand', 'ensuremath',
                      'begin', 'end', 'section', 'subsection', 'textbf', 'emph', 'label', 'ref'}
         def defined(name):
@@ -985,7 +1001,7 @@ class Normalizer:
             # when its interior contains commands outside the vocabulary.
             unknown = [n for n in L.control_words(L.strip_math(spec.body))
                        if n not in execution.values and n not in conditionals.DEFS
-                       and not conditionals.opener(n) and n not in ('else', 'fi', 'global', 'csname', 'endcsname')
+                       and not conditionals.opener(n) and n not in ('else', 'fi', 'unless', 'global', 'csname', 'endcsname')
                        and not self._known_name(n, macros)]
             if unknown:
                 self.kept_macros[name] = spec.body
@@ -1004,14 +1020,14 @@ class Normalizer:
                 if len(matches) == 1:
                     packages[name] = read_source(matches[0], sources=self.sources)
         execution = conditionals.Execution(defined, skip, keep, packages, defer,
-                                           self.switch_defaults, self._decide_test)
+                                           self.switch_defaults, self._decide_test,
+                                           format_defined if has_defined_test else None)
         self.held_calls = execution.held
         listed = {os.path.basename(n) for n in named}
         for name in styles:
             if name not in named and name not in listed:
                 execution.load_package(name)
-        execution.run(preamble)
-        body = execution.run(body)
+        body = execution.begin_document(preamble, body)
         # Only the interpreter may expand a managed name, even if its
         # declaration was skipped, or the call preceded its declaration.
         for key in (execution.managed | ordinary) - skip:
@@ -1157,10 +1173,6 @@ class Normalizer:
             body = self._wrap_arg(body, name, left, right)
         # a delimiter drawn at a chosen size is the delimiter
         body = self._drop_size_name(body)
-        # \ifnum\mathgroup=\symbold: a test of which maths font is current.
-        # The whole conditional goes, keeping the first branch -- replacing only
-        # the test left ``\else B\fi`` behind, which is worse than not firing.
-        body = self._resolve_mathgroup_tests(body)
         # the typeset branch of \texorpdfstring is the content
         body = self._keep_first_of_two(body, "texorpdfstring")
         # \hyperref[label]{text}: the text is the content, the label is the link
@@ -1398,11 +1410,14 @@ class Normalizer:
         """1 or 2 when the test can be evaluated here, else None."""
         t = test.strip()
         m = self.EQUAL_RE.match(t)
-        if m and not any('\\' in arg for arg in m.groups()):
-            return 1 if m.group(1).strip() == m.group(2).strip() else 2
+        if m and not any(re.search(r'[\\~#$^]|\n\s*\n', arg) for arg in m.groups()):
+            # Ordinary whitespace tokenizes to one space, including next to
+            # an argument brace. A leading/trailing space affects equality.
+            left, right = (re.sub(r'[ \t\r\n]+', ' ', arg) for arg in m.groups())
+            return 1 if left == right else 2
         m = self.ISEMPTY_RE.match(t)
-        if m:
-            return 1 if not m.group(1).strip() else 2
+        if m and not re.search(r'[\\{}~#$^]', m[1]):
+            return 1 if not m[1].strip(' \t\r\n') else 2
         return None
 
     def _ifthenelse(self, body: str) -> str:
@@ -2331,41 +2346,6 @@ class Normalizer:
                 return body
             inner = body[m.end(): end - 1]
             body = body[:m.start()] + left + inner + right + body[end:]
-
-    @staticmethod
-    def _resolve_mathgroup_tests(body: str) -> str:
-        r"""Drop ``\ifnum\mathgroup=<name> ... \else ... \fi`` whole.
-
-        Keeping the first branch is what a reader of the source sees, and the
-        two branches differ only in which font the maths is drawn in.
-        """
-        pat = re.compile(r"\\ifnum\s*\\mathgroup\s*=\s*\\[A-Za-z@]+")
-        out, pos = [], 0
-        while True:
-            m = pat.search(body, pos)
-            if not m:
-                out.append(body[pos:])
-                return "".join(out)
-            out.append(body[pos: m.start()])
-            depth, else_at, end_at, end_end = 1, None, None, None
-            for t in L.IF_TOKEN_RE.finditer(body, m.end()):
-                cmd = t.group(1)
-                if cmd in L.IF_OPENERS:
-                    depth += 1
-                elif cmd == "else":
-                    if depth == 1 and else_at is None:
-                        else_at = t.start()
-                else:                                   # \fi
-                    depth -= 1
-                    if depth == 0:
-                        end_at, end_end = t.start(), t.end()
-                        break
-            if end_at is None:
-                # unbalanced: keep the rest untouched rather than cutting it
-                out.append(body[m.end():])
-                return "".join(out)
-            out.append(body[m.end(): else_at if else_at is not None else end_at])
-            pos = end_end
 
     def _drop_size_name(self, body: str) -> str:
         """``\\big(``, ``\\Bigl[``, ``\\Biggr|``: the delimiter is the content.
