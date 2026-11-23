@@ -49,6 +49,7 @@ Only the Python standard library is used.
 
 from __future__ import annotations
 
+import preserved
 import argparse
 import bisect
 import issues as _issues
@@ -294,166 +295,10 @@ def skip_ifnum_test(text: str, i: int) -> int:
     return k if k != j else i
 
 
-def read_switches(text: str) -> dict:
-    r"""``\newif\ifX`` and the last ``\Xtrue``/``\Xfalse`` in ``text``.
-
-    A switch the paper declares is decidable from the source; taking the first
-    branch regardless put commented-out branches back (GAPS.md J1).
-    """
-    out = {}
-    for m in NEWIF_RE.finditer(text):
-        out.setdefault("if" + m.group(1), False)   # \newif sets it false
-    for m in NEWIF_SET_RE.finditer(text):
-        key = "if" + m.group(1)
-        if key in out:
-            out[key] = (m.group(2) == "true")
-    return out
-
-
-def _resolve_ifcase(text: str, m, defined, switches) -> str:
-    """``\\ifcase N a \\or b \\or c \\fi`` keeps the branch TeX would take."""
-    j = m.end()
-    while j < len(text) and text[j] in " \t\n":
-        j += 1
-    num = re.match(r"-?\d+", text[j:])
-    n = int(num.group(0)) if num else 0
-    body_start = j + (num.end() if num else 0)
-    depth, ors, fi_pos, fi_end = 1, [], None, None
-    for t in IF_TOKEN_RE.finditer(text, body_start):
-        cmd = t.group(1)
-        if cmd in IF_OPENERS:
-            depth += 1
-        elif cmd == "or":
-            if depth == 1:
-                ors.append((t.start(), t.end()))
-        elif cmd == "fi":
-            depth -= 1
-            if depth == 0:
-                fi_pos, fi_end = t.start(), t.end()
-                break
-    if fi_pos is None:
-        # unbalanced: drop the test and the markers, keep every branch
-        return IF_TOKEN_RE.sub(" ", text[:m.start()] + text[body_start:])
-    bounds = [body_start] + [o[1] for o in ors]
-    ends = [o[0] for o in ors] + [fi_pos]
-    idx = n if 0 <= n < len(bounds) else 0
-    inner = text[bounds[idx]:ends[idx]]
-    return (text[:m.start()] + resolve_conditionals(inner, defined, switches)
-            + resolve_conditionals(text[fi_end:], defined, switches))
-
-
-#: unknown conditionals, kept so the caller can ask which branch applies
-COND_TODOS: List[dict] = []
-
-
-def _branch_pair(text: str, body_start: int) -> tuple:
-    """The two branches of the conditional that starts at body_start."""
-    depth, else_at, else_end, fi_at = 1, None, None, None
-    for t in IF_TOKEN_RE.finditer(text, body_start):
-        cmd = t.group(1)
-        if cmd in IF_OPENERS:
-            depth += 1
-        elif cmd == "else" and depth == 1 and else_at is None:
-            else_at, else_end = t.start(), t.end()
-        elif cmd == "fi":
-            depth -= 1
-            if depth == 0:
-                fi_at = t.start()
-                break
-    if fi_at is None:
-        return "", ""
-    first = text[body_start: else_at if else_at is not None else fi_at]
-    second = text[else_end: fi_at] if else_end is not None else ""
-    return first.strip()[:200], second.strip()[:200]
-
-
-def resolve_conditionals(text: str, defined, switches=None) -> str:
-    """Keep the branch TeX would keep and drop the markers.
-
-    Only ``\\ifdefined`` can be decided here; the other tests are left as
-    "take the first branch", which is what a reader of the source sees.
-    """
-    if switches is None:
-        switches = read_switches(text)
-    m = None
-    for cand in IF_TOKEN_RE.finditer(text):
-        name_c = cand.group(1)
-        if name_c in ("else", "fi"):
-            continue          # a stray close before any open: leave it, look on
-        if name_c not in IF_OPENERS and name_c not in switches:
-            # \ifthenelse, \ifstrequal and friends are macros with brace
-            # arguments, not openers: leave them for the caller
-            continue
-        m = cand
-        break
-    if m is None:
-        return text
-    name = m.group(1)
-    if name == "ifcase":
-        return _resolve_ifcase(text, m, defined, switches)
-    keep, body_start = True, m.end()
-    if name == "ifdefined":
-        nm = IF_NAME_RE.match(text, m.end())
-        if nm:
-            keep, body_start = defined(nm.group(1)), nm.end()
-    elif name in switches and name not in ("iftrue", "iffalse"):
-        keep = switches[name]
-    elif name not in ("iftrue", "iffalse", "ifnum", "ifdim", "ifcase",
-                      "ifodd", "ifvmode", "ifhmode", "ifmmode"):
-        # a conditional with no readable test: keep the first branch, but say so
-        _issues.record("conditional:unknown", "latex2nl.resolve_conditionals",
-                       where="\\" + name, size=0)
-        _first, _second = _branch_pair(text, m.end())
-        COND_TODOS.append({"site": "latex2nl.resolve_conditionals",
-                           "conditional": "\\" + name,
-                           "first": _first, "second": _second})
-    elif name == "iffalse":
-        # \iffalse Draft ... \fi is how authors comment a draft out; taking the
-        # first branch put that draft back into the text (GAPS.md D6)
-        keep, body_start = False, m.end()
-    elif name == "iftrue":
-        keep, body_start = True, m.end()
-    elif name in ("ifnum", "ifdim"):
-        body_start = skip_ifnum_test(text, m.end())
-    elif name == "ifodd":
-        # \count0 is the test, not text: leaving it put "\count0 A" in a sentence
-        j = m.end()
-        while j < len(text) and text[j] in " \t\n":
-            j += 1
-        operand = NUM_TOKEN_RE.match(text, j)
-        body_start = operand.end() if operand else j
-    depth, else_pos, else_end, end_pos, end_end = 1, None, None, None, None
-    for t in IF_TOKEN_RE.finditer(text, body_start):
-        cmd = t.group(1)
-        if cmd in IF_OPENERS:
-            depth += 1
-        elif cmd == "else":
-            if depth == 1 and else_pos is None:
-                else_pos, else_end = t.start(), t.end()
-        elif cmd == "or":
-            continue          # only \ifcase separates branches with \or
-        else:
-            depth -= 1
-            if depth == 0:
-                end_pos, end_end = t.start(), t.end()
-                break
-    if end_pos is None:
-        # Unbalanced inside this fragment (the matching \fi may sit in a part
-        # that was already cut).  Keeping the raw \if/\else/\fi tokens makes the
-        # result depend on how much text surrounds them, so a second pass can
-        # decide differently -- that is how a fixed point was lost.  Keep every
-        # branch's text but drop the markers: stable, and nothing disappears.
-        # A numeric test is still machinery, so its expression goes too.
-        cut = m.end()
-        if name in ("ifnum", "ifdim"):
-            cut = skip_ifnum_test(text, m.end())
-        return IF_TOKEN_RE.sub(" ", text[:m.start()] + text[cut:])
-    if keep:
-        inner = text[body_start: else_pos if else_pos is not None else end_pos]
-    else:
-        inner = text[else_end: end_pos] if else_end is not None else ""
-    return (text[: m.start()] + resolve_conditionals(inner, defined)
-            + resolve_conditionals(text[end_end:], defined))
+# Keep these public names for callers; conditional content travels in the
+# normalized source, not mutable process-global branch fragments.
+from conditionals import resolve as resolve_conditionals, read_switches
+COND_TODOS: List[dict] = []  # compatibility only; no longer used for transport
 
 
 # --------------------------------------------------------------------------
@@ -495,6 +340,8 @@ class FormulaRecord:
     context_after: str = ""
     ref_target: Optional[str] = None
     ref_kind: Optional[str] = None
+    opaque: bool = False
+    unrecognized_commands: List[str] = field(default_factory=list)
     #: the sentence this formula came from was dropped, so nothing points at
     #: the record; the anchors say where it stood
     orphan: bool = False
@@ -502,6 +349,10 @@ class FormulaRecord:
 
     def to_dict(self) -> dict:
         out = dict(self.__dict__)
+        if not self.opaque:
+            out.pop('opaque', None)
+        if not self.unrecognized_commands:
+            out.pop('unrecognized_commands', None)
         if not self.orphan:
             # a normal record does not carry the two keys at all
             out.pop("orphan", None)
@@ -552,6 +403,7 @@ class Sentence:
     flags: List[str] = field(default_factory=list)
     #: {"kind": "step", "index": 3} when the sentence starts a declared part
     part: Optional[dict] = None
+    content_kind: str = "prose"
 
     def to_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -1575,7 +1427,7 @@ def collapse_ws(text: str) -> str:
 
 def split_sentences(text: str) -> List[str]:
     """Split prose into sentences, protecting abbreviations and initials."""
-    t = text
+    t = re.sub(r"([。！？][”’）]*)", lambda m: m.group(1) + '\ue202', text)
     for ab in ABBREVIATIONS_ALWAYS:
         t = re.sub(r"(?<![A-Za-z])" + re.escape(ab),
                    ab[:-1] + PROTECTED_DOT, t)
@@ -1588,7 +1440,7 @@ def split_sentences(text: str) -> List[str]:
     t = re.sub(r"(?<=\b[A-Z]\.)([A-Z])\.", r"\1" + PROTECTED_DOT, t)
     t = re.sub(r"\b([A-Z])\.(?=\s+[A-Z]\.)", r"\1" + PROTECTED_DOT, t)
     t = re.sub(r"(?<=\d)\.(?=\d)", PROTECTED_DOT, t)
-    parts = re.split(r"(?<=[.!?])\s+", t)
+    parts = re.split(r"(?<=[.!?。！？])\s+|\ue202", t)
     # "(In particular ... MATH529.) Then ..." -- the full stop sits before the
     # closing parenthesis, so the split has to look one character back
     split_more: List[str] = []
@@ -1661,7 +1513,7 @@ def _starts_sentence(text: str) -> bool:
     t = text.lstrip()
     while t[:1] in ("(", "[", "«", "“", '"'):
         t = t[1:].lstrip()
-    return bool(t[:1].isupper())
+    return bool(t[:1].isupper() or (t[:1].isalpha() and not t[:1].islower()))
 
 
 # --------------------------------------------------------------------------
@@ -1726,7 +1578,7 @@ def tokenize(sentence: str) -> List[str]:
 # --------------------------------------------------------------------------
 
 
-def find_math_spans(text: str) -> List[Span]:
+def find_math_spans(text: str, clean: bool = True) -> List[Span]:
     """Locate ``$..$``, ``$$..$$``, ``\\(..\\)``, ``\\[..\\]`` and display envs."""
     spans: List[Span] = []
     i, n = 0, len(text)
@@ -1750,6 +1602,7 @@ def find_math_spans(text: str) -> List[Span]:
             if nxt == "(":
                 end = text.find("\\)", i + 2)
                 if end == -1:
+                    _issues.record('math:unclosed', 'latex2nl.find_math_spans', where=r'\(', size=1)
                     spans.append(Span(i, n, "inline", text[i + 2:]))
                     i = n
                     continue
@@ -1785,7 +1638,7 @@ def find_math_spans(text: str) -> List[Span]:
                                   text[i: em.end()], env="diagram"))
                 i = em.end()
                 continue
-            if m and m.group(1) in MATH_ENVS:
+            if m and (m.group(1) in MATH_ENVS or m.group(1) == 'display'):
                 env = m.group(1)
                 after = i + m.end()
                 em = find_env_end(text, after, env)
@@ -1814,6 +1667,7 @@ def find_math_spans(text: str) -> List[Span]:
             if text.startswith("$$", i):
                 end = text.find("$$", i + 2)
                 if end == -1:
+                    _issues.record('math:unclosed', 'latex2nl.find_math_spans', where='$$', size=1)
                     # unclosed: the rest is still a display (AUDIT.md 21)
                     spans.append(Span(i, n, "display", text[i + 2:]))
                     i = n
@@ -1854,6 +1708,10 @@ def find_math_spans(text: str) -> List[Span]:
         i += 1
 
     for s in spans:
+        # Opaque formula interiors are data, not a place for heuristic cleanup.
+        # In particular, unknown argument groups may hold text or nested math.
+        if not clean or unknown_commands(s.body):
+            continue
         # \taglabel{X} is a \tag the normalizer turned into a label; it is not a
         # \label, so the hoisting that moves \label out of the body never sees it
         for lm in re.finditer(r"\\(?:label|taglabel)\{([^}]*)\}", s.body):
@@ -2601,6 +2459,8 @@ def unknown_commands(body: str) -> List[str]:
     """
     out = []
     for name in control_words(body):
+        if name == 'taglabel':
+            continue  # Internal label transport produced by normalize, not math vocabulary.
         if (name not in LEXICON_COMMANDS and name not in ANSWERED_COMMANDS
                 and name not in _PAPER_ANSWERED):
             out.append("\\" + name)
@@ -2667,9 +2527,12 @@ class LatexToNL:
         #: statement block is ``\begin{statement}{kind}`` instead of
         #: ``\begin{kind}``, and the same holds for display/grid/list
         self.canonical: bool = False
+        self.content_blocks: List[dict] = []
         self.formulas: List[FormulaRecord] = []
         self.sentences: List[Sentence] = []
         self.unresolved: List[str] = []
+        self.formula_diagnostics: List[dict] = []
+        self._opaque_math: List[str] = []
         #: upright names read as operators, e.g. \textup{Ric}; one per use
         self.operator_names: List[str] = []
         #: names this paper writes as \operatorname{...} (or declares with
@@ -2703,14 +2566,20 @@ class LatexToNL:
         _issues.record("unresolved:line", "latex2nl._note", where=what[:120],
                        size=1, cls=what.split(":")[0][:40])
 
+    def _formula_diagnostic(self, fid: str, kind: str, detail: str, **fields) -> None:
+        """Optional downstream interpretation; never a splitting failure."""
+        self.formula_diagnostics.append(dict(formula=fid, kind=kind, detail=detail, **fields))
+        _issues.record('formula:diagnostic', 'latex2nl._formula_diagnostic',
+                       where=fid + ': ' + detail, size=1, diagnostic_kind=kind)
+
     # -- entry point ----------------------------------------------------
     def convert(self, tex: str) -> Dict[str, object]:
         tex = strip_comments(tex)
         self.macros.parse(tex)
         # the switches a paper declares live in its preamble, which is stripped
         # before the body is read (GAPS.md J1)
-        self.switches = read_switches(tex)
         preamble, body = split_document(tex)
+        self.switches = read_switches(preamble)
         self._load_styles(preamble)
         extra = [e for e in sorted(self.macros.envs) if e not in UNIT_ENVS]
         if extra:
@@ -2732,10 +2601,19 @@ class LatexToNL:
         # expansion next: a wrapper macro (\makebibliography) hides document
         # machinery that _drop_meta has to see
         body = self.macros.expand(body)
+        # The raw entry point must preserve the same side content as the
+        # canonical route. Do not invoke the entire normalizer here.
+        import normalize
+        keeper = normalize.Normalizer()
+        body = keeper._ifthenelse(body)
+        body = keeper._preserve_floats(body)
+        body = keeper._preserve_notes(body)
+        self._by_id = {}
+        body = self._extract_preserved(body)
+        body = self._shield_opaque_math(body)
         body = self._drop_meta(body)
         body = self._unwrap_unknown_envs(body)
 
-        self._by_id: Dict[str, FormulaRecord] = {}
         # \DeclareMathOperator lives in the preamble, which _drop_meta has
         # already removed from body: the declaration has to be read from the
         # source, or it is never seen at all
@@ -2745,9 +2623,13 @@ class LatexToNL:
                 body)} | {m.group(1) for m in re.finditer(
                 r"\\DeclareMathOperator\*?\s*\{\s*\\([A-Za-z]+)\s*\}",
                 tex)}
-        self._by_id = {}
+        self._by_id = {r.id: r for r in self.formulas}
         for unit in self._segment(body):
             self._process_unit(unit)
+        # Notes are separate units, never spliced into the middle of a claim.
+        # The REF anchor maintains the parent relationship; opaque blocks stay
+        # in content_blocks.json and prevent a clean verdict.
+        self._process_preserved()
         # every record should be reachable from a sentence, or say why not
         # sent.formulas is filled with a \b-anchored pattern, so "MATH931th"
         # never lands in it while the text does use the record; the text is
@@ -2769,7 +2651,9 @@ class LatexToNL:
         return {
             "sentences": [s.to_dict() for s in self.sentences],
             "formulas": [f.to_dict() for f in self.formulas],
+            "content_blocks": self.content_blocks,
             "unresolved": list(self.unresolved),
+            "formula_diagnostics": list(self.formula_diagnostics),
             "operator_names": names,
             "sentence_boundaries": list(self.boundaries),
             "boundaries_joined": self._boundaries_joined,
@@ -2779,6 +2663,68 @@ class LatexToNL:
             "unwrapped_envs": dict(self.unwrapped_envs),
             "slots_pending": list(self.slots_pending),
         }
+
+    def _extract_preserved(self, body: str) -> str:
+        # A capsule inside math cannot become an embedded REF inside another
+        # formula: that REF would be unreachable from any sentence. Preserve
+        # the containing formula as pending, with all alternatives in its raw.
+        for span in reversed(find_math_spans(body)):
+            fragment = body[span.start:span.end]
+            if preserved.MARKER.search(fragment):
+                raw = preserved.MARKER.sub(lambda m: preserved.unpack(m)['raw'], fragment)
+                replacement = preserved.pack('conditional_formula', raw,
+                    status='pending', reason='preserved_content_inside_formula')
+                body = body[:span.start] + replacement + body[span.end:]
+        def sub(m):
+            block = preserved.unpack(m)
+            rid = self._next_ref_id()
+            bid = "content%d" % (len(self.content_blocks) + 1)
+            block.update(id=bid, anchor_ref=rid, anchor_sids=[], sentence_ids=[])
+            self.content_blocks.append(block)
+            rec = FormulaRecord(id=rid, raw=block["raw"], expanded="",
+                                kind="ref", role="term", ref_kind="content",
+                                ref_target=bid)
+            self.formulas.append(rec)
+            self._by_id[rid] = rec
+            if block['kind'] in ('float', 'conditional'):
+                return "\n\n" + rid + "\n\n"
+            return " " + rid + " "
+        return preserved.MARKER.sub(sub, body)
+
+    def _process_preserved(self) -> None:
+        index = 0
+        while index < len(self.content_blocks):
+            block = self.content_blocks[index]
+            index += 1
+            anchors = [s for s in self.sentences if block["anchor_ref"] in s.formulas]
+            block["anchor_sids"] = [s.sid for s in anchors]
+            block["parent_units"] = list(dict.fromkeys(s.unit for s in anchors))
+            pending = block.get("status") == "pending"
+            if pending and not block.get("previews"):
+                continue
+            # Macros in notes have already expanded before normalization stores
+            # the block. Delayed note normalization protects its content from
+            # destructive passes over the surrounding prose.
+            import normalize
+            note = normalize.Normalizer().normalize(
+                '\n\n'.join(block['previews']) if pending else block.get("body", block["raw"]))
+            note = self._extract_preserved(note)
+            note = self._shield_opaque_math(note)
+            before = len(self.sentences)
+            unit = Unit(uid=block["id"], env="caption" if pending else block["kind"],
+                        section=anchors[0].section if anchors else "",
+                        title=None, body=note)
+            self._process_unit(unit)
+            block["preview_sentence_ids" if pending else "sentence_ids"] = [s.sid for s in self.sentences[before:]]
+            if not pending:
+                block["status"] = "parsed" if block["sentence_ids"] else "pending"
+
+    def _shield_opaque_math(self, body: str) -> str:
+        # Protect formula interiors from prose metadata and environment passes.
+        import normalize
+        masked, records = normalize.Normalizer._protect_opaque_math(body, len(self._opaque_math))
+        self._opaque_math.extend(records)
+        return masked
 
     # -- stage: let the paper define its own vocabulary -----------------
     def _load_styles(self, preamble: str) -> None:
@@ -3183,40 +3129,18 @@ class LatexToNL:
                 for sent in self._join_sentences(split_sentences(chunk), unit):
                     if not sent:
                         continue
-                    # a sentence has to contain a word.  Testing the text as it
-                    # stands is not enough: the placeholder itself reads ``MATH1000``,
-                    # which is four letters, so a display standing alone in its own
-                    # paragraph became a "sentence" of one formula (1912.05938:
-                    # 996 sentences raw, 1163 canonical, and the extra ones are
-                    # exactly these).
-                    if "{" in sent or "}" in sent:
-                        # an unmatched half of a group that spanned two units, or a
-                        # group whose content is math still in text form
-                        cleaned = re.sub(r"(?<!\\)[{}]", "", sent)
-                        if cleaned != sent:
-                            self.brace_unwrapped += 1
-                            sent = cleaned
-                    _only_formula = not re.search(
-                        r"[A-Za-z]{2,}", PLACEHOLDER_RE.sub(" ", sent))
-                    _item_formula = ("/item" in (unit.uid or "")
-                                     and PLACEHOLDER_RE.search(sent))
-                    if _only_formula and not _item_formula:
+                    # Formula-only and non-Latin content are valid units.  Only
+                    # punctuation/spacing without a payload may be discarded.
+                    residue = PLACEHOLDER_RE.sub(" ", sent)
+                    has_payload = bool(PLACEHOLDER_RE.search(sent))
+                    has_text = any(ch.isalnum() for ch in residue)
+                    if not has_payload and not has_text:
                         _issues.record("drop:empty_sentence", "latex2nl._process_unit",
-                                       where=sent.strip()[:80], size=len(sent))
-                        # the sentence is not prose, so it is dropped -- but its
-                        # formulas stay in the table: mark them, and remember the
-                        # last sentence that was kept, because formulas.json is not
-                        # in document order
-                        prev = self.sentences[-1].sid if self.sentences else None
-                        for fid in [m.group(1) for m in PLACEHOLDER_RE.finditer(sent)]:
-                            rec = self._by_id.get(fid)
-                            if rec is not None:
-                                rec.orphan = True
-                                rec.prev_sentence = prev
-                                _issues.record(
-                                    "display:orphan", "latex2nl._process_unit",
-                                    where="%s %s" % (rec.id, rec.kind), size=1)
+                                       where=sent[:80], size=len(sent))
                         continue
+                    content_kind = "formula_only" if has_payload and not has_text else "prose"
+                    if has_payload and not has_text and not re.search(r'MATH\d+', sent):
+                        content_kind = "reference_only"
                     self._sentence_count += 1
                     ids = [m.group(1) for m in PLACEHOLDER_RE.finditer(sent)]
                     toks = sent.split() if self.tok_mode == "space" else tokenize(sent)
@@ -3235,7 +3159,7 @@ class LatexToNL:
                         env=unit.env, section=unit.section, title=unit.title,
                         speech_act=classify_speech_act(sent),
                         formulas=ids, tokens=toks, words=words, flags=flags,
-                        part=part,
+                        part=part, content_kind=content_kind,
                     ))
 
     def _join_sentences(self, parts: Sequence[str], unit: Unit) -> List[str]:
@@ -3259,7 +3183,11 @@ class LatexToNL:
                 answer = self.sentence_answers.get(sig)
                 if answer is not None:
                     self._answers_used.add(sig)
-                if answer is None and not _starts_sentence(sent):
+                # A single initial before a capitalized word is ambiguous:
+                # "J. Smith" versus "by A. This set...". Keep the default
+                # split, but require a boundary decision instead of claiming it.
+                initial = bool(re.search(r'\b[A-Z]\.$', left))
+                if answer is None and (not _starts_sentence(sent) or initial):
                     self._record_boundary(sig, left, sent, unit)
                 if answer == "join":
                     out[-1] = join_boundary(left, sent)
@@ -3409,6 +3337,7 @@ class LatexToNL:
 
     # -- stage: formula -> placeholder ----------------------------------
     def _rewrite(self, text: str, unit: Unit) -> Tuple[str, List[FormulaRecord]]:
+        text = preserved.restore(text, self._opaque_math, 'OPAQUEMATH')
         text = PART_MARKER_RE.sub(
             lambda m: "\ue000" + m.group(1) + "\ue001", text)
         spans = find_math_spans(text)
@@ -3540,6 +3469,21 @@ class LatexToNL:
     def _make_records(self, body: str, span: Span, before: str,
                       after: str) -> List[FormulaRecord]:
         """Turn one math span into one or several table records."""
+        unknown = unknown_commands(body)
+        drawing = bool(re.search(r'\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})', body))
+        if unknown and not drawing:
+            # No whitelist completion required. One formula, intact arguments,
+            # no qquad/side-condition/slot rewriting or inferred mathematical role.
+            core, punct = strip_trailing_punct(body)
+            pid = self._next_math_id()
+            rec = FormulaRecord(id=pid, raw=body, expanded=core, kind=span.kind,
+                                role='opaque', opaque=True, unrecognized_commands=unknown,
+                                env=span.env, label=span.label, trailing_punct=punct,
+                                flags=['opaque_formula'], context_before=before[-120:],
+                                context_after=after[:80])
+            self._formula_diagnostic(pid, 'unrecognized_commands',
+                'Formula preserved without interpreting internal commands', commands=unknown)
+            return [rec]
         parts: List[str] = [body]
         side: List[str] = []
         terminal = ""
@@ -3631,23 +3575,24 @@ class LatexToNL:
             unknown = unknown_commands(core)
             if unknown:
                 rec.flags.append("unknown_cmd:" + ",".join(unknown))
-                self._note(pid, "formula uses commands not understood: "
-                                + ", ".join(unknown))
+                rec.unrecognized_commands = unknown
+                self._formula_diagnostic(pid, 'unrecognized_commands',
+                                         ', '.join(unknown), commands=unknown)
             vague = [s for s in text_slots if s["role"] == "unclassified"]
             if vague:
                 rec.flags.append("text_slot_unclassified")
-                self._note(pid, "text slot(s) with no role hint: " + ", ".join(
+                self._formula_diagnostic(pid, 'unclassified_text_slot', "text slot(s) with no role hint: " + ", ".join(
                     "%s=%r" % (s["id"], s["raw"].strip()) for s in vague))
             if "has_text" in flags:
-                self._note(pid, "leftover \\text{...} that could not be lifted "
+                self._formula_diagnostic(pid, 'unparsed_formula_text', "leftover \\text{...} that could not be lifted "
                                 "into a text slot")
             if "piecewise" in flags:
-                self._note(pid, "piecewise definition; needs a cases node")
+                self._formula_diagnostic(pid, 'formula_structure', "piecewise definition; needs a cases node")
             # a bare run of letters ("xy", "Cf") is a question for the word
             # table, not a defect: lexicon.py exports it like any other
             # juxtaposition, so it must not also be reported here
             if "big_delimiter" in flags and top and top["symbol"] == "=":
-                self._note(pid, "set-builder or large bracket: relation inside "
+                self._formula_diagnostic(pid, 'formula_structure', "set-builder or large bracket: relation inside "
                                 "the brackets was treated as opaque")
             records.append(rec)
         return records
@@ -3787,13 +3732,33 @@ def write_outputs(result: Dict[str, object], out_dir: str,
             f.write(json.dumps(s, ensure_ascii=False) + "\n")
     with open(paths["formulas"], "w", encoding="utf-8") as f:
         json.dump(result["formulas"], f, ensure_ascii=False, indent=2)
-    if COND_TODOS:
-        with open(os.path.join(out_dir, "conditional_todo.json"), "w",
-                  encoding="utf-8") as f:
-            json.dump({"items": COND_TODOS,
-                       "_about": "conditionals the source cannot decide: answer "
-                                 "branch1 / branch2 / both"},
-                      f, ensure_ascii=False, indent=1)
+    with open(os.path.join(out_dir, "content_blocks.json"), "w", encoding="utf-8") as f:
+        json.dump(result.get("content_blocks", []), f, ensure_ascii=False, indent=2)
+    with open(os.path.join(out_dir, "split_status.json"), "w", encoding="utf-8") as f:
+        json.dump({"version": 2,
+                   "counts": {key: len(result.get(key, [])) for key in ('sentences','formulas','content_blocks')},
+                   "pending": {"content": sum(b.get('status') == 'pending' for b in result.get('content_blocks', [])),
+                               "boundaries": sum(not b.get('answer') for b in result.get('sentence_boundaries', [])),
+                               "unresolved": len(result.get('unresolved', []))},
+                   "downstream": {"slots": len(result.get('slots_pending', [])),
+                                  "formula_diagnostics": len(result.get('formula_diagnostics', []))}}, f, ensure_ascii=False, indent=2)
+    with open(os.path.join(out_dir, 'formula_diagnostics.json'), 'w', encoding='utf-8') as f:
+        json.dump({'scope': 'downstream', 'blocks_splitting': False,
+                   'items': result.get('formula_diagnostics', [])}, f, ensure_ascii=False, indent=2)
+    pending_blocks = [b for b in result.get("content_blocks", []) if b.get("status") == "pending"]
+    todo = os.path.join(out_dir, "content_todo.json")
+    if pending_blocks:
+        with open(todo, "w", encoding="utf-8") as f:
+            json.dump({"items": pending_blocks}, f, ensure_ascii=False, indent=2)
+    elif os.path.exists(todo):
+        os.remove(todo)
+    conditionals = [b for b in pending_blocks if b.get("kind") == "conditional"]
+    conditional_path = os.path.join(out_dir, "conditional_todo.json")
+    if conditionals:
+        with open(conditional_path, "w", encoding="utf-8") as f:
+            json.dump({"items": conditionals}, f, ensure_ascii=False, indent=2)
+    elif os.path.exists(conditional_path):
+        os.remove(conditional_path)
     with open(paths["unresolved"], "w", encoding="utf-8") as f:
         for line in result["unresolved"]:
             f.write(line + "\n")
@@ -3981,8 +3946,10 @@ def _self_test() -> int:
 
     print("[12] unknown command reported")
     r = run("We have $\\weirdop(x)=0$.")
-    check("unresolved logged", any("\\weirdop" in u for u in r["unresolved"]),
-          str(r["unresolved"]))
+    check("unknown formula is preserved with a nonblocking diagnostic",
+          not r['unresolved'] and r['formulas'][0]['raw'] == r'\weirdop(x)=0'
+          and any(r'\weirdop' in d.get('commands', []) for d in r['formula_diagnostics']),
+          str(r['formula_diagnostics']))
 
     print("[12b] \\text{} inside a formula becomes a text slot")
     r = run("If $q(x)=(a,b)$, then $u\\mapsto\\ell(u)\\ \\text{has rank }h"
@@ -4341,8 +4308,9 @@ def _self_test() -> int:
     check("s.t. is one token", "s.t." in toks, str(toks))
     r = run("Cited after J. Smith and co., see w.l.o.g. the case $n=1$.")
     toks = r["sentences"][0]["tokens"]
-    check("unknown abbreviation keeps its dot",
-          "J." in toks and toks.count(".") == 1, str(toks))
+    check("single initial before a name is an explicit boundary question",
+          any(b['before'].endswith('J.') and b['after'].startswith('Smith')
+              for b in r['sentence_boundaries']), str(r['sentence_boundaries']))
 
     print("[16] the canonical pipeline, end to end")
     # Everything above runs on raw LaTeX.  The pipeline does not: it feeds

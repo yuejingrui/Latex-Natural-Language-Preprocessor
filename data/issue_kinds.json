@@ -2,6 +2,11 @@
   "_about": "Destination of every let-through recorded by scripts/issues.py. route: code / todo:<file> / human / check / ledger. gate: hard (must not happen), soft (report only), none (deliberate). A kind that is not here cannot be recorded: issues.record raises. See GAPS.md sections 3 and 4.",
   "version": 1,
   "kinds": {
+    "formula:diagnostic": {
+      "route": "downstream",
+      "gate": "none",
+      "about": "Unrecognized formula commands or optional formula interpretation; does not block splitting."
+    },
     "drop:footnote": {
       "route": "human",
       "gate": "soft",
@@ -15,7 +20,7 @@
     "drop:empty_sentence": {
       "route": "ledger",
       "gate": "soft",
-      "about": "a split sentence with fewer than two letters is discarded (D7). The item number can be lost with it."
+      "about": "A sentence with no alphanumeric content or placeholders was omitted."
     },
     "conditional:iffalse": {
       "route": "code",
@@ -25,7 +30,7 @@
     "conditional:unknown": {
       "route": "todo:conditional_todo.json",
       "gate": "soft",
-      "about": "an \\ifX whose condition cannot be read takes the first branch (J1). Evidence: both branch texts."
+      "about": "An undecidable conditional is retained in full as a pending content block."
     },
     "name:outside_vocabulary": {
       "route": "todo:names_todo.json",
@@ -69,8 +74,8 @@
     },
     "check:C7": {
       "route": "check",
-      "gate": "soft",
-      "about": "an inline formula whose raw braces do not balance (M4)."
+      "gate": "hard",
+      "about": "Unbalanced or misordered TeX grouping braces in inline or display math; escaped braces excluded."
     },
     "check:C8": {
       "route": "check",
@@ -166,6 +171,26 @@
       "gate": "soft",
       "route": "ledger",
       "note": "one line latex2nl wrote to unresolved.log"
+    },
+    "check:linkage": {
+      "route": "check",
+      "gate": "hard",
+      "about": "Duplicate IDs, missing or inconsistent placeholder links, or unreachable records."
+    },
+    "check:tokens": {
+      "route": "check",
+      "gate": "hard",
+      "about": "Token stream does not preserve every non-whitespace sentence character."
+    },
+    "check:artifact": {
+      "route": "check",
+      "gate": "hard",
+      "about": "Required artifact or ledger is missing, malformed, or has an unregistered kind."
+    },
+    "check:pending": {
+      "route": "check",
+      "gate": "soft",
+      "about": "Content or decisions remain unprocessed; strict mode returns 3."
     }
   }
 }

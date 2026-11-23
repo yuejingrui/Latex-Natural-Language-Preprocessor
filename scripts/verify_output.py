@@ -10,7 +10,8 @@ ledger with the kind from GAPS.md section 5 (C1-C16).
     python3 verify_output.py OUT            # report + write OUT/issues.json
     python3 verify_output.py OUT --strict   # exit 1 if a hard check hits
 
-Exit codes: 0 clean, 1 a hard check hit, 2 nothing to check.
+Strict exit codes: 0 no hard/pending issues, 1 hard failure, 2 invalid artifacts, 3 pending.
+Without --strict, valid artifacts return 0 and status is reported in issues.json.
 """
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ import json
 import os
 import re
 import sys
+from collections import Counter
 from typing import Dict, List
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +29,7 @@ import issues  # noqa: E402
 
 PLACEHOLDER = re.compile(r"\b(?:MATH|REF|EQ|GRID|DIAGRAM)\d+\b")
 CONTROL = re.compile(r"\\[A-Za-z]+")
-TERMINAL = ".!?:"
+TERMINAL = ".!?:。！？"
 REF_BRACE = re.compile(r"REF\d+\}")
 
 
@@ -36,18 +38,34 @@ def load(out: str) -> Dict[str, object]:
     sents_path = os.path.join(out, "sentences.jsonl")
     forms_path = os.path.join(out, "formulas.json")
     if not os.path.exists(sents_path) or not os.path.exists(forms_path):
-        raise SystemExit("verify_output: %s has no sentences.jsonl/formulas.json" % out)
-    doc["sentences"] = [json.loads(l) for l in open(sents_path, encoding="utf-8")
-                        if l.strip()]
-    data = json.load(open(forms_path, encoding="utf-8"))
+        raise ValueError("%s has no sentences.jsonl/formulas.json" % out)
+    with open(sents_path, encoding="utf-8") as fh:
+        doc["sentences"] = [json.loads(l) for l in fh if l.strip()]
+    with open(forms_path, encoding="utf-8") as fh:
+        data = json.load(fh)
     doc["formulas"] = data["formulas"] if isinstance(data, dict) else data
     stats_path = os.path.join(out, "normalize-stats.json")
     doc["stats"] = {}
     if os.path.exists(stats_path):
-        try:
-            doc["stats"] = json.load(open(stats_path, encoding="utf-8"))
-        except ValueError:
-            pass
+        with open(stats_path, encoding="utf-8") as fh:
+            doc["stats"] = json.load(fh)
+    for field, key in (("sentences", "sid"), ("formulas", "id")):
+        if not isinstance(doc[field], list):
+            raise ValueError(field + " must be a list")
+        for row in doc[field]:
+            if not isinstance(row, dict) or not isinstance(row.get(key), str) or not row[key]:
+                raise ValueError(field + " has an invalid identifier")
+    for s in doc['sentences']:
+        if (not isinstance(s.get('text'), str) or
+            not isinstance(s.get('tokens'), list) or not all(isinstance(t,str) for t in s['tokens']) or
+            not isinstance(s.get('formulas'), list) or not all(isinstance(t,str) for t in s['formulas'])):
+            raise ValueError('invalid sentence fields: ' + s['sid'])
+    doc['content_blocks'] = []
+    block_path = os.path.join(out, 'content_blocks.json')
+    if os.path.exists(block_path):
+        with open(block_path, encoding='utf-8') as fh: doc['content_blocks'] = json.load(fh)
+    if not isinstance(doc['content_blocks'], list):
+        raise ValueError('content_blocks must be a list')
     return doc
 
 
@@ -82,10 +100,12 @@ def check_parses(out: str, sentences) -> List[dict]:
     hits = []
     by_sid = {r["sid"]: r for r in rows}
     missing = [s["sid"] for s in sentences if s["sid"] not in by_sid]
-    for sid in missing[:50]:
+    for sid in missing:
         hits.append(("parse:coverage", "verify_output.check_parses",
                      "%s has no parse" % sid, 1))
     for r in rows:
+        if r['sid'] not in {s['sid'] for s in sentences} or sum(x['sid']==r['sid'] for x in rows)>1:
+            hits.append(('parse:coverage', 'verify_output.check_parses', 'duplicate or unknown sid '+r['sid'], 1))
         tree = r.get("tree")
         if not tree:
             hits.append(("parse:failed", "verify_output.check_parses",
@@ -119,6 +139,8 @@ def check_c1(doc) -> List[dict]:
     hits = []
     sents = doc["sentences"]
     for i, sent in enumerate(sents[:-1]):
+        if sent.get('unit') != sents[i + 1].get('unit'):
+            continue
         text = (sent.get("text") or "").rstrip()
         if not text or text[-1] in TERMINAL:
             continue
@@ -195,7 +217,7 @@ def check_c6(doc) -> List[dict]:
     """
     hits = []
     for f in doc["formulas"]:
-        if f.get("kind") == "ref":
+        if f.get("kind") == "ref" or f.get('opaque'):
             # a citation's optional note may hold maths ("\cite[for $p=2$]{..}"),
             # and the record is a reference, not a formula body
             continue
@@ -220,10 +242,16 @@ def check_c16(doc) -> List[dict]:
 def check_c7(doc) -> List[dict]:
     hits = []
     for f in doc["formulas"]:
-        if f.get("kind") != "inline":
+        if f.get("kind") not in ("inline", "display"):
             continue
         raw = f.get("raw") or ""
-        if raw.count("{") != raw.count("}"):
+        depth, broken = 0, False
+        for m in re.finditer(r'\\[A-Za-z@]+|\\[^A-Za-z@]|[{}]', raw):
+            if m.group() == '{': depth += 1
+            elif m.group() == '}':
+                depth -= 1
+                if depth < 0: broken = True
+        if depth != 0 or broken:
             hits.append({"where": f["id"]})
     return hits
 
@@ -244,7 +272,7 @@ WORD_RUN = re.compile(r"\b[A-Za-z]{2,}(?:\s+[A-Za-z]{2,}){3,}\b")
 def check_c9(doc) -> List[dict]:
     hits = []
     for f in doc["formulas"]:
-        if f.get("kind") == "ref":
+        if f.get("kind") == "ref" or f.get('opaque'):
             # a reference record's body is the label ("eq:two moduli are
             # birational"); labels are words by design, not prose that leaked in
             continue
@@ -258,6 +286,8 @@ def check_c9(doc) -> List[dict]:
 def check_c10(doc) -> List[dict]:
     hits = []
     for f in doc["formulas"]:
+        if f.get('opaque'):
+            continue  # Internal environments are preserved, not interpreted.
         for m in re.finditer(r"\\begin\{([A-Za-z@*]+)\}", f.get("expanded") or ""):
             if m.group(1) not in ("grid", "diagram"):
                 hits.append({"where": "%s %s" % (f["id"], m.group(1))})
@@ -285,13 +315,19 @@ def check_c12(doc) -> List[dict]:
 
 
 def check_c13(doc, normalized: str) -> List[dict]:
-    labels = set(re.findall(r"\\label\{([^{}]*)\}", normalized))
+    from latex2nl import find_group_end
+    labels = set()
+    for m in re.finditer(r'\\label\s*\{', normalized):
+        end = find_group_end(normalized, m.end()-1)
+        if end: labels.add(normalized[m.end():end-1])
     hits = []
     for f in doc["formulas"]:
+        if f.get('kind') != 'ref' or f.get('ref_kind') in ('cite', 'content'):
+            continue
         target = f.get("ref_target")
         if not target or not isinstance(target, str):
             continue
-        if target in labels or target in ("", "None"):
+        if target in labels or all(t.strip() in labels for t in target.split(',')) or target in ("", "None"):
             continue
         hits.append({"where": "%s -> %s" % (f["id"], target)})
     return hits
@@ -311,12 +347,158 @@ def check_c14(doc) -> List[dict]:
     return hits
 
 
+def check_links(doc, normalized):
+    hits = []
+    def hit(where): hits.append({'where': where})
+    sents, forms, blocks = doc['sentences'], doc['formulas'], doc['content_blocks']
+    by_sid = {s['sid']: s for s in sents}
+    by_id = {f['id']: f for f in forms}
+    for label, ids in [('sentence',[s['sid'] for s in sents]), ('formula',[f['id'] for f in forms]),
+                       ('content',[b['id'] for b in blocks])]:
+        for key, count in Counter(ids).items():
+            if count > 1: hit('duplicate '+label+' '+key)
+    used = set()
+    # The converter supports placeholders attached to affixes (MATH1th).
+    refs = re.compile(r'(?:MATH|REF)\d+')
+    for sentence in sents:
+        text_ids = refs.findall(sentence['text'])
+        used.update(text_ids)
+        if set(text_ids) != set(sentence['formulas']):
+            hit(sentence['sid']+' text/formulas mismatch')
+        for fid in set(text_ids) | set(sentence['formulas']):
+            if fid not in by_id: hit(sentence['sid']+' missing '+fid)
+    for f in forms:
+        if f['id'] not in used: hit('unreachable '+f['id'])
+        if f.get('opaque'):
+            from latex2nl import strip_trailing_punct
+            # Opaque output has a stricter preservation contract instead of the
+            # expanded-form conventions (C6/C9/C10) used by known formulas.
+            expected, _ = strip_trailing_punct(f.get('raw', ''))
+            if (f.get('expanded') != expected or f.get('text_slots') or
+                    f.get('side_conditions') or f.get('role') != 'opaque'):
+                hit(f['id']+' opaque formula was rewritten')
+    block_ids = {b['id'] for b in blocks}
+    for f in forms:
+        if f.get('ref_kind') == 'content' and f.get('ref_target') not in block_ids:
+            hit(f['id']+' missing content block')
+    for b in blocks:
+        ref = by_id.get(b['anchor_ref'], {})
+        if ref.get('ref_target') != b['id'] or ref.get('ref_kind') != 'content':
+            hit(b['id']+' invalid anchor reference')
+        anchors = {s['sid'] for s in sents if b['anchor_ref'] in s['formulas']}
+        if not anchors or anchors != set(b.get('anchor_sids', [])):
+            hit(b['id']+' invalid anchor sentences')
+        for sid in b.get('sentence_ids', []) + b.get('preview_sentence_ids', []):
+            if sid not in by_sid or by_sid[sid].get('unit') != b['id']:
+                hit(b['id']+' invalid child sentence '+sid)
+        if b.get('status') not in ('parsed','pending') or (b.get('status')=='parsed' and not b.get('sentence_ids')):
+            hit(b['id']+' invalid content status')
+        if not isinstance(b.get('raw'),str) or not b['raw']:
+            hit(b['id']+' missing preserved source')
+    import preserved
+    # Top-level capsules must survive even if both the REF and block are removed.
+    source_blocks = Counter(preserved.unpack(m)['raw'] for m in preserved.MARKER.finditer(normalized))
+    output_blocks = Counter(b['raw'] for b in blocks)
+    for raw, count in source_blocks.items():
+        enclosing = sum(b.get('kind') == 'conditional_formula' and raw in b['raw'] for b in blocks)
+        if output_blocks[raw] + enclosing < count: hit('source capsule missing from output')
+    return hits
+
+
+def pending_items(out, doc):
+    pending = []
+    for block in doc['content_blocks']:
+        if block.get('status') == 'pending': pending.append('content '+block['id'])
+    for name in sorted(os.listdir(out)):
+        if not name.endswith('_todo.json'): continue
+        with open(os.path.join(out,name),encoding='utf-8') as fh: data=json.load(fh)
+        items = data.get('items') if isinstance(data,dict) else data
+        if not isinstance(items,list): raise ValueError('invalid todo: '+name)
+        if name == 'slot_todo.json':
+            continue  # Downstream role interpretation, not a sentence boundary.
+        # Filling an answer is not the same as rebuilding and checking output.
+        if items: pending.append(name+' ('+str(len(items))+')')
+    state_path = os.path.join(out,'split_status.json')
+    if not os.path.exists(state_path) and any('content_kind' in s for s in doc['sentences']):
+        raise ValueError('new-format output is missing split_status.json')
+    if os.path.exists(state_path):
+        with open(state_path,encoding='utf-8') as fh: state=json.load(fh)
+        for key,count in state['pending'].items():
+            if key == 'slots': continue  # Also understand the old v1 manifest.
+            if count: pending.append(key+' ('+str(count)+')')
+        for key in ('sentences','formulas','content_blocks'):
+            if state['counts'][key] != len(doc[key]):
+                issues.record('check:linkage','verify_output.manifest',where=key+' count changed',size=1)
+    unresolved_path = os.path.join(out,'unresolved.log')
+    if os.path.exists(unresolved_path):
+        with open(unresolved_path,encoding='utf-8') as fh:
+            if fh.read().strip(): pending.append('unresolved.log')
+    names = doc['stats'].get('outside_math_vocabulary')
+    if names is None:
+        names = doc['stats'].get('outside_vocabulary') or {}
+        normalized_path = os.path.join(out, 'normalized.tex')
+        if names and os.path.exists(normalized_path):
+            # Legacy stats did not distinguish prose from formula interiors.
+            # Reclassify against the actual source instead of relabeling a
+            # document-wide inventory as a prose defect.
+            import latex2nl
+            with open(normalized_path, encoding='utf-8') as fh: source = fh.read()
+            text_names = set(latex2nl.control_words(latex2nl.strip_math(source)))
+            names = {name: count for name, count in names.items() if name in text_names}
+        elif names:
+            pending.append('legacy_unscoped_vocabulary')
+            names = {}
+    if names: pending.append('outside_math_vocabulary')
+    for entry in issues.entries():
+        if (str(entry.get('route','')).startswith('todo:') or
+            entry['kind'] in ('drop:float','drop:footnote','math:unclosed','human:source_error','unresolved:line')):
+            pending.append('ledger '+entry['kind'])
+    return sorted(set(pending))
+
+
+def downstream_items(out, doc):
+    """Report interpretation work without changing the splitting verdict."""
+    items = []
+    path = os.path.join(out, 'formula_diagnostics.json')
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as fh: data = json.load(fh)
+        if not isinstance(data, dict) or not isinstance(data.get('items'), list):
+            raise ValueError('invalid formula_diagnostics.json')
+        if not all(isinstance(item, dict) for item in data['items']):
+            raise ValueError('invalid formula diagnostic item')
+        items.extend(data['items'])
+    for f in doc['formulas']:
+        if f.get('unrecognized_commands') and not any(
+                item.get('formula') == f['id'] and item.get('kind') == 'unrecognized_commands' for item in items):
+            items.append({'formula': f['id'], 'kind': 'unrecognized_commands',
+                          'commands': f['unrecognized_commands']})
+        for slot in f.get('text_slots', []):
+            if slot.get('role') in ('unclassified', None) and not any(
+                    item.get('formula') == f['id'] and item.get('kind') == 'unclassified_text_slot'
+                    and not item.get('slot') for item in items):
+                items.append({'formula': f['id'], 'kind': 'unclassified_text_slot',
+                              'slot': slot.get('id'), 'raw': slot.get('raw')})
+    return items
+
+
 def run(out: str, strict: bool) -> int:
+    try:
+        return _run(out, strict)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        issues.reset()
+        issues.record('check:artifact','verify_output.load',where=str(exc),size=1)
+        if os.path.isdir(out): issues.write(os.path.join(out,'issues.json'), {'status':'invalid'})
+        print('invalid artifact: '+str(exc),file=sys.stderr)
+        return 2
+
+
+def _run(out: str, strict: bool) -> int:
     doc = load(out)
     norm_path = os.path.join(out, "normalized.tex")
     normalized = ""
     if os.path.exists(norm_path):
-        normalized = open(norm_path, encoding="utf-8", errors="replace").read()
+        with open(norm_path, encoding="utf-8", errors="replace") as fh:
+            normalized = fh.read()
 
     checks = [
         ("C1", "hard", check_c1(doc)),
@@ -325,7 +507,7 @@ def run(out: str, strict: bool) -> int:
         ("C4", "soft", check_c4(doc)),
         ("C5", "soft", check_c5(doc)),
         ("C6", "hard", check_c6(doc)),
-        ("C7", "soft", check_c7(doc)),
+        ("C7", "hard", check_c7(doc)),
         ("C8", "soft", check_c8(doc)),
         ("C9", "hard", check_c9(doc)),
         ("C10", "hard", check_c10(doc)),
@@ -336,7 +518,6 @@ def run(out: str, strict: bool) -> int:
         ("C16", "soft", check_c16(doc)),
     ]
     issues.reset()
-    hard_hits = 0
     print("check  gate  hits  example")
     for name, gate, hits in checks:
         if hits:
@@ -344,11 +525,9 @@ def run(out: str, strict: bool) -> int:
         else:
             example = ""
         print("%-6s %-5s %5d  %s" % (name, gate, len(hits), example))
-        for h in hits[:400]:
+        for h in hits:
             issues.record("check:" + name, "verify_output.%s" % name,
                           where=h.get("where", ""), size=1)
-        if gate == "hard":
-            hard_hits += len(hits)
     # the tools write their own ledgers; fold them in before writing
     for name in sorted(os.listdir(out)):
         if name.startswith("issues_") and name.endswith(".json"):
@@ -359,12 +538,26 @@ def run(out: str, strict: bool) -> int:
     for kind, site, where, size in check_parses(out, doc["sentences"]):
         issues.record(kind, site, where, size)
 
+    for h in check_links(doc, normalized):
+        issues.record('check:linkage', 'verify_output.links', where=h['where'], size=1)
+    for sentence in doc['sentences']:
+        if ''.join(sentence['tokens']) != ''.join(sentence['text'].split()):
+            issues.record('check:tokens','verify_output.tokens',where=sentence['sid'],size=1)
+    pending = pending_items(out, doc)
+    downstream = downstream_items(out, doc)
+    for item in pending:
+        issues.record('check:pending','verify_output.pending',where=item,size=1)
+    status = 'hard_failure' if issues.hard() else 'pending' if pending else 'clean'
     payload = issues.write(os.path.join(out, "issues.json"),
-                           {"checks": {n: len(h) for n, _g, h in checks}})
+                           {"checks": {n: len(h) for n, _g, h in checks},
+                            "scope": "splitting", "status": status, "pending": pending,
+                            "downstream_diagnostics": downstream})
     print("\nissues written: %s" % os.path.join(out, "issues.json"))
     print(issues.summary_line())
-    if strict and hard_hits:
+    if strict and payload["hard"]:
         return 1
+    if strict and pending:
+        return 3
     return 0
 
 
@@ -372,7 +565,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("out", nargs="?", help="a run directory")
     ap.add_argument("--strict", action="store_true",
-                    help="exit 1 when a hard check hits")
+                    help="exit 1 for hard issues, 2 for invalid artifacts, 3 for pending work")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
     if args.self_test:

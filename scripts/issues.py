@@ -111,17 +111,18 @@ def write(path: str, extra: Optional[dict] = None) -> dict:
 
 def merge_file(path: str) -> int:
     """Fold entries written by another process (normalize, latex2nl) in."""
-    try:
-        with open(path, encoding="utf-8") as fh:
-            doc = json.load(fh)
-    except (OSError, ValueError):
-        return 0
+    with open(path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    if not isinstance(doc, dict) or not isinstance(doc.get("entries"), list):
+        raise ValueError("invalid issue ledger: " + path)
     added = 0
     reg = registry()
-    for e in doc.get("entries") or []:
+    for e in doc["entries"]:
+        if not isinstance(e, dict):
+            raise ValueError("invalid issue entry: " + path)
         kind = e.get("kind")
         if kind not in reg:
-            continue                      # never trust an unregistered kind
+            raise ValueError("unregistered issue kind %r in %s" % (kind, path))
         entry = {"kind": kind, "site": e.get("site", ""),
                  "route": reg[kind].get("route", ""),
                  "gate": reg[kind].get("gate", "none"),

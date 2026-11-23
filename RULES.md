@@ -1,5 +1,21 @@
 # 处理规则总表
 
+## 2026-11-23 更新：切分验收与公式理解分离
+
+以下规则优先于本文历史表格和先前修复说明中的“未知命令进入待办”要求。
+
+1. 切分负责确定文本/公式边界、保留内容、建立占位符和记录关联；不要求解释数学符号、公式角色或公式内部文字的逻辑作用。
+2. 命令表是已知转换与可选注释的依据，不是公式准入名单。明确数学边界内的未知命令不触发切分失败或 pending，不通过不断补白名单取得通过。
+3. 对含未知命令的公式，保留整个公式体及参数分组，作为 opaque 公式输出；不猜未知命令的参数个数，不拆其内部 qquad，不提取或改写其内部文字槽，不推断其数学角色。归一化阶段同样保护它，已完成的宏展开/条件处理不因此被声称无损。
+4. 未知命令清单、未定公式文字角色进入单独的下游诊断，不计入切分 pending。结构检查仍执行：公式边界不闭合、括号不平衡、占位符失联、token 丢失继续阻止通过。
+5. 正文中的未知命令、未知宏隐藏的数学环境、未定条件会影响边界或有效内容，仍保留原文并报警/待处理。不能将“公式内部未知命令可保留”推广成所有未知 TeX 都可忽略。
+6. strict=0 只表示切分检查通过；下游诊断可以非空。表格正文未切分、句界未定、条件未定、历史删除记录仍为 pending。旧版未分类 unresolved 保守保留，重新生成输出才应用新分类。
+
+例：`$\mySpecialOperator{x}{y}$` 无需注册命令即可输出 MATH 占位符，完整保存 `\mySpecialOperator{x}{y}`。`$\accentset{\ast}{W}$` 也采用这一通用规则，不为星号补数学解释。
+
+2026-11-23 修复后的行为、数据接口与验收结果见 [修复说明](REPAIR-2026-11-23.md)。本文原有的较早测试数字和未修状态保留为历史记录；涉及脚注/浮动块删除、纯公式过滤、条件默认取第一支及 strict 退出码的旧描述，以修复说明为准。
+
+
 这张表回答一个问题：**遇到一种 LaTeX 构造，管线怎么判**。
 它不按 TeX 的 atom 类（mathord/mathrel/…）判，按**它在论文里是内容还是排版**判。
 
@@ -14,11 +30,11 @@
 | # | 动作 | 判据 | 代表 | 代码 |
 |:--|:--|:--|:--|:--|
 | 1 | **读声明**：名字是寄存器/环境，不是词 | 论文自己声明过 | `\newlength\bshft`、`\newsavebox\myboxA`、`\newtheorem{rmk}{Remark}` | `normalize()` 里扫 `newlength/newdimen/newskip/newcount/newtoks/newsavebox/newbox/newif/chardef/mathchardef`；`read_theorem_decls()` |
-| 2 | **保内容、丢外壳** | 外壳只说明怎么画 | `\abs{x}`→`|x|`、`\accentset{\ast}{W}`→`W`、`\scalerel*{(}{x}`→`(` | `_unwrap_one`、`_unwrap_last_arg`、`_unwrap_first_arg`、`_wrap_arg`、`UNWRAP_ONE` |
+| 2 | **保内容、丢外壳** | 外壳只说明怎么画 | `\abs{x}`→`|x|`、`\scalerel*{(}{x}`→`(` | `_unwrap_one`、`_unwrap_last_arg`、`_unwrap_first_arg`、`_wrap_arg`、`UNWRAP_ONE` |
 | 3 | **整条丢** | 不印任何内容 | 间距 `\medspace`、`\special{…}`、`\vrule`、`\marginpar{…}`、`\tag{…}`、`\proof[…]` | `BARE_ONE`（连参数）、`BARE_DROP`（只丢名）、`PLUMBING` |
 | 4 | **改写为等价** | 同义，换个写法 | `\nicefrac`/`\mfrac`→`\frac`、`\colonequals`→`:=`、`\dots`→`…` | `_drop_bare` 里的 `re.sub` 段 |
 | 5 | **环境标记**：容器按十类处理 | 环境语义 | `display`/`grid`/`list`/`statement`/`diagram`/`drop`… | `_envs()`、`data/env_classes.json` |
-| 6 | **判不了 → 队列** | TeX 也没定义、论文也没定义 | `\vb`、`\sm`、`\nbd` | `pending_names.py` → `data/name_answers.json` |
+| 6 | **影响切分且未定 → 队列** | 正文命令、隐藏边界或条件分支未定；公式内部未知命令只保留并记录下游诊断 | 正文里的未定义宏；公式里的 `\vb` 等可原样保留 | `unresolved.log` / `content_todo.json`；公式信息见 `formula_diagnostics.json` |
 
 **先判 1，再判 2/3/4，最后才是 5**：声明过的名字在展开时就已经消失，轮不到后面几类。
 

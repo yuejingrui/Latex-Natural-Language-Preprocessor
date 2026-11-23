@@ -1,5 +1,10 @@
 # 切分层：LaTeX → 句子流 + 公式表
 
+**当前规则（2026-11-23 第二次调整）：** 公式命令表不是切分准入名单。数学边界明确时，未知命令按完整 `opaque` 公式保留；未识别命令和文字槽角色输出到 `formula_diagnostics.json` 等下游信息，不计入切分 pending。`unresolved.log` 只承载本轮切分疑点。结构错误、未定句界/条件和未切分内容仍阻止通过。详见 [RULES.md](RULES.md) 开头及 [运行对比](../../切分规则调整_2026-11-23/规则调整与运行对比.md)。
+
+2026-11-23 修复后的行为、数据接口与验收结果见 [修复说明](REPAIR-2026-11-23.md)。本文原有的较早测试数字和未修状态保留为历史记录；涉及脚注/浮动块删除、纯公式过滤、条件默认取第一支及 strict 退出码的旧描述，以修复说明为准。
+
+
 这一包只做**切分**：把一篇数学论文的 `.tex` 变成两样东西——
 
 - **句子流**：一句一行，公式所在位置换成占位符 `MATHn`（公式）或 `REFn`（引用）；
@@ -72,7 +77,7 @@ python3 scripts/normalize.py PAPER.tex -o $RUN/normalized.tex \
 python3 scripts/latex2nl.py $RUN/normalized.tex -o $RUN --canonical \
         --issues $RUN/issues_latex2nl.json
 
-# 3. 输出检查（--strict：硬检查命中时退出码 1）
+# 3. 严格检查：0 无硬错误/待办；1 硬错误；2 产物损坏；3 待处理
 python3 scripts/verify_output.py $RUN --strict
 
 # 4. 对一批跑过的目录出"无句末标点"分类清单
@@ -298,8 +303,8 @@ MATH112: formula uses commands not understood: \curvearrowright
 |--:|:--|:--|
 | 1 | 去注释 | 只有注释的行整行去掉，不留空行（TeX 里这种行不产生输出）；`\%` 保留 |
 | 2 | 读宏定义并展开 | `\newcommand`/`\def`/`\let`/`\DeclareMathOperator`，分隔参数宏（`\def\[#1]#2{…}`）、字符别名（`\let\x=a`）；嵌套调用按轮展开（最多 8 轮）；展开后会出现没人认识的名字的宏**保留宏名**，记进 `kept_macros` |
-| 3 | 判条件分支 | `\ifdefined`、`\ifthenelse`、`\ifcase`（字面数字）、`\ifodd`、`\iffalse`；判不了的取第一支并记 `conditional:unknown` |
-| 4 | 去掉不带命题内容的机制 | 版式、尺寸与间距（连同操作数）、参考文献（含裸 `\thebibliography`）、浮动体与脚注（计数，记 `drop:float`/`drop:footnote`）、`\label` 外提到公式前 |
+| 3 | 判条件分支 | `\ifdefined`、`\ifthenelse`、`\ifcase`（字面数字）、`\ifodd`、`\iffalse`；判不了的完整保存为 pending 内容块 |
+| 4 | 去掉不带命题内容的机制 | 版式、尺寸与间距（连同操作数）、参考文献（含裸 `\thebibliography`）、浮动块完整保存为 pending，脚注另成单元并挂接正文、`\label` 外提到公式前 |
 | 5 | 环境归成五类 | 见下表；文本块拆壳；论文用 `\newtheorem` 声明的类按定理处理；未知环境保留并报告 |
 | 6 | 同形改写与去排版 | `\le`→`\leq` 这类同一字形的不同拼写合并；`\left`/`\bigl` 等尺寸、细空格去掉；**字形不同的不合并**（`\epsilon`/`\varepsilon`、`\subset`/`\subseteq`） |
 | 7 | 名字表 | 命令按 `tex_names.json`（TeX 自己说的）、`name_overrides.json`（人工更正）、`name_answers.json`（问答得到的答案，可按篇）决定 `allow`/`font`/`unwrap`/`ignore`/`expand` |
@@ -341,7 +346,7 @@ MATH112: formula uses commands not understood: \curvearrowright
 | 5 | 写占位符 | 公式在句中留下 `MATHn`；相邻占位符之间补空格；粘在后面的词缀（`-module`）记进 `affix` |
 | 6 | 切句子 | 句末 `.?!:;`；例外：`e.g.`、`i.e.`、`abbreviations.json` 里的缩写、两个以上连写的首字母、公式内的标点；句点后面是小写词时**仍然断开**，但写进 `sentence_todo.json`（§7） |
 | 7 | display 结尾判句界 | 看 display 后面的第一个字符：大写断句、小写续句；看不出时按公式自带的标点，再不行记 `sentence_end_unclear` |
-| 8 | 过滤与分词 | 去掉占位符后不足两个字母的片段丢弃（`drop:empty_sentence`），其公式标 `orphan`；生成 `tokens` |
+| 8 | 过滤与分词 | 仅丢弃无字母数字、无占位符的标点空片段；保留纯公式与 Unicode 文字，生成 `tokens` |
 | 9 | 初判公式角色 | 见 §4.2 的角色表 |
 | 10 | 判句子语气 | 看句首第一个词（或 `We` 之后的词）：`let`/`define`/`denote`/`call`/`choose`/`put`/`set`/`write` → `definition`；`assume`/`suppose` → `assumption`；其余 → `assertion` |
 
@@ -389,7 +394,7 @@ MATH112: formula uses commands not understood: \curvearrowright
 
 编号没有 C15。各项的来源与抽样精度见 `GAPS.md` §5。
 
-**退出码**：0 正常；**只有加 `--strict` 时**硬检查命中才返回 1；2 表示目录里没有可检查的产物。
+**严格模式退出码**：0 无硬错误/待办，1 硬错误，2 缺失或损坏产物，3 待处理。非严格模式读取成功返回 0，具体状态在 issues.json。
 
 ### 5.4 `split_audit.py`：无句末标点的分类清单
 

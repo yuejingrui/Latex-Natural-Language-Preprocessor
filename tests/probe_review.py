@@ -63,13 +63,14 @@ sent = " ".join(texts(doc))
 check("a cite keeps a space before REF", "flat REF" in sent, sent)
 check("a ref keeps a space before REF", sent.count("flat REF") >= 2, sent)
 
-# 9-10: a float keeps its caption and loses its body
+# 9-10: a float exposes its caption and preserves its full body as pending
 norm, doc = run("\\begin{figure}\n\\includegraphics{x.png}\n"
                 "\\caption{The quiver $Q$ is connected.}\n\\end{figure}\n"
                 "Text follows.")
 check("a figure caption is kept", any("quiver" in s for s in texts(doc)), texts(doc))
-check("the figure body is dropped", not any("includegraphics" in s for s in texts(doc)),
-      texts(doc))
+check("the figure body is preserved as pending",
+      any(b['status'] == 'pending' and 'includegraphics' in b['raw']
+          for b in doc['content_blocks']), doc['content_blocks'])
 
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))

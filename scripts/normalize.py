@@ -65,6 +65,7 @@ Only the Python standard library is used.
 
 from __future__ import annotations
 
+import preserved
 import argparse
 import json
 import os
@@ -654,7 +655,7 @@ class Normalizer:
         self.size_cmds = self.aliases_doc.get("size_commands", [])
         self.layout_cmds = self.aliases_doc.get("layout_commands", [])
         self.thin = self.aliases_doc.get("thin_spaces", [])
-        self.extra = set(self.aliases_doc.get("extra_commands", []))
+        self.extra = set(self.aliases_doc.get("extra_commands", [])) | {"nlprepcontent", "accentset", "underaccent", "ifthenelse", "isempty", "equal"}
         self.names = names if names is not None else NameTable(paper=paper)
         self.paper = paper
         self.extra |= set(self.names.allowed) | set(self.names.expand)
@@ -702,6 +703,7 @@ class Normalizer:
         return out
 
     def _run(self, tex: str, style_paths: List[str] = ()) -> str:
+        tex, capsules = preserved.mask(tex)
         tex = L.strip_comments(tex)
         macros = L.MacroTable()
         macros.parse(tex)
@@ -742,10 +744,9 @@ class Normalizer:
         preamble, body = L.split_document(tex)
         defined = set(macros.macros) | set(macros.decl_aliases) | set(
             re.findall(r"\\(?:def|gdef|edef|xdef|let)\s*\\([A-Za-z@]+)", tex))
-        # the switches live in the preamble, which ``body`` no longer holds:
-        # read them from the whole source, or every \ifX takes its first branch
+        # Start with executed preamble state; body assignments are read in order.
         body = L.resolve_conditionals(body, defined.__contains__,
-                                      L.read_switches(tex))
+                                      L.read_switches(preamble))
         # a bibliography written without \begin: one corpus paper writes
         # "\thebibliography{999}" and the whole reference list came out as prose
         body = self._drop_bare_bibliography(body)
@@ -769,9 +770,18 @@ class Normalizer:
         for kept in sorted(macros.kept_unknown):
             self.stats["macro_kept_unknown:" + kept] += 1
         body = macros.expand(body)
+        body = L.resolve_conditionals(body, defined.__contains__)
+        body = self._ifthenelse(body)
         # before the cleanup passes: the code the paper's own environment
         # inserts must go through the same treatment as the rest
         body = self._expand_declared_envs(body, macros)
+        # Preserve semantic side content before any layout/name cleanup. Shield
+        # newly created capsules in this pass as well as ones from prior passes.
+        body = self._preserve_floats(body)
+        body = self._preserve_notes(body)
+        body, new_capsules = preserved.mask(body, 'NEW')
+        body, opaque_math = self._protect_opaque_math(
+            body, known=lambda name: self._known_name(name, macros))
         body = L.drop_command_all_args(body, L.META_CMDS)
         body = L.drop_command_all_args(body, self.TITLE_CMDS)
         body = self._drop_bare(body)
@@ -791,9 +801,39 @@ class Normalizer:
         body = self._part_markers(body)
         body = self._commands(body)
         body = self._restore_diagrams(body)
-        return self._tidy(body)
+        body = preserved.restore(self._tidy(body), opaque_math, 'OPAQUEMATH')
+        body = preserved.restore(body, new_capsules, 'NEW')
+        return preserved.restore(body, capsules)
 
     # -- document-level material ---------------------------------------
+    # Partial registry of transformations actually implemented below. This is
+    # not an acceptance whitelist: all other formula names can stay opaque.
+    MATH_REPLACEMENTS = {'nicefrac': r'\frac', 'mfrac': r'\frac',
+                         'coloneq': ' :=', 'coloneqq': ' :=', 'colonequals': ' :=',
+                         'eqqcolon': ' =:'}
+    MATH_FIRST_ARG = ('scalerel',)
+    MATH_UNWRAP = ('mathlarger',)
+    MATH_FENCES = {'abs': ('|', '|'), 'norm': (r'\|', r'\|')}
+    @staticmethod
+    def _protect_opaque_math(body: str, offset: int = 0, known=None):
+        """Shield whole unknown formulas from name/layout cleanup this pass."""
+        records, out, pos = [], [], 0
+        for span in L.find_math_spans(body, clean=False):
+            unknown = L.unknown_commands(span.body)
+            if known:
+                unknown = [cmd for cmd in unknown if not known(cmd[1:])]
+            if not unknown:
+                continue
+            # Known drawings have their own lossless transport and previews.
+            if re.search(r'\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})', span.body):
+                continue
+            out.append(body[pos:span.start])
+            records.append(body[span.start:span.end])
+            out.append('\ue200OPAQUEMATH' + str(offset + len(records)-1) + '\ue201')
+            pos = span.end
+        out.append(body[pos:])
+        return ''.join(out), records
+
     #: commands that take no argument.  Only the name goes: eating a following
     #: ``{..}`` or ``[..]`` deletes content (``\noindent{\bf Step 1.}`` lost the
     #: heading, ``\quad [x]`` lost the interval).
@@ -886,12 +926,15 @@ class Normalizer:
             return True
         if name in macros.macros or name in self.theorem_envs or name in self.name_to:
             return True
+        if name in PRIMITIVE_EAT or re.fullmatch(r'SavedStyle[A-Za-z]*', name):
+            return True
         # the rule tables on the Normalizer itself: RULE_NAMES was built from
         # latex2nl's globals and missed BARE_ONE and friends, which is why \color
         # looked unknown and its whole macro was kept (OPEN.md 1.0)
         for attr in ("BARE_ONE", "BARE_DROP", "NO_ARG_DROP", "TITLE_CMDS",
                      "FORMAT_CMDS", "MATH_FONT_CMDS", "HEADING_CMDS",
-                     "ENV_AS_COMMAND"):
+                     "ENV_AS_COMMAND", "UNWRAP_ONE", "PLUMBING",
+                     "MATH_REPLACEMENTS", "MATH_FIRST_ARG", "MATH_UNWRAP", "MATH_FENCES"):
             if name in (getattr(self, attr, ()) or ()):
                 return True
         return name in RULE_NAMES
@@ -911,7 +954,62 @@ class Normalizer:
                 kept.add(name)
         return kept
 
+    def _preserve_floats(self, body: str) -> str:
+        out, pos = [], 0
+        for m in L.ENV_TOKEN_RE.finditer(body):
+            if m.start() < pos or m.group(1) != "begin":
+                continue
+            env = m.group(2)
+            cls, _ = self.name_to.get(env, self.name_to.get(env.rstrip('*'), (None, None)))
+            if cls != "float":
+                continue
+            end = L.find_env_end(body, m.end(), env)
+            stop = end.end() if end else len(body)
+            raw = body[m.start():stop]
+            captions = []
+            for cm in re.finditer(r"\\caption\*?\s*(?:\[[^\]]*\]\s*)?\{", raw):
+                ce = L.find_group_end(raw, cm.end()-1)
+                if ce:
+                    captions.append(raw[cm.end():ce-1])
+            out.append(body[pos:m.start()])
+            out.append(preserved.pack("float", raw, environment=env,
+                       status="pending", reason="layout_not_parsed" if end else "unclosed_layout",
+                       previews=captions, source_stage="expanded_body", offset=m.start()))
+            self.stats["content_preserved:" + env] += 1
+            pos = stop
+        out.append(body[pos:])
+        return ''.join(out)
+
+    def _preserve_notes(self, body: str) -> str:
+        pat = re.compile(r"\\(footnote|footnotetext|symbolfootnote|marginpar)(?![A-Za-z@])\s*(?:\[[^\]]*\]\s*)?\{")
+        out, pos = [], 0
+        for m in pat.finditer(body):
+            if m.start() < pos:
+                continue
+            end = L.find_group_end(body, m.end()-1)
+            if end is None:
+                out.append(body[pos:m.start()])
+                out.append(preserved.pack(m.group(1), body[m.start():],
+                           status='pending', reason='unclosed_note',
+                           source_stage='expanded_body', offset=m.start()))
+                pos = len(body)
+                break
+            before = body[pos:m.start()]
+            # A note immediately after a full stop belongs to that sentence.
+            tail = re.search(r"([.!?。！？])\s*$", before)
+            punctuation = tail.group(1) if tail else ""
+            out.append(before[:tail.start()] if tail else before)
+            out.append(preserved.pack(m.group(1), body[m.start():end],
+                       body=body[m.end():end-1], status="ready",
+                       source_stage="expanded_body", offset=m.start()))
+            out.append(punctuation)
+            self.stats["content_preserved:" + m.group(1)] += 1
+            pos = end
+        out.append(body[pos:])
+        return "".join(out)
+
     def _drop_bare(self, body: str) -> str:
+        body = self._preserve_notes(body)
         # TeX's own plumbing: these are package internals and never a word of
         # the paper (11,493 uses of one \if@compatibility).  Matched by name,
         # not by pattern: \xymatrix@R=5pt is a command followed by an option,
@@ -958,19 +1056,14 @@ class Normalizer:
                 body = re.sub(r"\\" + cmd + r"(?![A-Za-z@])", " ", body)
         # \nicefrac{a}{b} is a fraction; \frac is its closest equivalent and
         # both arguments survive
-        body = re.sub(r"\\nicefrac(?![A-Za-z@])", r"\\frac", body)
-        # the same for the text-style fraction package's relative
-        body = re.sub(r"\\mfrac(?![A-Za-z@])", r"\\frac", body)
-        # ":=" and "=:" are single relations, and the corpus writes them with
-        # three different names
-        body = re.sub(r"\\coloneq(?:q|uals)?(?![A-Za-z@])", " :=", body)
-        body = re.sub(r"\\eqqcolon(?![A-Za-z@])", " =:", body)
+        for name, replacement in self.MATH_REPLACEMENTS.items():
+            body = re.sub(r'\\' + re.escape(name) + r'(?![A-Za-z@])',
+                          lambda _m, value=replacement: value, body)
         # \scalerel*{delim}{ref}: the delimiter is the content
-        for cmd in ("scalerel",):
+        for cmd in self.MATH_FIRST_ARG:
             body = self._unwrap_first_arg(body, cmd)
         # absolute value and norm, for a paper that never defined the name
-        for name, (left, right) in (("abs", ("|", "|")),
-                                    ("norm", (r"\|", r"\|"))):
+        for name, (left, right) in self.MATH_FENCES.items():
             body = self._wrap_arg(body, name, left, right)
         # a delimiter drawn at a chosen size is the delimiter
         body = self._drop_size_name(body)
@@ -1031,12 +1124,10 @@ class Normalizer:
         # a vertical rule with its dimensions carries no words
         body = self._drop_arg_cmd(body, "vrule", limit=0)
         body = re.sub(r"\\nobreak(?![A-Za-z@])", " ", body)
-        # an accent over a base: the last group is the content, what precedes it
-        # only says how to draw it
-        for cmd in ("accentset", "underaccent"):
-            body = self._unwrap_last_arg(body, cmd)
+        # Mathematical accents carry identity (e.g. W with a star is not W).
+        # Keep the constructor and both arguments intact.
         # a bigger version of something is that thing
-        for cmd in ("mathlarger",):
+        for cmd in self.MATH_UNWRAP:
             body = self._unwrap_one(body, cmd)
         # boxes: keep the content, drop the size.  Early, because a drawing
         # inside a box must still be reachable by the environment pass.
@@ -1228,7 +1319,7 @@ class Normalizer:
         """``\\ifthenelse{test}{yes}{no}`` -> the branch the test selects.
 
         ``\\isempty{..}`` and ``\\equal{..}{..}`` are read from the source;
-        otherwise the first branch is kept, as ``L.resolve_conditionals`` does.
+        otherwise the full conditional is preserved as pending content.
         Always taking the first branch dropped real content: 358 of 969 calls
         in the sample choose the second one.
 
@@ -1256,16 +1347,20 @@ class Normalizer:
                     break
                 args.append(body[i + 1: end - 1])
                 i = end
-            if len(args) < 2:
-                pos = m.end()                  # keep looking after this one
-                continue
+            if len(args) < 3:
+                pick = preserved.pack('conditional', body[m.start():], status='pending',
+                                      reason='malformed_ifthenelse', conditional=r'\ifthenelse')
+                body = body[:m.start()] + pick
+                break
             choice = self._decide_test(args[0])
             pick = args[choice] if choice is not None and len(args) > choice \
                 else args[1]
             if choice is not None:
                 self.stats["ifthenelse_decided"] += 1
             else:
-                self.stats["ifthenelse_first_branch"] += 1
+                self.stats["ifthenelse_pending"] += 1
+                pick = preserved.pack('conditional', body[m.start():i], status='pending',
+                                      reason='undecidable_test', conditional=r'\ifthenelse')
             body = body[:m.start()] + " " + pick + body[i:]
             pos = m.start()                    # the branch may hold another one
         return body
@@ -1949,22 +2044,14 @@ class Normalizer:
                     (kind or "theorem").strip(), self._envs(rest2, depth))
 
         if cls == "float" or cls == "bibliography" or cls == "drop":
-            self.stats["env_dropped:" + env] += 1
             if cls == "float":
-                # a whole block goes; tabular and minipage hold content that a
-                # reader would miss (GAPS.md D2)
-                _issues.record("drop:float", "normalize._envs",
-                               where=env, size=len(inner))
-                # the caption is content: a figure without it leaves the text
-                # pointing at a picture that is no longer there
-                caps = []
-                for cm in re.finditer(r"\\caption\s*(?:\[[^\]]*\])?\s*\{", inner):
-                    cend = L.find_group_end(inner, cm.end() - 1)
-                    if cend is not None:
-                        caps.append(inner[cm.end(): cend - 1].strip())
-                if caps:
-                    self.stats["caption_kept:" + env] += 1
-                    return "\n" + " ".join(c for c in caps if c) + "\n"
+                self.stats["content_preserved:" + env] += 1
+                raw = "\\begin{" + env + "}" + inner + "\\end{" + env + "}"
+                # Keep the entire block, including table cells and captions.
+                # The current splitter does not interpret arbitrary layouts.
+                return "\n" + preserved.pack("float", raw, environment=env,
+                            status="pending", reason="layout_not_parsed") + "\n"
+            self.stats["env_dropped:" + env] += 1
             return "\n"
         if cls == "diagram":
             return self._stash_diagram(env, inner)
@@ -2462,11 +2549,15 @@ class Normalizer:
     def _apply_names(self, body: str) -> str:
         """Do to each name what TeX (or an answer) said to do with it."""
         for name, repl in self.names.expand.items():
+            if name in ("accentset", "underaccent"):
+                continue
             body, k = re.subn(r"\\" + re.escape(name) + r"(?![A-Za-z@])",
                               lambda _m, r=repl: r, body)
             if k:
                 self.stats["name_expand:" + name] += k
         for name in self.names.unwrap:
+            if name in ("accentset", "underaccent"):
+                continue
             # ``\hbox to 3cm{..}``: the size sits between name and group
             body = re.sub(r"\\" + re.escape(name) + r"(?![A-Za-z@])\s*"
                           r"(?:to|spread)\s*[-+.\d]+\s*"
@@ -2477,6 +2568,8 @@ class Normalizer:
             if body != before:
                 self.stats["name_unwrap:" + name] += 1
         for name in self.names.ignore:
+            if name in ("accentset", "underaccent"):
+                continue
             pat = re.compile(r"\\" + re.escape(name) + r"(?![A-Za-z@])")
             out, pos, count = [], 0, 0
             while True:
@@ -2720,9 +2813,11 @@ def _toy_cases() -> List[Tuple[str, str, str, "callable"]]:
          lambda o: "special" not in o and "Text." in o and "End." in o),
         # the off-vocabulary triage: package plumbing, and package commands
         # whose meaning is known, taken from how they are used in the corpus
-        ("a name with @ is TeX plumbing and goes",
+        ("plumbing goes but an unclosed conditional is preserved",
          "", "Text \\m@th still \\if@compatibility here.",
-         lambda o: "@" not in o and "still" in o and "here." in o),
+         lambda o: "still" in o and any(
+             preserved.unpack(m)['raw'].strip() == r"\if@compatibility here."
+             for m in preserved.MARKER.finditer(o))),
         # the corpus names its own environments: rmk, Lem, Prop, defi.  A
         # declared one is a statement of that kind, a capitalised standard one
         # is the standard kind, and a diagram package's CD is a diagram.
@@ -2756,11 +2851,12 @@ def _toy_cases() -> List[Tuple[str, str, str, "callable"]]:
         ("a counter value goes, a theorem name stays",
          "", "By (\\theequation) and \\theorem{} here.",
          lambda o: "theequation" not in o and "\\theorem" in o),
-        ("a link keeps its text, a note and a tag go",
+        ("link text, note content and tag label survive",
          "\\marginpar{x}",
          "See \\hyperref[lbl]{the text} and \\tag{3} \\marginpar{note} here.",
          lambda o: "the text" in o and "hyperref" not in o
-         and "marginpar" not in o and "tag" not in o and "note" not in o),
+         and "\\taglabel{3}" in o
+         and any(preserved.unpack(m).get('body') == 'note' for m in preserved.MARKER.finditer(o))),
         ("ellipses are symbols",
          "", "We write \\dots and \\ldots and \\cdots.",
          lambda o: "\\dots" not in o and o.count("\u2026") == 3),
@@ -2777,9 +2873,9 @@ def _toy_cases() -> List[Tuple[str, str, str, "callable"]]:
          "Set $\\ThisStyle{\\SavedStyle A}$ and $\\kern-\\bshft x$.",
          lambda o: "ThisStyle" not in o and "SavedStyle" not in o
          and "bshft" not in o and "A" in o and "x" in o),
-        ("an accent over a base keeps the base",
+        ("an accent over a base keeps both arguments",
          "", "The value $\\accentset{\\ast}{W}$ is finite.",
-         lambda o: "W" in o and "accentset" not in o and "ast" not in o),
+         lambda o: r"\accentset{\ast}{W}" in o),
         ("a nice fraction becomes a fraction",
          "", "We get $\\nicefrac{1}{2}$ of it.",
          lambda o: "\\frac{1}{2}" in o and "nicefrac" not in o),
@@ -2820,7 +2916,10 @@ def self_test() -> int:
         ("label rendered", "\\item[(i)] first" in out
          and "\\item[(ii)] second" in out),
         ("text block unwrapped", "centred text" in out and "center" not in out),
-        ("float dropped", "figure" not in out and "caption" not in out),
+        ("float preserved with caption", any(
+            preserved.unpack(m).get('kind') == 'float' and
+            r'\caption{a picture}' in preserved.unpack(m)['raw']
+            for m in preserved.MARKER.finditer(out))),
         ("document stripped", "documentclass" not in out),
     ]
 
@@ -2935,6 +3034,14 @@ def main(argv: List[str] = None) -> int:
         styles += local_styles(args.tex, tex)
     out = n.normalize(tex, styles)
     vocab = n.vocabulary(out)
+    # Whole-document name inventory is informational. Only names outside known
+    # mathematical boundaries can prevent text/formula splitting.
+    text_parts, cursor = [], 0
+    for span in L.find_math_spans(out, clean=False):
+        text_parts.append(out[cursor:span.start])
+        cursor = span.end
+    text_parts.append(out[cursor:])
+    text_vocab = n.vocabulary(''.join(text_parts))
 
     report = {
         "kept_macros": dict(n.kept_macros),
@@ -2945,6 +3052,8 @@ def main(argv: List[str] = None) -> int:
         "unknown_envs": dict(n.unknown_envs.most_common()),
         "outside_vocabulary": dict(sorted(vocab.items(),
                                           key=lambda kv: -kv[1])),
+        "outside_math_vocabulary": text_vocab,
+        "vocabulary_scope_version": 2,
         "labels_unrendered": {"%s %s" % k: v
                               for k, v in n.unrendered.most_common()},
     }
