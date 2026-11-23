@@ -80,6 +80,12 @@ check("no sentence keeps a stray brace",
       not any(("{" in s["text"] or "}" in s["text"]) for s in doc["sentences"]),
       texts(doc))
 
+# F3 (MERGE-PLAN 3): a note body goes through the same name pass
+norm, doc = run("Text.\\footnotetext{\\emph{Date:} \\today} More text.\n")
+sent = " ".join(texts(doc))
+check("a note body is cleaned of metadata",
+      "\\today" not in sent and "\\emph" not in sent, sent)
+
 # F1 (MERGE-PLAN 3): a placeholder with an affix still belongs to the sentence
 for body, want in (("We write $n$th.\n", "MATH1th"),
                    ("These are $X$-Segal.\n", "MATH1-Segal"),

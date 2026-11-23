@@ -342,9 +342,11 @@ def read_theorem_decls(text: str) -> Dict[str, str]:
         # an optional [counter] may come before the display name
         while i < len(text) and text[i] in " \t\r\n":
             i += 1
+        counter = ""
         if i < len(text) and text[i] == "[":
             end = L.find_group_end(text, i)
             if end is not None:
+                counter = text[i + 1: end - 1].strip()
                 i = end
         while i < len(text) and text[i] in " \t\r\n":
             i += 1
@@ -356,9 +358,15 @@ def read_theorem_decls(text: str) -> Dict[str, str]:
         display = re.sub(r"\\[A-Za-z]+|[{}~]", " ", text[i + 1: end - 1])
         words = re.findall(r"[A-Za-z]+", display)
         kind = THEOREM_KINDS.get((words[0].lower() if words else ""), "")
+        if not kind and counter:
+            # ``\newtheorem{taller}[lemma]{$\!\!$}``: the display name is empty,
+            # so the counter it shares says what kind this is (MERGE-PLAN F6)
+            kind = THEOREM_KINDS.get(counter.lower()) or out.get(counter, "")
         if not kind:
             kind = (words[0].lower() if words else m.group(1).lower())
         out[m.group(1)] = kind
+        if counter and not THEOREM_KINDS.get(kind.lower()):
+            out.setdefault(counter, kind)
     return out
 
 
@@ -732,6 +740,9 @@ class Normalizer:
             for name, kind in read_theorem_decls(sty).items():
                 self.theorem_envs.setdefault(name, kind)
         self._def_cmds = tuple(self.DEF_CMDS) + tuple(macros.decl_aliases)
+        # kept for _clean_content: a preserved note body is expanded with the
+        # same table the prose was (MERGE-PLAN F3)
+        self.macros = macros
         # A declared alphabet is read from its font family, and a family whose
         # name says nothing becomes upright.  Counting them per family keeps
         # that fallback reviewable: it is a guess, not a reading.
@@ -1085,6 +1096,23 @@ class Normalizer:
         out.append(body[pos:])
         return ''.join(out)
 
+    def _clean_content(self, text: str) -> str:
+        """A preserved body, cleaned with the same passes as prose.
+
+        ``raw`` is kept verbatim in the content block; ``body`` is what the
+        splitter may cut.  Only the name pass runs here -- the layout and
+        sentence passes are latex2nl's job (MERGE-PLAN F3).
+        """
+        macros = getattr(self, "macros", None) or L.MacroTable()
+        body = macros.expand(text)
+        body = self._apply_names(body)
+        # build-time metadata (	oday prints the build date): the value says
+        # nothing about the paper, and the original stays in raw
+        body, k = re.subn(r"\\today(?![A-Za-z])", "", body)
+        if k:
+            self.stats["content_meta_removed:today"] += k
+        return body
+
     def _preserve_notes(self, body: str) -> str:
         pat = re.compile(r"\\(footnote|footnotetext|symbolfootnote|marginpar)(?![A-Za-z@])\s*(?:\[[^\]]*\]\s*)?\{")
         out, pos = [], 0
@@ -1105,7 +1133,8 @@ class Normalizer:
             punctuation = tail.group(1) if tail else ""
             out.append(before[:tail.start()] if tail else before)
             out.append(preserved.pack(m.group(1), body[m.start():end],
-                       body=body[m.end():end-1], status="ready",
+                       body=self._clean_content(body[m.end():end-1]),
+                       status="ready",
                        source_stage="expanded_body", offset=m.start()))
             out.append(punctuation)
             self.stats["content_preserved:" + m.group(1)] += 1

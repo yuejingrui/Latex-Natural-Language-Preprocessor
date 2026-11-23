@@ -93,6 +93,17 @@ check("13. the proof wrapper is recognised without \\qed",
       any(s.get("env") == "proof" for s in doc["sentences"]),
       str([s.get("env") for s in doc["sentences"]]))
 
+# F6 (MERGE-PLAN 3): a declaration that shares a counter inherits its kind
+norm, doc = run("\\documentclass{article}\n"
+                "\\newtheorem{lemma}{Lemma}\n"
+                "\\newtheorem{taller}[lemma]{$\\!\\!$}\n"
+                "\\begin{document}\n"
+                "\\begin{taller}Let MATH1 be a set.\\end{taller}\n"
+                "\\end{document}\n")
+envs = [s.get("env") for s in doc["sentences"]]
+check("an empty display name inherits its counter's kind",
+      envs and all(e == "lemma" for e in envs), str(envs))
+
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
 sys.exit(1 if bad else 0)
