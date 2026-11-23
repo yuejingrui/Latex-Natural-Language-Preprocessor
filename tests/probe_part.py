@@ -69,7 +69,7 @@ check("6. a step outside a proof is still a part",
       bool(part2) and part2[0]["kind"] == "step", str(part2))
 
 # ---- the paper that motivated it ---------------------------------------
-run_dir = "/home/roger/gted/test-danmark/danmark"
+run_dir = os.path.abspath(os.path.join(HERE, "..", "..", "test-danmark", "danmark"))
 try:
     rows = [json.loads(l) for l in open(run_dir + "/sentences.jsonl",
                                         encoding="utf-8")]

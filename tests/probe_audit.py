@@ -190,7 +190,12 @@ import shutil as _shutil
 import subprocess as _sp
 import tempfile as _tf
 
-if os.path.isfile("/home/roger/gted/scripts/fill_failures.py"):
+FILL = os.path.join(os.path.dirname(HERE), "..", "scripts", "fill_failures.py")
+FILL = os.path.abspath(FILL)
+SKIP_FILL = not os.path.isfile(FILL)
+if SKIP_FILL:
+    print("  SKIP: scripts/fill_failures.py is not shipped with this repository")
+if not SKIP_FILL:
     _base = _tf.mkdtemp(prefix="fillfail.")
     _work = os.path.join(_base, "work")
     _out = os.path.join(_base, "newarticle")
@@ -198,7 +203,7 @@ if os.path.isfile("/home/roger/gted/scripts/fill_failures.py"):
     os.makedirs(os.path.join(_out, "good"))
     open(os.path.join(_out, "good", "paper.tex"), "w").write("x\n")
     open(os.path.join(_out, "good", "meta.json"), "w").write('{"has_tex": true}\n')
-    _shutil.copy("/home/roger/gted/scripts/fill_failures.py",
+    _shutil.copy(FILL,
                  os.path.join(_work, "fill_failures.py"))
     _rows = [{"arxiv_id": a, "doi": "", "title": a, "authors": "", "date": "",
               "journal": "", "volume": "", "issue": "", "first_page": "", "last_page": ""}
@@ -208,7 +213,7 @@ if os.path.isfile("/home/roger/gted/scripts/fill_failures.py"):
     open(os.path.join(_work, "failures.txt"), "w").write(
         "good\t[Errno 32] Broken pipe\ngone404\thttp 404\npipe\t[Errno 32] Broken pipe\n")
     _env = dict(os.environ, GTED_NEWARTICLE=_out,
-                PYTHONPATH="/home/roger/gted/scripts")
+                PYTHONPATH=os.path.dirname(FILL))
     _r = _sp.run([sys.executable, os.path.join(_work, "fill_failures.py")],
                  capture_output=True, text=True, env=_env)
     _meta_good = open(os.path.join(_out, "good", "meta.json")).read().strip()
