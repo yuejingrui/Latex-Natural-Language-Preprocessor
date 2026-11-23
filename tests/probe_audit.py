@@ -155,7 +155,7 @@ pre = ("\\documentclass{article}\n\\def\\tsadi#1{\\pretsadi{#1}}\n"
 norm, doc = run(pre + "We have \\tsadi{x} and \\R and $a\\lesssim b$ here."
                 "\n\\end{document}\n")
 check("a macro with an unknown expansion is kept",
-      "\\tsadi{x}" in norm and "\\mathbb R" in norm and "$a\\lesssim b$" in norm,
+      any(b["raw"] == r"\tsadi{x}" for b in doc["content_blocks"]) and "\\mathbb R" in norm and "$a\\lesssim b$" in norm,
       repr(norm))
 
 import normalize as _N

@@ -297,7 +297,7 @@ def skip_ifnum_test(text: str, i: int) -> int:
 
 # Keep these public names for callers; conditional content travels in the
 # normalized source, not mutable process-global branch fragments.
-from conditionals import resolve as resolve_conditionals, read_switches
+from conditionals import resolve as resolve_conditionals, read_switches, switch_option
 COND_TODOS: List[dict] = []  # compatibility only; no longer used for transport
 
 
@@ -417,10 +417,10 @@ class Sentence:
 # --------------------------------------------------------------------------
 
 
-def strip_comments(tex: str) -> str:
+def strip_comments(tex: str, line_origins=None) -> str:
     """Drop ``%`` comments, keeping escaped ``\\%``."""
     out = []
-    for line in tex.splitlines():
+    for line_number, line in enumerate(tex.splitlines(), 1):
         i = 0
         cut = len(line)
         while True:
@@ -446,6 +446,8 @@ def strip_comments(tex: str) -> str:
             # blank line is a paragraph break downstream (SPLITTING.md §3).
             continue
         out.append(kept)
+        if line_origins is not None:
+            line_origins.append(line_number)
     return "\n".join(out)
 
 
@@ -815,6 +817,50 @@ STANDARD_SECTION_NAMES = {
 "part", "chapter", "section", "subsection", "subsubsection",
 "paragraph", "subparagraph",
 }
+
+
+def macro_arguments(text, i, nargs, default):
+    """Read one invocation without consuming a following structural token."""
+    args: List[str] = []
+    ok = True
+    if default is not None:
+        j = i
+        while j < len(text) and text[j] in " \t\n":
+            j += 1
+        if j < len(text) and text[j] == "[":
+            end = find_group_end(text, j)
+            if end is None:
+                ok = False
+            else:
+                args.append(text[j + 1: end - 1])
+                i = end
+        if ok and not args:
+            args.append(default)      # the optional argument is absent
+    need = nargs - len(args) if default is not None else nargs
+    for _ in range(max(0, need)):
+        while i < len(text) and text[i] in " \t\n":
+            i += 1
+        if i < len(text) and text[i] == "{":
+            end = find_group_end(text, i)
+            if end is None:
+                ok = False
+                break
+            args.append(text[i + 1: end - 1])
+            i = end
+        else:
+            # TeX takes one token when the braces are missing:
+            # ``\def\B#1{\mathbf{#1}}`` is called as ``\B C``,
+            # ``\mathbbe n``, ``\Set{x \mid ...}``.  Only accepting
+            # ``{..}`` left those calls unexpanded, and the name then
+            # looked like an unknown command of the paper (\B 125 uses,
+            # \mathbbe 91, \Set 42 in the 20-paper sample).
+            end = _single_token_end(text, i)
+            if end is None:
+                ok = False
+                break
+            args.append(text[i:end])
+            i = end
+    return (args, i) if ok else None
 
 
 class MacroTable:
@@ -1213,53 +1259,13 @@ class MacroTable:
                 # the text and left a stray brace (C7, OPEN.md 1.8)
                 continue
             out.append(text[pos: m.start()])
-            i = m.end()
-            args: List[str] = []
-            ok = True
-            if default is not None:
-                j = i
-                while j < len(text) and text[j] in " \t\n":
-                    j += 1
-                if j < len(text) and text[j] == "[":
-                    end = find_group_end(text, j)
-                    if end is None:
-                        ok = False
-                    else:
-                        args.append(text[j + 1: end - 1])
-                        i = end
-                if ok and not args:
-                    args.append(default)      # the optional argument is absent
-            need = nargs - len(args) if default is not None else nargs
-            for _ in range(max(0, need)):
-                while i < len(text) and text[i] in " \t\n":
-                    i += 1
-                if i < len(text) and text[i] == "{":
-                    end = find_group_end(text, i)
-                    if end is None:
-                        ok = False
-                        break
-                    args.append(text[i + 1: end - 1])
-                    i = end
-                else:
-                    # TeX takes one token when the braces are missing:
-                    # ``\def\B#1{\mathbf{#1}}`` is called as ``\B C``,
-                    # ``\mathbbe n``, ``\Set{x \mid ...}``.  Only accepting
-                    # ``{..}`` left those calls unexpanded, and the name then
-                    # looked like an unknown command of the paper (\B 125 uses,
-                    # \mathbbe 91, \Set 42 in the 20-paper sample).
-                    end = _single_token_end(text, i)
-                    if end is None:
-                        ok = False
-                        break
-                    args.append(text[i:end])
-                    i = end
-            if not ok:
+            parsed = macro_arguments(text, m.end(), nargs, default)
+            if parsed is None:
                 out.append(m.group(0))
                 pos = m.end()
                 continue
-            repl = body
-            for k, a in enumerate(args, start=1):
-                repl = repl.replace("#%d" % k, a)
+            args, i = parsed
+            repl = re.sub(r"#([1-9])", lambda h: args[int(h[1])-1] if int(h[1]) <= len(args) else h[0], body)
             out.append(guard(repl, m.start(), i))
             pos = i
         out.append(text[pos:])
@@ -1578,7 +1584,8 @@ def tokenize(sentence: str) -> List[str]:
 # --------------------------------------------------------------------------
 
 
-def find_math_spans(text: str, clean: bool = True) -> List[Span]:
+def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
+                    report_unclosed=True) -> List[Span]:
     """Locate ``$..$``, ``$$..$$``, ``\\(..\\)``, ``\\[..\\]`` and display envs."""
     spans: List[Span] = []
     i, n = 0, len(text)
@@ -1591,7 +1598,8 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
                 end = text.find("\\]", i + 2)
                 if end == -1:
                     # unclosed: the rest is still a display, not prose
-                    _issues.record("math:unclosed", "latex2nl.find_math_spans",
+                    if report_unclosed:
+                        _issues.record("math:unclosed", "latex2nl.find_math_spans",
                                    where="$$", size=1)
                     spans.append(Span(i, n, "display", text[i + 2:]))
                     i = n
@@ -1602,7 +1610,8 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
             if nxt == "(":
                 end = text.find("\\)", i + 2)
                 if end == -1:
-                    _issues.record('math:unclosed', 'latex2nl.find_math_spans', where=r'\(', size=1)
+                    if report_unclosed:
+                        _issues.record('math:unclosed', 'latex2nl.find_math_spans', where=r'\(', size=1)
                     spans.append(Span(i, n, "inline", text[i + 2:]))
                     i = n
                     continue
@@ -1643,7 +1652,8 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
                 after = i + m.end()
                 em = find_env_end(text, after, env)
                 if em is None:
-                    _issues.record("math:unclosed", "latex2nl.find_math_spans",
+                    if report_unclosed:
+                        _issues.record("math:unclosed", "latex2nl.find_math_spans",
                                    where="display-env", size=1)
                     # an unclosed display env is still mathematics; treating it
                     # as prose turned \mathfrak{F}=1 into a sentence (AUDIT.md 22)
@@ -1660,6 +1670,9 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
                 # skip the name only: \textbf{Property $(i)$} holds a formula
                 i += name_m.end()
                 continue
+            if inspect_arguments and name_m:
+                i += name_m.end()
+                continue
             i = skip_control_sequence(text, i)
             continue
 
@@ -1667,7 +1680,8 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
             if text.startswith("$$", i):
                 end = text.find("$$", i + 2)
                 if end == -1:
-                    _issues.record('math:unclosed', 'latex2nl.find_math_spans', where='$$', size=1)
+                    if report_unclosed:
+                        _issues.record('math:unclosed', 'latex2nl.find_math_spans', where='$$', size=1)
                     # unclosed: the rest is still a display (AUDIT.md 21)
                     spans.append(Span(i, n, "display", text[i + 2:]))
                     i = n
@@ -1692,7 +1706,8 @@ def find_math_spans(text: str, clean: bool = True) -> List[Span]:
                     break
                 j += 1
             if j >= n:
-                _issues.record("math:unclosed", "latex2nl.find_math_spans",
+                if report_unclosed:
+                    _issues.record("math:unclosed", "latex2nl.find_math_spans",
                                where="$", size=1)
                 # an unclosed $: the rest of the block is still mathematics, and
                 # leaving it as prose put \mathfrak, \mathcal and \mathbb into
@@ -2498,7 +2513,7 @@ class LatexToNL:
                  sentence_answers: Optional[Dict[str, str]] = None,
                  style_paths: Optional[Sequence[str]] = None,
                  base_dir: str = ".",
-                 slot_roles: Optional[Dict[str, str]] = None) -> None:
+                 slot_roles: Optional[Dict[str, str]] = None, switches=None) -> None:
         self.proposition_form = proposition_form
         self.max_words = max_words
         self.merge_display = merge_display
@@ -2508,6 +2523,8 @@ class LatexToNL:
 
         self.macros = MacroTable()
         self.style_paths = list(style_paths or ())
+        self.sources = {}
+        self.switch_defaults = switches or {}
         self.base_dir = base_dir
         #: style files that were actually read
         self.styles: List[str] = []
@@ -2579,8 +2596,17 @@ class LatexToNL:
         # the switches a paper declares live in its preamble, which is stripped
         # before the body is read (GAPS.md J1)
         preamble, body = split_document(tex)
-        self.switches = read_switches(preamble)
-        self._load_styles(preamble)
+        import normalize
+        keeper = normalize.Normalizer(switches=self.switch_defaults)
+        keeper.sources = self.sources
+        self.styles = list(dict.fromkeys([*self.style_paths, *normalize.local_styles(
+            os.path.join(self.base_dir, 'main.tex'), preamble)]))
+        styles = keeper.read_styles(self.styles)
+        self.styles = [p for p in self.styles if os.path.isfile(p)]
+        for sty in styles.values():
+            self.macros.parse(sty)
+            normalize.augment_macros(self.macros, sty)
+        normalize.augment_macros(self.macros, tex)
         extra = [e for e in sorted(self.macros.envs) if e not in UNIT_ENVS]
         if extra:
             self.unit_envs = tuple(UNIT_ENVS) + tuple(extra)
@@ -2592,22 +2618,14 @@ class LatexToNL:
             # adds them to MATH_ENVS / MATH_INNER_ENVS / LIST_ENVS instead.
             if "statement" not in self.unit_envs:
                 self.unit_envs = tuple(self.unit_envs) + ("statement",)
-        # conditionals first: \ifdefined\SHOWPROOFS must be decided before the
-        # macro table turns \SHOWPROOFS into nothing
-        self.defined_names = set(self.macros.macros) | set(
-            re.findall(r"\\(?:def|gdef|edef|xdef|let)\s*\\([A-Za-z@]+)", tex))
-        body = resolve_conditionals(body, self.defined_names.__contains__,
-                                    self.switches)
-        # expansion next: a wrapper macro (\makebibliography) hides document
-        # machinery that _drop_meta has to see
+        body = keeper.execute_document(preamble, body, self.macros, styles)
         body = self.macros.expand(body)
-        # The raw entry point must preserve the same side content as the
-        # canonical route. Do not invoke the entire normalizer here.
-        import normalize
-        keeper = normalize.Normalizer()
         body = keeper._ifthenelse(body)
         body = keeper._preserve_floats(body)
         body = keeper._preserve_notes(body)
+        body = preserved.restore_calls(body, keeper.held_calls)
+        body = keeper.preserve_prose_calls(body, self.macros)
+        body = preserved.locate(body, self.sources)
         self._by_id = {}
         body = self._extract_preserved(body)
         body = self._shield_opaque_math(body)
@@ -2673,7 +2691,8 @@ class LatexToNL:
             if preserved.MARKER.search(fragment):
                 raw = preserved.MARKER.sub(lambda m: preserved.unpack(m)['raw'], fragment)
                 replacement = preserved.pack('conditional_formula', raw,
-                    status='pending', reason='preserved_content_inside_formula')
+                    status='pending', reason='preserved_content_inside_formula',
+                    components=[preserved.unpack(m) for m in preserved.MARKER.finditer(fragment)])
                 body = body[:span.start] + replacement + body[span.end:]
         def sub(m):
             block = preserved.unpack(m)
@@ -2727,32 +2746,6 @@ class LatexToNL:
         return masked
 
     # -- stage: let the paper define its own vocabulary -----------------
-    def _load_styles(self, preamble: str) -> None:
-        """Read the local ``.sty`` files the paper loads.
-
-        A paper's theorem environments and operator macros usually live in a
-        package file, not in the ``.tex``: without this, ``\\begin{notation}``
-        reaches the sentence stream as text and ``\\Ext`` is an unknown
-        command.  Only files that sit next to the document (or were named on
-        the command line) are read; the standard packages stay untouched.
-        """
-        names = []
-        for m in USE_PACKAGE_RE.finditer(preamble):
-            names.extend(n.strip() for n in m.group(1).split(",") if n.strip())
-        paths = [os.path.join(self.base_dir, n + ".sty") for n in names]
-        paths.extend(self.style_paths)
-        seen = set()
-        for path in paths:
-            if not path or path in seen or not os.path.exists(path):
-                continue
-            seen.add(path)
-            try:
-                with open(path, encoding="utf-8", errors="replace") as fh:
-                    self.macros.parse(fh.read())
-                self.styles.append(path)
-            except OSError:
-                continue
-
     def _unwrap_unknown_envs(self, body: str) -> str:
         """Keep the content of an environment this script does not know.
 
@@ -4483,6 +4476,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         help="the input is normalize.py output: a statement is "
                              "\\begin{statement}{kind}, and display/grid/list "
                              "are canonical too")
+    parser.add_argument("--switch", type=switch_option, action="append", default=[],
+                        metavar="ifNAME=true|false", help="initial value of a document switch")
     parser.add_argument("--self-test", action="store_true",
                         help="run built-in checks on synthetic snippets")
     args = parser.parse_args(argv)
@@ -4505,8 +4500,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.canonical:
         use_canonical_names()
 
-    with open(args.tex, "r", encoding="utf-8") as f:
-        tex = f.read()
+    import normalize
+    sources = {}
+    tex = normalize.read_source(args.tex, sources=sources)
 
     answers = {}
     if args.merge_sentence_answers:
@@ -4519,9 +4515,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         tok_mode=args.tok_mode,
         sentence_answers=answers,
         style_paths=args.style,
+        switches=dict(args.switch),
         base_dir=os.path.dirname(os.path.abspath(args.tex)),
         slot_roles=load_slot_roles(args.slot_table),
     )
+    conv.sources = sources
     conv.canonical = bool(args.canonical)
     use_paper_id(args.paper_id)
     result = conv.convert(tex)

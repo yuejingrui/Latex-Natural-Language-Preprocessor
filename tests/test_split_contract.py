@@ -93,9 +93,10 @@ class SplitContractTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertTrue(report['downstream_diagnostics'])
 
-    def test_unknown_prose_still_fails(self):
+    def test_unknown_prose_is_preserved_and_pending(self):
         norm, result = self.convert(r'We use \novelTransform{x} here.')
-        self.assertEqual(self.verify(norm, result)[0], 1)
+        self.assertEqual(result['content_blocks'][0]['raw'], r'\novelTransform{x}')
+        self.assertEqual(self.verify(norm, result)[0], 3)
 
     def test_unclosed_delimiters_still_pending(self):
         for opening in ('$', '$$', r'\(', r'\['):

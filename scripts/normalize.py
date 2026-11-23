@@ -66,6 +66,7 @@ Only the Python standard library is used.
 from __future__ import annotations
 
 import preserved
+import conditionals
 import argparse
 import json
 import os
@@ -196,25 +197,29 @@ def _ensuremath_to_math(text: str) -> str:
     return text
 
 
-def read_source(path: str, seen: Optional[set] = None) -> str:
+def read_source(path: str, seen: Optional[set] = None, sources=None) -> str:
     """Read a root file and inline every ``\\input``/``\\include`` it reaches."""
     seen = seen if seen is not None else set()
     ap = os.path.abspath(path)
     if ap in seen or not os.path.isfile(ap):
         return ""
-    seen.add(ap)
+    seen = seen | {ap}
     with open(ap, encoding="utf-8", errors="replace") as fh:
         raw = fh.read()
+    if sources is not None:
+        sources[ap] = raw
+    raw = L.strip_comments(raw)
 
     def repl(m):
         name = m.group(1).strip()
         cand = os.path.join(os.path.dirname(ap), name)
         if not cand.endswith(".tex"):
             cand += ".tex"
-        if not os.path.isfile(cand) and cand not in MISSING_INPUTS:
-            # the paper is incomplete: the text that lives there is lost
-            MISSING_INPUTS.append(cand)
-        return read_source(cand, seen)
+        if not os.path.isfile(cand) or os.path.abspath(cand) in seen:
+            if cand not in MISSING_INPUTS:
+                MISSING_INPUTS.append(cand)
+            return m[0]
+        return read_source(cand, seen, sources)
 
     return INPUT_RE.sub(repl, raw)
 
@@ -638,7 +643,7 @@ def skip_operand(body: str, i: int, dimen: bool = False,
 
 
 class Normalizer:
-    def __init__(self, names: "NameTable" = None, paper: str = "") -> None:
+    def __init__(self, names: "NameTable" = None, paper: str = "", switches=None) -> None:
         self.name_to = build_name_map(_load(ENV_PATH))
         # a picture-label list is a drawing, whatever env_classes.json says
         self.name_to.setdefault("labellist", ("diagram", None))
@@ -666,6 +671,12 @@ class Normalizer:
         self.unknown_cmds: Counter = Counter()
         self.unrendered: Counter = Counter()
         self._diagrams: List[str] = []
+        self.theorem_envs = {}
+        self.structural_names = (set(self.DEF_CMDS) | set(L.META_CMDS) | set(L.NOT_AN_ARGUMENT) | set(L.LAYOUT_WRAPPERS)
+                                 | L.STANDARD_SECTION_NAMES | {'partmarker', 'taglabel', 'nlprepcontent'})
+        self.sources = {}
+        self.switch_defaults = switches or {}
+        self.kept_macros = {}
         self.env_decls: Dict[str, EnvDecl] = {}
         self._def_cmds: Tuple[str, ...] = self.DEF_CMDS
         self._skip_aliases: set = set()
@@ -689,7 +700,7 @@ class Normalizer:
         for _ in range(4):
             # the same name table: re-reading the data files per round would let
             # a round disagree with the one before it about the same command
-            nxt = Normalizer(self.names)._run(out, style_paths)
+            nxt = Normalizer(self.names)._run(out)
             if nxt == out:
                 break
             out = nxt
@@ -698,9 +709,9 @@ class Normalizer:
             # The cap is a safety net, not an answer.  Text that is still
             # changing after it is wrong somewhere, and the caller must be able
             # to see that without running the whole thing a second time.
-            if Normalizer(self.names)._run(out, style_paths) != out:
+            if Normalizer(self.names)._run(out) != out:
                 self.stats["not_converged"] = 1
-        return out
+        return preserved.locate(out, self.sources)
 
     def _run(self, tex: str, style_paths: List[str] = ()) -> str:
         tex, capsules = preserved.mask(tex)
@@ -715,12 +726,8 @@ class Normalizer:
         # unknown container.  These are the largest class of unknown
         # environment in the corpus (rmk alone: 89 papers, 850 uses).
         self.theorem_envs = read_theorem_decls(tex)
-        for path in style_paths:
-            try:
-                with open(path, encoding="utf-8", errors="replace") as fh:
-                    sty = fh.read()
-            except OSError:
-                continue
+        styles = self.read_styles(style_paths)
+        for sty in styles.values():
             macros.parse(sty)
             augment_macros(macros, sty)
             macros.parse(sty)
@@ -742,11 +749,7 @@ class Normalizer:
         self._skip_aliases = {old for old, new in self.aliases.items()
                               if new in macros.macros}
         preamble, body = L.split_document(tex)
-        defined = set(macros.macros) | set(macros.decl_aliases) | set(
-            re.findall(r"\\(?:def|gdef|edef|xdef|let)\s*\\([A-Za-z@]+)", tex))
-        # Start with executed preamble state; body assignments are read in order.
-        body = L.resolve_conditionals(body, defined.__contains__,
-                                      L.read_switches(preamble))
+        body = self.execute_document(preamble, body, macros, styles)
         # a bibliography written without \begin: one corpus paper writes
         # "\thebibliography{999}" and the whole reference list came out as prose
         body = self._drop_bare_bibliography(body)
@@ -760,17 +763,7 @@ class Normalizer:
                              r"\s*\\?\{?([A-Za-z@]+)\}?", tex):
             self.dimension_names.add(m.group(1))
         body = self._drop_definitions(body)
-        # a paper macro whose fully expanded body introduces names that nothing
-        # knows (no table, no declaration, no rule) is NOT expanded: expanding it
-        # hands private font/graphics commands to the text, and the name itself is
-        # the only thing downstream can ask about (OPEN-PROBLEMS.md 7.1 item 2)
-        macros.kept_unknown = self._macros_with_unknown_names(macros)
-        self.kept_macros = {name: (macros.macros[name][1] or "")[:300]
-                            for name in macros.kept_unknown}
-        for kept in sorted(macros.kept_unknown):
-            self.stats["macro_kept_unknown:" + kept] += 1
         body = macros.expand(body)
-        body = L.resolve_conditionals(body, defined.__contains__)
         body = self._ifthenelse(body)
         # before the cleanup passes: the code the paper's own environment
         # inserts must go through the same treatment as the rest
@@ -779,6 +772,8 @@ class Normalizer:
         # newly created capsules in this pass as well as ones from prior passes.
         body = self._preserve_floats(body)
         body = self._preserve_notes(body)
+        body = preserved.restore_calls(body, self.held_calls)
+        body = self.preserve_prose_calls(body, macros)
         body, new_capsules = preserved.mask(body, 'NEW')
         body, opaque_math = self._protect_opaque_math(
             body, known=lambda name: self._known_name(name, macros))
@@ -939,20 +934,115 @@ class Normalizer:
                 return True
         return name in RULE_NAMES
 
-    def _macros_with_unknown_names(self, macros) -> set:
-        """Macros whose expansion would hand an unknown command to the text."""
-        kept: set = set()
-        for name, (nargs, body, _default) in macros.macros.items():
-            if "@" in name or not body:
+    def read_styles(self, paths):
+        styles = {}
+        queue = [(os.path.splitext(os.path.basename(path))[0], path) for path in paths]
+        seen = set()
+        while queue:
+            name, path = queue.pop(0)
+            if name in styles or not os.path.isfile(path):
                 continue
-            try:
-                expanded = macros.expand(body, rounds=3)
-            except Exception:                     # noqa: BLE001 - cyclic bodies
+            sty = read_source(path, sources=self.sources)
+            styles[name] = sty
+            path = os.path.abspath(path)
+            if path in seen:
                 continue
-            names = set(re.findall(r"\\([A-Za-z@]+)", expanded))
-            if any(not self._known_name(n, macros) for n in names):
-                kept.add(name)
-        return kept
+            seen.add(path)
+            for package in L.USE_PACKAGE_RE.finditer(sty):
+                for dep in package[1].split(','):
+                    dep = dep.strip()
+                    queue.append((dep, os.path.join(os.path.dirname(path), dep + '.sty')))
+        return styles
+
+    def execute_document(self, preamble, body, macros, styles):
+        """Execute ordinary definitions at their call sites; leave specialist
+        declarations (fonts, delimited defs, declarer aliases) to MacroTable."""
+        self.kept_macros = {}
+        skip = set(macros.decl_aliases) | L.STANDARD_SECTION_NAMES
+        declarations = '\n'.join([preamble, body, *styles.values()])
+        ordinary = {m[1] or m[2] for m in conditionals.SIMPLE_CMD.finditer(declarations)}
+        ordinary.update(m[1] for m in conditionals.SIMPLE_DEF.finditer(declarations))
+        ordinary.update(m[1] for m in L.MacroTable.DECLOP_RE.finditer(declarations))
+        ordinary.update(m[1] for pat in (L.MacroTable.LET_RE, L.MacroTable.LET_CHAR_RE)
+                        for m in pat.finditer(declarations) if m[1] not in skip)
+        legacy = set(macros.macros) - ordinary
+        # A name from the paper's future definitions cannot answer \ifdefined.
+        intrinsic = {'def', 'gdef', 'let', 'relax', 'iftrue', 'iffalse', 'ifx',
+                     'ifnum', 'ifdefined', 'else', 'fi', 'newcommand', 'ensuremath',
+                     'begin', 'end', 'section', 'subsection', 'textbf', 'emph', 'label', 'ref'}
+        def defined(name):
+            if name in intrinsic:
+                return True
+            if name in ordinary:
+                return False
+            if name in legacy or name in self.lexicon or self.names.origin.get(name) == "tex":
+                return None  # A vocabulary entry does not establish definition in this build.
+            return False
+        def keep(name, spec, execution):
+            if '@' in name or L.only_draws(spec.body):
+                return True
+            # Look through a declared wrapper which establishes math mode even
+            # when its interior contains commands outside the vocabulary.
+            unknown = [n for n in L.control_words(L.strip_math(spec.body))
+                       if n not in execution.values and n not in conditionals.DEFS
+                       and not conditionals.opener(n) and n not in ('else', 'fi', 'global', 'csname', 'endcsname')
+                       and not self._known_name(n, macros)]
+            if unknown:
+                self.kept_macros[name] = spec.body
+            return bool(unknown)
+        def defer(name):
+            return (name not in self.structural_names and name not in macros.macros
+                    and not self._known_name(name, macros))
+
+        named = {n.strip() for m in L.USE_PACKAGE_RE.finditer(declarations)
+                 for n in m[1].split(',')}
+        packages = dict(styles)
+        for name in named - styles.keys():
+            if '/' in name:
+                suffix = os.sep + os.path.normpath(name + '.sty')
+                matches = [path for path in self.sources if path.endswith(suffix)]
+                if len(matches) == 1:
+                    packages[name] = read_source(matches[0], sources=self.sources)
+        execution = conditionals.Execution(defined, skip, keep, packages, defer,
+                                           self.switch_defaults, self._decide_test)
+        self.held_calls = execution.held
+        listed = {os.path.basename(n) for n in named}
+        for name in styles:
+            if name not in named and name not in listed:
+                execution.load_package(name)
+        execution.run(preamble)
+        body = execution.run(body)
+        # Only the interpreter may expand a managed name, even if its
+        # declaration was skipped, or the call preceded its declaration.
+        for key in (execution.managed | ordinary) - skip:
+            macros.macros.pop(key, None)
+        return body
+
+    def preserve_prose_calls(self, body, macros):
+        """Keep an uninterpreted invocation before the prose cleanup removes braces."""
+        from bisect import bisect_right
+        spans = L.find_math_spans(body, clean=False, inspect_arguments=True, report_unclosed=False)
+        starts = [s.start for s in spans]
+        parts, cursor = [], 0
+        for match in conditionals.TOKEN.finditer(body):
+            name = match[0][1:]
+            if match.start() < cursor or not name or not name[0].isalpha():
+                continue
+            i = bisect_right(starts, match.start()) - 1
+            if i >= 0 and match.start() < spans[i].end:
+                continue
+            if name in self.structural_names or self._known_name(name, macros):
+                continue
+            stop = preserved.call_end(body, match.end())
+            raw = body[match.start():stop]
+            fields = dict(command=match[0], reason='missing_definition',
+                          source_stage='expanded_body', offset=match.start())
+            if name in self.kept_macros:
+                fields.update(reason='unsupported_definition', definition=self.kept_macros[name])
+            parts.extend((body[cursor:match.start()], preserved.pack(
+                'prose_macro', raw, status='pending', **fields)))
+            cursor = stop
+        return ''.join(parts) + body[cursor:]
 
     def _preserve_floats(self, body: str) -> str:
         out, pos = [], 0
@@ -1308,7 +1398,7 @@ class Normalizer:
         """1 or 2 when the test can be evaluated here, else None."""
         t = test.strip()
         m = self.EQUAL_RE.match(t)
-        if m:
+        if m and not any('\\' in arg for arg in m.groups()):
             return 1 if m.group(1).strip() == m.group(2).strip() else 2
         m = self.ISEMPTY_RE.match(t)
         if m:
@@ -3018,6 +3108,8 @@ def main(argv: List[str] = None) -> int:
     ap.add_argument("--paper-id",
                     help="select the per-paper answers in data/name_answers.json"
                          " (a paper may give its own meaning to a name)")
+    ap.add_argument("--switch", type=conditionals.switch_option, action="append", default=[],
+                    metavar="ifNAME=true|false", help="initial value of a document switch")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
 
@@ -3025,10 +3117,12 @@ def main(argv: List[str] = None) -> int:
         return self_test()
     if not args.tex:
         ap.error("give a .tex file or --self-test")
-    n = Normalizer(paper=args.paper_id or "")
+    n = Normalizer(paper=args.paper_id or "", switches=dict(args.switch))
 
     with open(args.tex, encoding="utf-8", errors="replace") as fh:
-        tex = fh.read() if args.no_inputs else read_source(args.tex)
+        tex = fh.read() if args.no_inputs else read_source(args.tex, sources=n.sources)
+    if args.no_inputs:
+        n.sources[os.path.abspath(args.tex)] = tex
     styles = list(args.style)
     if not args.no_inputs:
         styles += local_styles(args.tex, tex)

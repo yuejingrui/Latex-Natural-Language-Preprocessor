@@ -4,6 +4,8 @@ This is not a TeX engine: registers, expansion in tests, modes, and ifx meanings
 are deliberately unresolved. State is read in execution order, including groups.
 """
 import re
+from dataclasses import dataclass
+from bisect import bisect_right
 from fractions import Fraction
 import preserved
 
@@ -102,74 +104,415 @@ def test(text, m, switches, defined):
     return None, pos
 
 
-def resolve(text, defined=lambda name: False, switches=None):
-    state = switches if switches is not None else {}
-    groups, out, pos, cursor = [], [], 0, 0
-    global_next = False
-    while (m := TOKEN.search(text, pos)):
-        pos = m.end(); token = m.group(); name = token[1:]
-        if token == '{' or name in ('begingroup','bgroup'):
-            groups.append(dict(state)); continue
-        if token == '}' or name in ('endgroup','egroup'):
-            if groups: state.clear(); state.update(groups.pop())
-            continue
-        if name in DEFS:
-            pos = definition_end(text, m); continue
-        if name == 'global': global_next = True; continue
-        if name == 'newif':
-            arg = re.match(r'\s*\\(if[A-Za-z@]+)', text[pos:])
-            if arg:
-                state[arg[1]] = False
-                out.append(text[cursor:m.start()]); cursor = pos = pos+arg.end()
-            continue
-        setting = re.fullmatch(r'([A-Za-z@]+)(true|false)', name)
-        if setting and 'if'+setting[1] in state:
-            key, value = 'if'+setting[1], setting[2] == 'true'
-            state[key] = value
-            if global_next:
-                for group in groups: group[key] = value
-            global_next = False
-            out.append(text[cursor:m.start()]); cursor = pos
-            continue
-        global_next = False
-        if not opener(name): continue
-        decision, body_start = test(text, m, state, defined)
+
+
+
+
+@dataclass(frozen=True)
+class Switch:
+    value: object
+
+
+@dataclass(frozen=True)
+class Setter:
+    switch: str
+    value: bool
+
+
+@dataclass(frozen=True)
+class ExternalAlias:
+    token: str
+    defined: bool | None
+
+
+@dataclass(frozen=True)
+class Macro:
+    nargs: int
+    body: str
+    default: str | None
+
+
+UNKNOWN = object()
+ABSENT = object()
+SIMPLE_CMD = re.compile(r'\\(?:newcommand|renewcommand|providecommand|DeclareRobustCommand)'
+                        r'\*?\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))'
+                        r'\s*(?:\[(\d)\]\s*)?(?:\[([^\]]*)\]\s*)?\{')
+SIMPLE_DEF = re.compile(r'\\(?:g?def)\s*\\([A-Za-z@]+)((?:\s*#[1-9])*)\s*\{')
+
+
+def ordinary_definition(text, match, end):
+    head = SIMPLE_CMD.match(text, match.start())
+    if head:
+        name = head[1] or head[2]
+        nargs, default = int(head[3] or 0), head[4]
+    else:
+        head = SIMPLE_DEF.match(text, match.start())
+        if not head:
+            return None
+        name, default = head[1], None
+        params = re.findall(r'#([1-9])', head[2])
+        nargs = len(params)
+        if params != list('123456789'[:nargs]):
+            return None
+    if head.end() > end or text[end-1:end] != '}':
+        return None
+    return name, Macro(nargs, text[head.end():end-1], default)
+
+
+def alternatives(text, start, cuts, end):
+    stops = [c[1] for c in cuts] + [end]
+    starts = [start] + [c[2] for c in cuts]
+    branches = [text[a:b] for a, b in zip(starts, stops)]
+    if not cuts or cuts[-1][0] != 'else':
+        branches.append('')
+        starts.append(end)
+    return list(zip(starts, branches))
+
+
+class Execution:
+    """One source-order state, shared by preamble, selected branches and calls."""
+
+    def __init__(self, defined=lambda name: False, skip=(), keep=None, packages=None, defer=None, switch_defaults=None, braced_test=None):
+        self.fallback_defined = defined
+        self.packages = packages or {}
+        self.braced_test = braced_test
+        self.defer = defer
+        self.held = []
+        self.switch_defaults = switch_defaults or {}
+        self.skip = set(skip)
+        self.keep = keep or (lambda name, spec, execution: False)
+        self.values = {}
+        self.groups = []
+        self.managed = set()
+        self.expansions = 0
+        for key, value in self.switch_defaults.items():
+            self.declare_switch(key, value)
+
+    def declare_switch(self, key, value, globally=False):
+        self.assign(key, Switch(value), globally)
+        for suffix, setting in [('true', True), ('false', False)]:
+            self.assign(key[2:]+suffix, Setter(key, setting), globally)
+
+
+    def assign(self, name, value, globally=False):
+        self.values[name] = value
+        if globally:
+            for group in self.groups:
+                group[name] = value
+
+    def defined(self, name):
+        value = self.values.get(name, ABSENT)
+        if value is UNKNOWN:
+            return None
+        if isinstance(value, ExternalAlias):
+            return value.defined
+        if name in self.values:
+            return value is not ABSENT
+        answer = self.fallback_defined(name)
+        return None if answer is False and self.values.get('unread_source') else answer
+
+    def switches(self):
+        return {k: v.value for k, v in self.values.items() if isinstance(v, Switch)}
+
+    def merge_branches(self, branches, active):
+        """Propagate only state common to all outcomes, including saved groups."""
+        original = [self.values, *self.groups]
+        outcomes = []
+        for branch in branches:
+            self.values, *self.groups = [d.copy() for d in original]
+            self.run(branch, active=active)
+            outcomes.append([self.values, *self.groups])
+        self.values, *self.groups = original
+        for i, frame in enumerate(original):
+            frames = [outcome[i] if i < len(outcome) else {} for outcome in outcomes]
+            for key in set().union(*frames, frame):
+                choices = [d.get(key, ABSENT) for d in frames]
+                if all(v == choices[0] for v in choices):
+                    if choices[0] is ABSENT:
+                        frame.pop(key, None)
+                    else:
+                        frame[key] = choices[0]
+                else:
+                    frame[key] = Switch(None) if all(isinstance(v, Switch) for v in choices) else UNKNOWN
+
+    def load_package(self, name):
+        key = 'package:' + name
+        if key not in self.values:
+            self.assign(key, True, globally=True)
+            self.run(self.packages[name])
+
+    def conditional(self, text, match, active, offset, math):
+        token = match[0]
+        name = token[1:]
+        decision, body_start = test(text, match, self.switches(), self.defined)
         cuts, end, close = bounds(text, body_start)
-        raw = text[m.start():close if close is not None else len(text)]
-        malformed = close is None or sum(c[0]=='else' for c in cuts)>1
-        if name != 'ifcase' and any(c[0]=='or' for c in cuts): malformed = True
-        out.append(text[cursor:m.start()])
+        branches = alternatives(text, body_start, cuts, end)
+        separators = [cut[0] for cut in cuts]
+        malformed = (close is None or separators.count('else') > 1 or
+                     ('else' in separators and separators[-1] != 'else') or
+                     ('or' in separators and name != 'ifcase'))
+        pos = len(text) if close is None else close
         if decision is None or malformed:
-            out.append(preserved.pack('conditional', raw, status='pending',
-                       reason='unbalanced_conditional' if malformed else 'undecidable_test',
-                       conditional='\\'+name, source_stage='conditional_input', offset=m.start()))
-            # An unresolved branch can alter subsequent state. Never use an old
-            # switch value as though those assignments could not have executed.
-            for key in list(state):
-                if re.search(r'\\'+re.escape(key[2:])+r'(?:true|false)(?![A-Za-z@])',raw):
-                    state[key] = None
-            for decl in re.finditer(r'\\newif\s*\\(if[A-Za-z@]+)', raw):
-                state[decl[1]] = None
+            replacement = preserved.pack('conditional', text[match.start():pos], status='pending',
+                reason='unbalanced_conditional' if malformed else 'undecidable_test',
+                conditional=token, test=text[match.start():body_start], source_stage='conditional_input',
+                offset=offset+match.start())
+            self.merge_branches([branch for _, branch in branches], active)
         else:
             if name == 'ifcase':
-                ors = [c for c in cuts if c[0]=='or']
-                otherwise = next((c for c in cuts if c[0]=='else'), None)
-                stop = otherwise[1] if otherwise else end
-                starts = [body_start]+[c[2] for c in ors if c[1]<stop]
-                ends = [c[1] for c in ors if c[1]<stop]+[stop]
-                inner = (text[starts[decision]:ends[decision]] if 0<=decision<len(starts)
-                         else text[otherwise[2]:end] if otherwise else '')
+                index = decision if 0 <= decision < len(branches)-1 else -1
             else:
-                otherwise = next((c for c in cuts if c[0]=='else'), None)
-                inner = (text[body_start:otherwise[1] if otherwise else end] if decision
-                         else text[otherwise[2]:end] if otherwise else '')
-            out.append(resolve(inner, defined, state))
-        cursor = pos = close if close is not None else len(text)
-    out.append(text[cursor:])
-    return ''.join(out)
+                index = 0 if decision else -1
+            branch_offset, branch = branches[index]
+            replacement = self.run(branch, active, offset+branch_offset, math)
+        return pos, replacement
+
+    def run(self, text, active=(), offset=0, math=False):
+        import latex2nl as L
+        out, pos, cursor = [], 0, 0
+        global_start = None
+        spans = starts = None
+        def in_math(at):
+            nonlocal spans, starts
+            if math:
+                return True
+            if spans is None:
+                spans = L.find_math_spans(text, clean=False, inspect_arguments=True, report_unclosed=False)
+                starts = [span.start for span in spans]
+            i = bisect_right(starts, at)-1
+            return i >= 0 and at < spans[i].end
+
+        while (m := TOKEN.search(text, pos)):
+            pos = m.end()
+            token, name = m[0], m[0][1:]
+            start = m.start()
+            globally = global_start is not None and not text[cursor:start].strip()
+            if globally:
+                start = global_start
+            global_start = None
+            replacement = None
+            if token == '{' or name in ('begingroup', 'bgroup'):
+                self.groups.append(self.values.copy())
+                continue
+            if token == '}' or name in ('endgroup', 'egroup'):
+                if self.groups:
+                    self.values = self.groups.pop()
+                continue
+            if name in ('begin', 'end'):
+                env = re.match(r'\s*\{[\w*@-]+\}', text[pos:])
+                if env:
+                    pos += env.end()
+                    if name == 'begin':
+                        self.groups.append(self.values.copy())
+                    elif self.groups:
+                        self.values = self.groups.pop()
+                continue
+            if name == 'global':
+                out.append(text[cursor:start])
+                cursor = m.end()
+                global_start = start
+                continue
+            if name == 'DeclareMathOperator':
+                head = L.MacroTable.DECLOP_RE.match(text, m.start())
+                end = L.find_group_end(text, head.end()-1) if head else None
+                if end is None:
+                    continue
+                key = head[1]
+                value = Macro(0, r'\operatorname{' + text[head.end():end], None)
+                self.assign(key, value, globally)
+                self.managed.add(key)
+                pos, replacement = end, ''
+            elif name in DEFS:
+                pos = definition_end(text, m)
+                parsed = ordinary_definition(text, m, pos)
+                if not parsed or parsed[0] in self.skip:
+                    continue
+                key, spec = parsed
+                self.managed.add(key)
+                if name != 'providecommand' or self.defined(key) is False:
+                    self.assign(key, spec, globally or name == 'gdef')
+                replacement = ''
+            elif name in ('usepackage', 'RequirePackage'):
+                arg = re.match(r'\s*(?:\[[^\]]*\]\s*)?\{([^{}]+)\}', text[pos:])
+                if arg:
+                    for package in (v.strip() for v in arg[1].split(',')):
+                        if package in self.packages:
+                            self.load_package(package)
+                        else:
+                            self.assign('unread_source', True)
+                    pos += arg.end()
+                continue
+            elif name in ('input', 'include', 'subfile'):
+                # An include still present here was unavailable (or not inlined).
+                self.assign('unread_source', True)
+                pos = preserved.call_end(text, pos)
+                replacement = preserved.pack('source_file', text[m.start():pos],
+                    status='pending', reason='unread_include', source_stage='conditional_input')
+            elif name == 'csname':
+                depth = 1
+                end = None
+                for nested in TOKEN.finditer(text, pos):
+                    if nested[0] == r'\csname':
+                        depth += 1
+                    elif nested[0] == r'\endcsname':
+                        depth -= 1
+                        if depth == 0:
+                            end = nested
+                            break
+                key = text[pos:end.start()].strip() if end else ''
+                pos = end.end() if end else len(text)
+                target = self.values.get(key)
+                if isinstance(target, Setter):
+                    self.assign(target.switch, Switch(target.value), globally)
+                    replacement = ''
+                else:
+                    # A computed control sequence can change state. A later
+                    # branch must not use the old switch value as evidence.
+                    for switch in self.switches():
+                        self.assign(switch, Switch(None), globally=True)
+                    replacement = preserved.pack('dynamic_command', text[m.start():pos],
+                        status='pending', reason='unresolved_csname',
+                        source_stage='conditional_input', offset=offset+m.start())
+            elif name == 'let':
+                alias = L.MacroTable.LET_RE.match(text, m.start())
+                if alias and alias[1] not in self.skip:
+                    key, target = alias[1], alias[2]
+                    value = self.values.get(target, ABSENT)
+                    if target not in self.values:
+                        defined = self.defined(target)
+                        if defined is not False:
+                            value = ExternalAlias('\\'+target, defined)
+                    self.assign(key, value, globally)
+                    self.managed.add(key)
+                    pos, replacement = alias.end(), ''
+                else:
+                    alias = L.MacroTable.LET_CHAR_RE.match(text, m.start())
+                    if not alias:
+                        continue
+                    self.assign(alias[1], Macro(0, alias[2], None), globally)
+                    self.managed.add(alias[1])
+                    pos, replacement = alias.end(), ''
+            elif name == 'newif':
+                arg = re.match(r'\s*\\(if[A-Za-z@]+)', text[pos:])
+                if not arg:
+                    continue
+                key = arg[1]
+                self.declare_switch(key, self.switch_defaults.get(key, False), globally)
+                pos += arg.end()
+                replacement = ''
+            elif isinstance(value := self.values.get(name), Setter):
+                self.assign(value.switch, Switch(value.value), globally)
+                replacement = ''
+            elif isinstance(value, ExternalAlias):
+                replacement = value.token
+                if text[pos:pos+1].isalpha():
+                    replacement += ' '
+            elif isinstance(value, Macro):
+                args = L.macro_arguments(text, pos, value.nargs, value.default)
+                if args is None or self.keep(name, value, self) or name in active or len(active) >= 32 or self.expansions >= 50000:
+                    # Keep the invocation together until its math/prose context is known.
+                    if args is not None:
+                        pos = args[1]
+                    continue
+                actuals, pos = args
+                self.expansions += 1
+                expanded = re.sub(r'#([1-9])', lambda h: actuals[int(h[1])-1]
+                                  if int(h[1]) <= len(actuals) else h[0], value.body)
+                # A zero-argument alias can forward the caller's remaining
+                # arguments to another ordinary macro (\def\show{\render}).
+                alias_names = set()
+                while (alias := re.fullmatch(r'\\([A-Za-z@]+)', expanded)):
+                    target = self.values.get(alias[1])
+                    if not isinstance(target, Macro) or alias[1] in alias_names:
+                        break
+                    alias_names.add(alias[1])
+                    if target.nargs == 0:
+                        if not re.fullmatch(r"\\[A-Za-z@]+", target.body):
+                            break
+                        expanded = target.body
+                        continue
+                    forwarded = L.macro_arguments(text, pos, target.nargs, target.default)
+                    if forwarded is not None:
+                        _, after = forwarded
+                        expanded += text[pos:after]
+                        pos = after
+                    break
+                if globally:
+                    expanded = r'\global ' + expanded
+                replacement = self.run(expanded, active+(name,), offset+m.start(), in_math(m.start()))
+                if replacement and replacement[0].isalpha() and re.search(r'\\[A-Za-z@]+$', text[:start]):
+                    replacement = ' '+replacement
+                if text[pos:pos+1].isalpha() and re.search(r'\\[A-Za-z@]+$', replacement):
+                    replacement += ' '
+            elif value is UNKNOWN and not opener(name):
+                pos = preserved.call_end(text, pos)
+                replacement = preserved.pack('prose_macro', text[m.start():pos], status='pending',
+                    command=token, reason='conditional_definition', source_stage='conditional_input',
+                    offset=offset+m.start())
+            elif name == 'ifthenelse' and self.braced_test:
+                args = L.macro_arguments(text, pos, 3, None)
+                if args is None:
+                    pos = len(text)
+                    replacement = preserved.pack('conditional', text[m.start():], status='pending',
+                        reason='malformed_ifthenelse', conditional=token)
+                else:
+                    (predicate, yes, no), pos = args
+                    decision = self.braced_test(predicate)
+                    if decision is None:
+                        self.merge_branches([yes, no], active)
+                        replacement = preserved.pack('conditional', text[m.start():pos], status='pending',
+                            reason='undecidable_test', test=predicate, conditional=token)
+                    else:
+                        replacement = self.run(yes if decision == 1 else no, active,
+                                               offset+m.start(), in_math(m.start()))
+            elif opener(name):
+                pos, replacement = self.conditional(text, m, active, offset, in_math(m.start()))
+            elif (self.defer and name and name[0].isalpha() and self.defer(name)
+                  and not in_math(m.start())):
+                stop = preserved.call_end(text, pos)
+                if stop > pos:
+                    raw = text[m.start():stop]
+                    # The argument of a missing macro might never execute.
+                    # Keep it intact and merge the observable switch effects.
+                    if any(isinstance(self.values.get(n), (Setter, Macro))
+                           or n in DEFS for n in L.control_words(text[pos:stop])):
+                        tail = text[pos:stop]
+                        arguments = []
+                        end_arg = 0
+                        for group in re.finditer(r'[\[{]', tail):
+                            if group.start() < end_arg:
+                                continue
+                            end_arg = L.find_group_end(tail, group.start()) or len(tail)
+                            arguments.append(tail[group.end():end_arg-1])
+                        self.merge_branches(['', *arguments, ''.join(arguments)], active)
+                    replacement = '\ue200CALL'+str(len(self.held))+'\ue201'
+                    self.held.append(raw)
+                    pos = stop
+            if replacement is not None:
+                out.extend((text[cursor:m.start()] if not globally else '', replacement))
+                cursor = pos
+        out.append(text[cursor:])
+        return ''.join(out)
+
+
+def switch_option(value):
+    match = re.fullmatch(r'(if[A-Za-z@]+)=(true|false)', value)
+    if not match:
+        raise ValueError('expected ifNAME=true or ifNAME=false')
+    return match[1], match[2] == 'true'
+
+
+def resolve(text, defined=lambda name: False, switches=None):
+    execution = Execution(defined)
+    for key, value in (switches or {}).items():
+        execution.declare_switch(key, value)
+    result = execution.run(text)
+    if switches is not None:
+        switches.update(execution.switches())
+    return result
 
 
 def read_switches(preamble):
-    state = {}
-    resolve(preamble, switches=state)
-    return state
+    execution = Execution()
+    execution.run(preamble)
+    return execution.switches()
