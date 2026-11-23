@@ -158,10 +158,6 @@ def build_lexicon() -> set:
 INPUT_RE = re.compile(r"\\(?:input|include|subfile)\s*\{([^}]+)\}")
 
 
-#: \input files that were not found; the CLI records them for a person
-MISSING_INPUTS: List[str] = []
-
-
 #: command names the rule tables themselves handle; a macro body that only
 #: contains these (plus the name table) is safe to expand
 def _rule_names() -> set:
@@ -217,8 +213,7 @@ def read_source(path: str, seen: Optional[set] = None, sources=None) -> str:
         if not cand.endswith(".tex"):
             cand += ".tex"
         if not os.path.isfile(cand) or os.path.abspath(cand) in seen:
-            if cand not in MISSING_INPUTS:
-                MISSING_INPUTS.append(cand)
+            # The ordered reader reports this call only if its branch executes.
             return m[0]
         return read_source(cand, seen, sources)
 
@@ -606,7 +601,7 @@ PRIMITIVE_EAT = {
     "setbox": "assign", "sbox": "assign", "savebox": "assign",
     "unitlength": "number",
 }
-PRIMITIVE_UNWRAP = {"uppercase", "lowercase", "mathchoice",
+PRIMITIVE_UNWRAP = {"uppercase", "lowercase",
                     "MakeUppercase", "MakeLowercase"}
 
 
@@ -750,7 +745,7 @@ class Normalizer:
         self._skip_aliases = {old for old, new in self.aliases.items()
                               if new in macros.macros}
         preamble, body = L.split_document(tex)
-        body = self.execute_document(preamble, body, macros, styles)
+        body = self.execute_document(preamble, body, macros, styles, tex)
         # a bibliography written without \begin: one corpus paper writes
         # "\thebibliography{999}" and the whole reference list came out as prose
         body = self._drop_bare_bibliography(body)
@@ -779,7 +774,7 @@ class Normalizer:
         body, new_capsules = preserved.mask(body, 'NEW')
         body, opaque_math = self._protect_opaque_math(
             body, known=lambda name: self._known_name(name, macros))
-        body = L.drop_command_all_args(body, L.META_CMDS)
+        body = L.drop_metadata(body)
         body = L.drop_command_all_args(body, self.TITLE_CMDS)
         body = self._drop_bare(body)
         # _drop_bare leaves a marker where a font switch was; this unwraps the
@@ -819,7 +814,7 @@ class Normalizer:
             unknown = L.unknown_commands(span.body)
             if known:
                 unknown = [cmd for cmd in unknown if not known(cmd[1:])]
-            if not unknown:
+            if not unknown and not L.CONTEXTUAL_MATH.search(span.body):
                 continue
             # Known drawings have their own lossless transport and previews.
             if re.search(r'\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})', span.body):
@@ -956,7 +951,7 @@ class Normalizer:
                     queue.append((dep, os.path.join(os.path.dirname(path), dep + '.sty')))
         return styles
 
-    def execute_document(self, preamble, body, macros, styles):
+    def execute_document(self, preamble, body, macros, styles, source):
         """Execute ordinary definitions at their call sites; leave specialist
         declarations (fonts, delimited defs, declarer aliases) to MacroTable."""
         self.kept_macros = {}
@@ -1024,10 +1019,8 @@ class Normalizer:
                                            format_defined if has_defined_test else None)
         self.held_calls = execution.held
         listed = {os.path.basename(n) for n in named}
-        for name in styles:
-            if name not in named and name not in listed:
-                execution.load_package(name)
-        body = execution.begin_document(preamble, body)
+        initial_packages = [name for name in styles if name not in named and name not in listed]
+        body = execution.begin_document(preamble, body, initial_packages, source)
         # Earlier literal closers may have been discarded with a branch;
         # conversely an executed macro can have emitted the first real closer.
         if re.search(r'\\end\s*\{document\}', body):
@@ -1215,11 +1208,7 @@ class Normalizer:
         # \theequation, \thesection: a counter's value, which the reference
         # table already carries.  The counter names are listed, because \the is
         # a prefix of \theorem and \thebibliography.
-        body = re.sub(r"\\the(?:equation|eqnarray|section|subsection|"
-                      r"subsubsection|figure|table|chapter|part|page|"
-                      r"appendix|footnote|enumi|enumii|enumiii|enumiv|"
-                      r"theorem|lemma|definition|proposition|corollary|"
-                      r"remark|example)(?![A-Za-z@])", " ", body)
+        body = re.sub(L.COUNTER_TOKEN, " ", body)
         # text ligatures that arrive as commands
         body = re.sub(r"\\ae(?![A-Za-z@])", "\u00e6", body)
         body = re.sub(r"\\oe(?![A-Za-z@])", "\u0153", body)
@@ -3152,12 +3141,12 @@ def main(argv: List[str] = None) -> int:
     if args.check:
         again = Normalizer(n.names).normalize(out)
         report["idempotent"] = again == out
+    for path in (args.out, args.stats, args.issues):
+        if path:
+            os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(out)
-    for missing in MISSING_INPUTS:
-        _issues.record("human:source_error", "normalize.read_source",
-                       where=os.path.basename(missing), size=0)
     if args.issues:
         _issues.write(args.issues)
         print("issues written: %s" % args.issues)

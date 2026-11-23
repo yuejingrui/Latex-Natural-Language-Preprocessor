@@ -60,6 +60,24 @@ class SplitContractTests(unittest.TestCase):
                 self.assertEqual(result['formulas'][0]['unrecognized_commands'], ['\\'+name])
                 self.assertEqual(self.verify(norm, result)[0], 0)
 
+    def test_math_style_counter_and_terminal_tokens(self):
+        formulas = [r'\mathchoice{a}{b}{c}{d}', r'x^{\thesection}', 'n!!', r'\left(x\right.', r'x\,']
+        for canonical in (False, True):
+            body = ' '.join('Value $' + raw + '$.' for raw in formulas)
+            norm, result = self.convert(body, canonical)
+            expected = formulas[:3] + ['(x', 'x'] if canonical else formulas
+            self.assertEqual([f['expanded'] for f in result['formulas']], expected)
+            self.assertTrue(all(not f['trailing_punct'] for f in result['formulas']))
+            self.assertEqual(self.verify(norm, result)[0], 0)
+            result['formulas'][2]['trailing_punct'] = '!'
+            self.assertEqual(self.verify(norm, result)[0], 1)
+
+    def test_metadata_ends_before_grouped_formula(self):
+        body = r'First. \setcounter{section}{2}{Keep $x$.} \noindent{Keep $y$.}'
+        for canonical in (False, True):
+            _, result = self.convert(body, canonical)
+            self.assertEqual([s['text'] for s in result['sentences']], ['First.', 'Keep MATH1.', 'Keep MATH2.'])
+
     def test_parameters_and_internal_text_not_rewritten(self):
         raw = r'\novelTransform[option]{\textbf{x}}{\text{a long phrase with several words}}'
         norm, result = self.convert('We study $'+raw+'$.')

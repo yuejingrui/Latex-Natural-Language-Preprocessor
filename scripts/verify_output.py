@@ -369,6 +369,8 @@ def check_links(doc, normalized):
             if fid not in by_id: hit(sentence['sid']+' missing '+fid)
     for f in forms:
         if f['id'] not in used: hit('unreachable '+f['id'])
+        if f.get('trailing_punct') == '!':
+            hit(f['id']+' formula exclamation mark moved into prose')
         if f.get('opaque'):
             from latex2nl import strip_trailing_punct
             # Opaque output has a stricter preservation contract instead of the

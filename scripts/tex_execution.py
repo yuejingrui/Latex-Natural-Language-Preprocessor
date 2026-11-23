@@ -22,8 +22,11 @@ FILE_ARG = re.compile(r'\s*\{([\w./ -]+)\}')
 # Stand-in for a known formula with conditional control flow. The outer
 # reader can skip either branch without inspecting tokens inside its maths.
 FORMULA = '\ue320'
+BRACED_COUNTER = re.compile(r'\{\s*(' + L.COUNTER_TOKEN + r')\s*\}')
 TOKEN = re.compile(C.TOKEN.pattern + '|' + FORMULA)
-HIDDEN_FLOW = re.compile(r'\\(?:input|include|subfile|endinput|At(?:Begin|End)Document|AddToHook)(?![A-Za-z@])')
+HOOK_PATTERN = '|'.join(sorted(C.HOOKS))
+HIDDEN_FLOW = re.compile(r'\\(?:input|include|subfile|endinput|excludecomment|includecomment|' +
+                         HOOK_PATTERN + r')(?![A-Za-z@])')
 IF_WORD = re.compile(r'\\if[A-Za-z@]*')
 DELIMITER = re.compile(r'[ \t]*(?:\n[ \t]*)?')
 WORD_END = re.compile(r'(?<!\\)(?:\\\\)*\\[A-Za-z@]+$')
@@ -83,6 +86,10 @@ class Plan:
         self.files = {}
         self.sites = {}
         self.switches = set()
+        self.comment_envs = set()
+        self.hooked_envs = set()
+        self.token_registers = set()
+        self.count_registers = set()
 
     def site(self, src, kind, start, end):
         site = Site(len(self.sites) + 1, kind, start, end)
@@ -90,7 +97,8 @@ class Plan:
         return site
 
     def mark(self, src, pos, site, event):
-        src.edits[pos].append(r'\typeout{' + f'{self.prefix}:{site.id}:{event}' + '}')
+        # \typeout makes temporary assignments that leak under positive \globaldefs.
+        src.edits[pos].append(r'\immediate\write16{' + f'{self.prefix}:{site.id}:{event}' + '}')
 
     def load(self, name):
         if name in self.files:
@@ -110,6 +118,7 @@ class Plan:
         outer = list(masked)
         formulas = {}
         for span in spans:
+            observe = bool(BRACED_COUNTER.search(view, span.start, span.end))
             if IF_WORD.search(view, span.start, span.end):
                 words = {m[0][1:] for m in C.TOKEN.finditer(view, span.start, span.end)}
                 # A user command such as \ifactor and the connective \iff are
@@ -117,8 +126,10 @@ class Plan:
                 if (words & (C.BRACED_IFS - {'iff'}) or
                         (words & {'fi', 'else', 'or'} and any(C.opener(w) for w in words)) or
                         words & self.switches):
-                    formulas[span.start] = span
-                    outer[span.start] = FORMULA
+                    observe = True
+            if observe:
+                formulas[span.start] = span
+                outer[span.start] = FORMULA
         src = Source(name, raw, ''.join(outer), view, formulas)
         self.files[name] = src
         entry = self.site(src, 'file', 0, 0)
@@ -142,6 +153,13 @@ class Plan:
 
     def scan_formula(self, src, span):
         view, start, end = src.formula_view, span.start, span.end
+        if not IF_WORD.search(view, start, end):
+            nodes = []
+            for arg in BRACED_COUNTER.finditer(view, start, end):
+                site = self.site(src, 'counter', arg.start(1), arg.end(1))
+                self.mark(src, site.start, site, 'value=' + arg[1])
+                nodes.append(site)
+            return nodes
         lo, hi = start, end
         ensure = re.match(r'\\ensuremath\s*\{', view[start:end])
         if ensure:
@@ -174,12 +192,48 @@ class Plan:
                 if arg:
                     pos += arg.end()
                 continue
+            if name in ('newtoks', 'newcount') and (arg := C.REGISTER_DECL.match(view, pos, stop)):
+                registers = self.token_registers if name == 'newtoks' else self.count_registers
+                registers.add(arg[1] or arg[2])
+                pos = arg.end()
+                continue
+            if name in self.token_registers and (arg := re.compile(r'\s*=?\s*\{').match(view, pos, stop)):
+                end = L.find_group_end(view, arg.end()-1)
+                if end is None or end > stop:
+                    raise Unobserved('unbounded token register assignment')
+                pos = end  # the RHS is stored without executing any of its tokens
+                continue
+            if name == 'globaldefs':
+                arg = re.compile(r'\s*=?\s*\\([A-Za-z@]+)').match(view, pos, stop)
+                if arg and arg[1] in self.count_registers:
+                    pos = arg.end()
+                    site = self.site(src, 'scope', m.start(), pos)
+                    nodes.append(site)
+                    self.mark(src, pos, site, r'value=\the\globaldefs')
+                    continue
+            if name == 'IfFileExists':
+                args = []
+                for _ in range(3):
+                    arg = re.compile(r'\s*\{').match(view, pos, stop)
+                    end = L.find_group_end(view, arg.end()-1) if arg else None
+                    if end is None or end > stop:
+                        raise Unobserved('unbounded IfFileExists arguments')
+                    args.append((arg.end(), end-1))
+                    pos = end
+                site = self.site(src, 'condition', m.start(), pos)
+                nodes.append(site)
+                for (lo, hi), event in zip(args[1:], ('then', 'else')):
+                    self.mark(src, lo, site, event)
+                    site.parts.append((lo, hi, self.scan(src, lo, hi, view=view)))
+                continue
             if m[0] == '{':
                 # Arguments may be stored, expanded repeatedly or reordered.
                 end = C.group_end(view, m.start())
                 group = view[pos:end-1]
                 if HIDDEN_FLOW.search(group) or IF_WORD.search(group) or FORMULA in group:
                     nodes.append(self.site(src, 'unsupported argument', m.start(), end))
+                elif r'\globaldefs' in group:
+                    nodes.extend(self.scan(src, pos, end-1, view=view))
                 pos = end
                 continue
             if name == 'unless':
@@ -250,26 +304,49 @@ class Plan:
                                  m.start(), pos)
                 nodes.append(site)
                 self.mark(src, m.start(), site, 'stop')
-            elif name in ('AtEndDocument', 'AtBeginDocument', 'AddToHook'):
-                phase = 'begin' if name == 'AtBeginDocument' else 'end'
-                if name == 'AddToHook':
-                    arg = re.match(r'\s*\{(begin|end)document\}', view[pos:stop])
-                    if not arg:
-                        nodes.append(self.site(src, 'unsupported hook', m.start(), pos))
-                        continue
-                    phase = arg[1]
-                    pos += arg.end()
-                arg = re.match(r'\s*\{', view[pos:stop])
-                if not arg:
+            elif name in C.HOOKS:
+                spec = C.hook_spec(name, view, pos, stop)
+                if not spec:
                     nodes.append(self.site(src, 'unsupported hook', m.start(), pos))
                     continue
-                lo = pos + arg.end()
-                pos = C.group_end(view, lo-1)
-                site = self.site(src, phase + ' hook', m.start(), pos)
+                phase, lo, pos = spec
+                if phase.startswith('env/'):
+                    self.hooked_envs.add(phase.split('/')[1])
+                site = self.site(src, 'hook', m.start(), pos)
+                site.target = phase
                 nodes.append(site)
                 self.mark(src, m.start(), site, 'register')
                 self.mark(src, lo, site, 'emit')
                 site.parts.append((lo, pos-1, self.scan(src, lo, pos-1)))
+            elif name in ('excludecomment', 'includecomment') and (arg := C.ENV_ARG.match(view, pos, stop)):
+                pos = arg.end()
+                self.comment_envs.add(arg[1])
+                site = self.site(src, name, m.start(), pos)
+                site.target = arg[1]
+                nodes.append(site)
+                self.mark(src, m.start(), site, 'declare')
+            elif name == 'begin' and (arg := C.ENV_ARG.match(view, pos, stop)) and arg[1] in self.comment_envs:
+                extent = C.comment_extent(src.raw, arg.end(), arg[1])
+                if not extent or extent[2] > stop:
+                    raise Unobserved('cannot locate comment closing line in '+src.name)
+                first, last, pos = extent
+                site = self.site(src, 'comment', m.start(), pos)
+                site.target = arg[1]
+                nodes.append(site)
+                self.mark(src, m.start(), site, 'call')
+                self.mark(src, first, site, 'included')
+                src.edits[first].append('%\n')
+                site.parts.append((first, last, self.scan(src, first, last)))
+                # comment.sty compares the entire closing line literally.
+                src.edits[pos].append('\n')
+                self.mark(src, pos, site, 'return')
+                src.edits[pos].append('%')
+            elif name in ('begin', 'end') and (arg := C.ENV_ARG.match(view, pos, stop)) and arg[1] in self.hooked_envs:
+                pos = arg.end()
+                site = self.site(src, 'environment', m.start(), pos)
+                site.target = 'env/'+arg[1]+'/'+name
+                nodes.append(site)
+                self.mark(src, m.start(), site, name)
             elif name in ('begin', 'end') and (env := re.match(r'\s*\{document\}', view[pos:stop])):
                 pos += env.end()
                 site = self.site(src, name, m.start(), pos)
@@ -305,6 +382,7 @@ class Replay:
             raise Unobserved('unknown site in TeX log')
         self.events = deque(events)
         self.registered = Counter()
+        self.comments = {}
         self.in_body = False
         self.ended = False
         self.pending = []
@@ -324,14 +402,15 @@ class Replay:
         self.take(entry, 'enter')
         return self.render(src, 0, len(src.raw), src.nodes)
 
-    def hooks(self, phase):
+    def hooks(self, *phases):
         pieces = []
         while self.events and self.events[0][1] == 'emit':
             src, hook = self.plan.sites[self.events[0][0]]
-            if hook.kind != phase + ' hook' or not self.registered[hook.id]:
+            if hook.target not in phases or not self.registered[hook.id]:
                 raise Unobserved(f'site {hook.id}: unexpected hook execution')
             self.take(hook, 'emit')
-            self.registered[hook.id] -= 1
+            if not hook.target.startswith('env/') or src.raw.startswith(r'\AddToHookNext', hook.start):
+                self.registered[hook.id] -= 1
             pieces.append(self.render(src, *hook.parts[0]))
         return join_source(pieces)
 
@@ -344,7 +423,22 @@ class Replay:
                 branch = 0 if self.take(site, 'then', 'else') == 'then' else 1
                 if branch < len(site.parts):
                     parts.append(self.render(src, *site.parts[branch]))
-                lo = DELIMITER.match(src.raw, lo, hi).end()
+                if src.raw[lo-1:lo] != '}':
+                    lo = DELIMITER.match(src.raw, lo, hi).end()
+            elif site.kind in ('counter', 'scope'):
+                if not self.events or self.events[0][0] != site.id:
+                    raise Unobserved(f'site {site.id}: missing counter expansion')
+                event = self.events.popleft()[1]
+                if not event.startswith('value='):
+                    raise Unobserved(f'site {site.id}: missing counter value')
+                value = event[6:]
+                if site.kind == 'scope':
+                    if not re.fullmatch(r'-?[0-9]+', value):
+                        raise Unobserved(f'site {site.id}: invalid assignment scope')
+                    parts.append(r'\globaldefs=' + value + ' ')
+                else:
+                    parts.append(value if re.fullmatch(r'-?\d+(?:\.\d+)*', value, re.ASCII)
+                                 else src.raw[site.start:lo])
             elif site.kind == 'unobserved formula' and self.in_body:
                 self.pending.append(site.id)
                 parts.append(preserved.pack('conditional_formula', src.raw[site.start:lo],
@@ -372,13 +466,30 @@ class Replay:
                 if hi != len(src.raw):
                     raise Unobserved(f'site {site.id}: endinput crosses source range')
                 return join_source(parts)
-            elif site.kind in ('begin hook', 'end hook'):
+            elif site.kind == 'hook':
                 self.take(site, 'register')
                 self.registered[site.id] += 1
+            elif site.kind in ('excludecomment', 'includecomment'):
+                self.take(site, 'declare')
+                self.comments[site.target] = site.kind
+            elif site.kind == 'comment':
+                self.take(site, 'call')
+                if self.events and self.events[0] == (site.id, 'included'):
+                    self.take(site, 'included')
+                    parts.append(self.render(src, *site.parts[0]))
+                elif self.comments.get(site.target) != 'excludecomment':
+                    raise Unobserved('missing included body for '+site.target)
+                self.take(site, 'return')
+            elif site.kind == 'environment':
+                self.take(site, site.target.rsplit('/', 1)[1])
+                callback = self.hooks(site.target)
+                if callback:
+                    parts.append(r'\AddToHookNext{' + site.target + '}{' + callback + '}')
+                parts.append(src.raw[site.start:lo])
             elif site.kind == 'begin':
                 self.take(site, 'begin')
                 self.in_body = True
-                parts.extend([src.raw[site.start:lo], self.hooks('begin')])
+                parts.extend([src.raw[site.start:lo], self.hooks('begin', 'late_begin')])
             elif site.kind == 'end':
                 self.take(site, 'end')
                 parts.extend([self.hooks('end'), src.raw[site.start:lo]])
@@ -391,7 +502,9 @@ class Replay:
 
     def document(self, main):
         text = self.file(main)
-        if self.events or any(self.registered.values()) or not self.ended:
+        missing = any(count and not self.plan.sites[i][1].target.startswith('env/')
+                      for i, count in self.registered.items())
+        if self.events or missing or not self.ended:
             raise Unobserved('incomplete replay: extra events, unexecuted hook or missing document end')
         return text
 
@@ -499,7 +612,7 @@ def observe(path, engine, output, sources):
             report['recorder_inputs'] = inputs
             report['stage'] = 'validation'
             events = [(int(i), event) for i, event in re.findall(
-                rf'^{prefix}:(\d+):([a-z]+)$', log, re.M)]
+                rf'^{prefix}:(\d+):([a-z]+|value=[^\r\n]*)$', log, re.M)]
             report['events'] = [dict(site=i, event=event) for i, event in events]
             text_pdf = pdf_text(work, main.name)
             if reference_text != text_pdf or reference_inputs != inputs or passes != observed_passes:
@@ -513,7 +626,7 @@ def observe(path, engine, output, sources):
                     raise Unobserved(f'{name}: project TeX input has no source mapping')
                 if file.suffix.lower() in ('.sty', '.cls'):
                     view = L.lexical_view(file.read_text(encoding='utf-8-sig', errors='replace'))
-                    if re.search(r'\\(?:AtEndDocument|AtBeginDocument|AddToHook)(?![A-Za-z@])', view):
+                    if re.search(r'\\(?:' + HOOK_PATTERN + r'|excludecomment|includecomment)(?![A-Za-z@])', view):
                         raise Unobserved(f'{name}: hook in project style/class has no source mapping')
             replay = Replay(plan, events)
             selected = replay.document(main.name)

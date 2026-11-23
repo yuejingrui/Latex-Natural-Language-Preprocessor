@@ -85,6 +85,31 @@ class SourceOrderTests(unittest.TestCase):
             self.assertEqual([b['kind'] for b in result['content_blocks']],
                              ['dynamic_command', 'conditional'])
 
+    def test_saved_values_and_delayed_assignments(self):
+        pre = (r'\def\v{x}\def\pair#1{#1+#1}\edef\a{\pair{\v}}\edef\f{\noexpand\pair}'
+               r'\def\v{y}\edef\b{\v}\def\update{\def\v{z}}{\aftergroup\update}'
+               r'{\globaldefs=1 \def\last{w}}')
+        for result in self.outputs(r'Values $\a$, $\b$, $\v$, $\f{u}$ and $\last$.', pre):
+            self.assertEqual([f['expanded'] for f in result['formulas']], ['x+x','y','z','u+u','w'])
+        pre = r'\def\val{x}\def\valz{wrong}\def\suffix#1{#1z}\edef\saved{\suffix{\val}}'
+        for result in self.outputs(r'Value $\saved$.', pre):
+            self.assertEqual(result['formulas'][0]['expanded'], 'xz')
+
+    def test_real_and_stored_document_end(self):
+        pre = r'\newtoks\savedtokens\def\finish{\end{document}}\AtEndDocument{Final $\v$.}'
+        body = r'First. \savedtokens={\end{document}}Kept. \def\v{b}\finish \def\v{c}Lost.'
+        for result in self.outputs(body, pre):
+            self.assertEqual([s['text'] for s in result['sentences']], ['First.', 'Kept.', 'Final MATH1.'])
+            self.assertEqual([f['raw'] for f in result['formulas']], ['b'])
+
+    def test_box_typesetting_and_local_reassignment(self):
+        pre = r'\newsavebox{\mybox}\sbox{\mybox}{Stored $w$. }'
+        body = r'{\sbox{\mybox}{Local $x$. }\usebox{\mybox}}\usebox{\mybox}'
+        for result in self.outputs(body, pre):
+            self.assertEqual([f['raw'] for f in result['formulas']], ['x', 'w'])
+        for result in self.outputs(r'\usebox{\mybox}', r'\newsavebox{\mybox}\sbox{\mybox}{$\thesection$}'):
+            self.assertEqual(result['content_blocks'][0]['status'], 'pending')
+
     def test_named_switch_configuration(self):
         for value, expected in [(True, 'Draft.'), (False, 'Final.')]:
             self.sentences(r'\ifdraft Draft.\else Final.\fi', [expected],

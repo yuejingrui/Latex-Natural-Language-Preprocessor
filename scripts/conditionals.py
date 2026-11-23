@@ -194,20 +194,149 @@ class Macro:
 UNKNOWN = object()
 ABSENT = object()
 DECLARED = object()
-UNEXPANDED_DEF = object()
+ENV_HOOKS = {'AtBeginEnvironment': 'begin', 'AtEndEnvironment': 'end'}
+HOOKS = {'AtBeginDocument', 'AtEndDocument', 'AfterEndPreamble', 'AddToHook', 'AddToHookNext',
+         'BeforeBeginEnvironment', 'AfterEndEnvironment', *ENV_HOOKS}
+ENV_ARG = re.compile(r'\s*\{([\w*@-]+)\}')
+
+
+def hook_spec(name, text, pos, stop):
+    """Return the target and exact source range of a literal callback body."""
+    phase = {'AtBeginDocument': 'begin', 'AtEndDocument': 'end',
+             'AfterEndPreamble': 'late_begin'}.get(name)
+    if phase is None:
+        arg = re.compile(r'\s*\{([^{}]+)\}').match(text, pos, stop)
+        if not arg:
+            return None
+        pos = arg.end()
+        if name in ENV_HOOKS and re.fullmatch(r'[\w*@-]+', arg[1]):
+            phase = 'env/' + arg[1] + '/' + ENV_HOOKS[name]
+        elif name in ('AddToHook', 'AddToHookNext'):
+            phase = {'begindocument':'begin', 'begindocument/end':'late_begin',
+                     'enddocument':'end'}.get(arg[1])
+            if re.fullmatch(r'env/[\w*@-]+/(?:begin|end)', arg[1]):
+                phase = arg[1]
+    group = re.compile(r'\s*\{').match(text, pos, stop)
+    if phase and group:
+        import latex2nl as L
+        end = L.find_group_end(text, group.end()-1)
+        if end is not None and end <= stop:
+            return phase, group.end(), end
+    return None
+
+
+def comment_extent(text, start, env):
+    """comment.sty reads physical lines and requires a literal closing line."""
+    newline = text.find('\n', start)
+    if newline >= 0:
+        closing = re.search(r'(?m)^\\end\{' + re.escape(env) + r'\}[ \t]*$', text[newline+1:])
+        if closing:
+            return newline+1, newline+1+closing.start(), newline+1+closing.end()
+    return None
+
+
+class UnknownExecution(ValueError):
+    """The uncertainty can affect the remainder of the document."""
+
+
+@dataclass(frozen=True)
+class UnexpandedDef:
+    source: str
+
+
+@dataclass(frozen=True)
+class TokenRegister:
+    body: str = ''
+
+
+@dataclass(frozen=True)
+class SavedBox:
+    body: str = ''
+
+
 SIMPLE_CMD = re.compile(r'\\(?:newcommand|renewcommand|providecommand|DeclareRobustCommand)'
                         r'\*?\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))'
                         r'\s*(?:\[(\d)\]\s*)?(?:\[([^\]]*)\]\s*)?\{')
 SIMPLE_DEF = re.compile(r'\\(?:g?def)\s*\\([A-Za-z@]+)((?:\s*#[1-9])*)\s*\{')
-QUOTED_DEF = re.compile(r'\\[ex]def\s*\\([A-Za-z@]+)\s*\{\\noexpand\s*(\\[A-Za-z@]+)\s*\}')
+EXPANDED_HEAD = re.compile(r'\\[ex]def\s*\\([A-Za-z@]+)\s*\{')
+CONTROL_WORD = re.compile(r'\\[A-Za-z@]+')
+TOKEN_SPACE = re.compile(r'[ \t]*(?:\n[ \t]*)?')
+WORD_END = re.compile(r'(?<!\\)(?:\\\\)*\\[A-Za-z@]+$')
 
 
-def ordinary_definition(text, match, end):
-    # A single \noexpand token survives an expanded definition unchanged.
-    # Its binding is looked up when the new macro is called.
+def substitute(body, args):
+    """Substitute already-tokenized arguments without fusing control words."""
+    parts, pos = [], 0
+    def append(piece):
+        if piece:
+            if parts and re.match(r'[A-Za-z@]', piece) and WORD_END.search(parts[-1]):
+                parts.append(' ')
+            parts.append(piece)
+    for m in re.finditer(r'\\.|#([1-9])', body):
+        if m[1] and int(m[1]) <= len(args):
+            append(body[pos:m.start()])
+            append(args[int(m[1])-1])
+            pos = m.end()
+    append(body[pos:])
+    return ''.join(parts)
+
+
+def freeze_tokens(text, values, active=(), budget=None):
+    r"""Expand ordinary macros at definition time; \noexpand quotes one token."""
+    import latex2nl as L
+    if '#' in text or len(active) >= 32:
+        return None
+    budget = [0] if budget is None else budget
+    out, pos = [], 0
+    while m := TOKEN.search(text, pos):
+        out.append(text[pos:m.start()])
+        token, pos = m[0], m.end()
+        if not token.startswith('\\'):
+            out.append(token)
+            continue
+        if CONTROL_WORD.fullmatch(token):
+            pos = TOKEN_SPACE.match(text, pos).end()
+        if token == r'\noexpand':
+            if pos == len(text):
+                return None
+            nxt = TOKEN.match(text, pos)
+            token = nxt[0] if nxt else text[pos]
+            pos += len(token)
+            if CONTROL_WORD.fullmatch(token):
+                pos = TOKEN_SPACE.match(text, pos).end()
+                token += ' '  # token delimiter when the stored body is read back
+            out.append(token)
+            continue
+        value = values.get(token[1:])
+        budget[0] += 1
+        if not isinstance(value, Macro) or token in active or budget[0] > 1024:
+            return None
+        body = value.body
+        if value.nargs:
+            args = L.macro_arguments(text, pos, value.nargs, value.default)
+            if args is None:
+                return None
+            actuals, pos = args
+            if any(int(k) > len(actuals) for k in re.findall(r'#([1-9])', body)):
+                return None
+            body = substitute(body, actuals)
+            if len(body) > 100000:
+                return None
+        expansion = freeze_tokens(body, values, active+(token,), budget)
+        if expansion is None:
+            return None
+        out.append(expansion)
+    return ''.join(out) + text[pos:]
+
+
+def ordinary_definition(text, match, end, values):
     if match[0] in (r'\edef', r'\xdef'):
-        head = QUOTED_DEF.fullmatch(text, match.start(), end)
-        return (head[1], Macro(0, head[2], None)) if head else None
+        head = EXPANDED_HEAD.match(text, match.start())
+        if head and text[end-1:end] == '}':
+            body = freeze_tokens(text[head.end():end-1], values)
+            if body is not None:
+                return head[1], Macro(0, body, None)
+        return None
     head = SIMPLE_CMD.match(text, match.start())
     if head:
         name = head[1] or head[2]
@@ -253,6 +382,9 @@ class Execution:
         self.groups = []
         self.managed = set()
         self.expansions = 0
+        self.document_active = False
+        self.ended = False
+        self.hook_source = ''
         for key, value in self.switch_defaults.items():
             self.declare_switch(key, value)
 
@@ -267,6 +399,18 @@ class Execution:
         if globally:
             for group in self.groups:
                 group[name] = value
+
+    def enter_group(self):
+        self.groups.append(self.values.copy())
+        self.values.pop('tex:aftergroup', None)
+
+    def leave_group(self):
+        delayed = self.values.get('tex:aftergroup', ())
+        self.values = self.groups.pop()
+        if delayed is UNKNOWN:
+            return preserved.pack('conditional', r'\aftergroup', status='pending',
+                                  reason='undecidable_delayed_tokens')
+        return ''.join(t + ' ' if CONTROL_WORD.fullmatch(t) else t for t in delayed)
 
     def defined(self, name, query_format=False):
         value = self.values.get(name, ABSENT)
@@ -293,6 +437,8 @@ class Execution:
         for branch in branches:
             self.values, *self.groups = [d.copy() for d in original]
             self.run(branch, active=active)
+            if self.ended:
+                raise UnknownExecution('uncertain_document_end')
             outcomes.append([self.values, *self.groups])
         self.values, *self.groups = original
         for i, frame in enumerate(original):
@@ -313,20 +459,39 @@ class Execution:
             self.assign(key, True, globally=True)
             self.run(self.packages[name])
 
-    def begin_document(self, preamble, body):
-        self.run(preamble)
-        hooks = self.values.pop('begin_hooks', ())
-        if hooks is UNKNOWN:
-            # Different possible preambles registered different hooks. Their
-            # side effects and any text they produce belong to the document.
-            for key, value in list(self.values.items()):
-                self.values[key] = Switch(None) if isinstance(value, Switch) else UNKNOWN
-            self.values['unread_source'] = True
-            return preserved.pack('conditional', preamble, status='pending',
-                                  reason='undecidable_begin_document_hook') + self.run(body)
-        return ''.join(self.run(hook) for hook in hooks) + self.run(body)
+    def begin_document(self, preamble, body, initial_packages=(), source=None):
+        self.hook_source = preamble or body
+        try:
+            for package in initial_packages:
+                self.load_package(package)
+            self.run(preamble)
+            self.document_active = True
+            opening = self.fire_hooks('begin') + self.fire_hooks('late_begin')
+            content = self.run(body)
+            self.ended = False
+            self.document_active = False
+            return opening + content + self.fire_hooks('end')
+        except UnknownExecution as exc:
+            return preserved.pack('tex_execution', source if source is not None else preamble + '\n' + body, status='pending',
+                                  reason=str(exc))
 
-    def stateful_environment(self, text, match, pos, env, spec, active, offset, math):
+    def fire_hooks(self, phase):
+        out = []
+        for prefix in ('hook:', 'next_hook:'):
+            key = prefix + phase
+            hooks = self.values.get(key, ())
+            if prefix == 'next_hook:' and hooks:
+                self.assign(key, (), globally=True)
+            if hooks is UNKNOWN:
+                for name in self.switches():
+                    self.assign(name, Switch(None), globally=True)
+                out.append(preserved.pack('conditional', self.hook_source, status='pending',
+                                          reason='undecidable_hook_registration'))
+            else:
+                out.extend(self.run(hook) for hook in hooks)
+        return ''.join(out)
+
+    def stateful_environment(self, text, match, pos, env, spec, active, offset, math, callback):
         """Execute state-changing begin/end code around the actual body."""
         import latex2nl as L
         nargs, default, begin, finish = spec
@@ -334,9 +499,9 @@ class Execution:
         if parsed is None:
             return None
         args, start = parsed
-        begin = re.sub(r'#([1-9])', lambda h: args[int(h[1])-1]
-                       if int(h[1]) <= len(args) else h[0], begin)
-        if not any(isinstance(self.values.get(n), (Setter, Macro)) or n in DEFS
+        begin = substitute(begin, args)
+        literal_wrapper = bool(nargs or begin.strip() or finish.strip()) and not L.control_words(spec[2] + finish)
+        if not literal_wrapper and not any(isinstance(self.values.get(n), (Setter, Macro)) or n in DEFS
                    or n in ('global', 'newif', 'let', 'csname') or opener(n)
                    for n in L.control_words(begin+' '+finish)):
             return None  # Layout-only wrappers retain the existing rendering rules.
@@ -346,10 +511,12 @@ class Execution:
             end = closing.end() if closing else len(text)
             return end, preserved.pack('environment', text[match.start():end], status='pending',
                                        reason='unresolved_environment_execution')
-        self.groups.append(self.values.copy())
-        replacement = self.run('\n'.join((begin, text[start:closing.start()], finish)),
+        replacement = callback + self.run(begin + '\n' + text[start:closing.start()],
                                active+(guard,), offset+start, math)
-        self.values = self.groups.pop()
+        replacement += self.fire_hooks('env/'+env+'/end')
+        replacement += self.run(finish, active+(guard,), offset+closing.start(), math)
+        if literal_wrapper:
+            replacement = text[match.start():pos] + '\n' + replacement + '\n' + closing[0]
         return closing.end(), replacement
 
     def conditional(self, text, match, active, offset, math, unless=None):
@@ -387,6 +554,11 @@ class Execution:
         out, pos, cursor = [], 0, 0
         global_start = None
         spans = starts = None
+        def insert_delayed(at, delayed):
+            nonlocal text, spans, starts
+            if delayed:
+                text = text[:at] + delayed + text[at:]
+                spans = starts = None
         def in_math(at):
             nonlocal spans, starts
             if math:
@@ -397,7 +569,7 @@ class Execution:
             i = bisect_right(starts, at)-1
             return i >= 0 and at < spans[i].end
 
-        while (m := EXEC_TOKEN.search(text, pos)):
+        while not self.ended and (m := EXEC_TOKEN.search(text, pos)):
             pos = m.end()
             token, name = m[0], m[0][1:]
             start = m.start()
@@ -406,56 +578,114 @@ class Execution:
                 start = global_start
             global_start = None
             replacement = None
+            mode = self.values.get('tex:globaldefs', 0)
+            if mode is UNKNOWN:
+                raise UnknownExecution('uncertain_assignment_scope')
+            global_assignment = mode > 0 or (mode == 0 and globally)
             if token in MATH_CLOSE or token in (r'\)', r'\]'):
                 if (token, len(self.groups)) == self.values.get('math_closer') and self.groups:
-                    self.values = self.groups.pop()
+                    insert_delayed(pos, self.leave_group())
                 elif token in MATH_CLOSE:
-                    self.groups.append(self.values.copy())
+                    self.enter_group()
                     self.values['math_closer'] = (MATH_CLOSE[token], len(self.groups))
                 continue
             if token == '{' or name in ('begingroup', 'bgroup'):
-                self.groups.append(self.values.copy())
+                self.enter_group()
                 continue
             if token == '}' or name in ('endgroup', 'egroup'):
                 if self.groups:
-                    self.values = self.groups.pop()
+                    insert_delayed(pos, self.leave_group())
                 continue
             if name in ('begin', 'end'):
                 env = re.match(r'\s*\{([\w*@-]+)\}', text[pos:])
                 if env:
                     pos += env.end()
+                    if name == 'end' and env[1] == 'document' and self.document_active:
+                        self.ended = True
+                        out.append(text[cursor:start])
+                        break
                     if name == 'begin':
+                        mode = self.values.get('comment:'+env[1])
+                        if mode is not None:
+                            extent = comment_extent(text, pos, env[1])
+                            first, last, pos = extent or (pos, len(text), len(text))
+                            if mode is UNKNOWN or not extent:
+                                contents = preserved.pack('environment', text[start:pos], status='pending',
+                                                          reason='unresolved_comment_environment')
+                            else:
+                                contents = self.run(text[first:last], active, offset+first, math) if mode else ''
+                            out.extend((text[cursor:start], contents))
+                            cursor = pos
+                            continue
+                        phase = 'env/'+env[1]+'/begin'
+                        has_hook = self.values.get('hook:'+phase) or self.values.get('next_hook:'+phase)
+                        self.enter_group()
+                        callback = self.fire_hooks(phase) if has_hook else ''
                         spec = self.values.get('env:'+env[1])
                         if isinstance(spec, tuple):
                             result = self.stateful_environment(text, m, pos, env[1], spec,
-                                                               active, offset, in_math(m.start()))
+                                                               active, offset, in_math(m.start()), callback)
                             if result:
                                 pos, rendered = result
+                                insert_delayed(pos, self.leave_group())
                                 out.extend((text[cursor:m.start()], rendered))
                                 cursor = pos
                                 continue
-                        self.groups.append(self.values.copy())
+                        if callback:
+                            if isinstance(spec, tuple) and spec[0] == 0:
+                                out.extend((text[cursor:pos], callback))
+                                cursor = pos
+                            else:
+                                out.extend((text[cursor:start], callback))
+                                cursor = start
                     elif self.groups:
-                        self.values = self.groups.pop()
+                        callback = self.fire_hooks('env/'+env[1]+'/end')
+                        if callback:
+                            out.extend((text[cursor:start], callback))
+                            cursor = start
+                        insert_delayed(pos, self.leave_group())
                 continue
             if name == 'global':
                 out.append(text[cursor:start])
                 cursor = m.end()
                 global_start = start
                 continue
-            if name == 'DeclareMathOperator':
+            if name == 'aftergroup':
+                pos = TOKEN_SPACE.match(text, pos).end()
+                if pos < len(text):
+                    arg = TOKEN.match(text, pos)
+                    delayed = arg[0] if arg else text[pos]
+                    pos += len(delayed)
+                    if CONTROL_WORD.fullmatch(delayed):
+                        pos = TOKEN_SPACE.match(text, pos).end()
+                    if self.groups:
+                        queue = self.values.get('tex:aftergroup', ())
+                        if queue is not UNKNOWN:
+                            self.values['tex:aftergroup'] = queue+(delayed,)
+                replacement = ''
+            elif name == 'globaldefs':
+                arg = re.match(r'\s*=?\s*([+-]?\d{1,10})(?!\d)', text[pos:])
+                if not arg:
+                    raise UnknownExecution('unresolved_globaldefs_value')
+                pos += arg.end()
+                following = CONTROL_WORD.match(text, pos)
+                if following and following[0][1:] not in (DEFS | {'global', 'relax', 'let', 'globaldefs'}):
+                    raise UnknownExecution('unresolved_globaldefs_numeric_suffix')
+                self.assign('tex:globaldefs', int(arg[1]), global_assignment)
+                replacement = ''
+            elif name == 'DeclareMathOperator':
                 head = L.MacroTable.DECLOP_RE.match(text, m.start())
                 end = L.find_group_end(text, head.end()-1) if head else None
                 if end is None:
                     continue
                 key = head[1]
                 value = Macro(0, r'\operatorname{' + text[head.end():end], None)
-                self.assign(key, value, globally)
+                self.assign(key, value, global_assignment)
                 self.managed.add(key)
                 pos, replacement = end, ''
             elif name in DEFS:
                 pos = definition_end(text, m)
-                parsed = ordinary_definition(text, m, pos)
+                parsed = ordinary_definition(text, m, pos, self.values)
                 if not parsed or parsed[0] in self.skip:
                     if name in ('newenvironment', 'renewenvironment'):
                         from normalize import read_env_decls
@@ -470,28 +700,37 @@ class Execution:
                     if name in ('def', 'gdef', 'edef', 'xdef'):
                         key = re.match(r'\s*\\([A-Za-z@]+)', text[m.end():])
                         if key:
-                            value = UNEXPANDED_DEF if name in ('edef', 'xdef') else DECLARED
-                            self.assign(key[1], value, globally or name in ('gdef', 'xdef'))
+                            value = UnexpandedDef(text[m.start():pos]) if name in ('edef', 'xdef') else DECLARED
+                            if isinstance(value, UnexpandedDef):
+                                self.managed.add(key[1])
+                            self.assign(key[1], value, global_assignment or
+                                        (name in ('gdef', 'xdef') and mode != UNKNOWN and mode >= 0))
                     continue
                 key, spec = parsed
                 self.managed.add(key)
                 previous = self.defined(key, query_format=True) if name == 'providecommand' else False
                 if previous is False:
-                    self.assign(key, spec, globally or name in ('gdef', 'xdef'))
+                    self.assign(key, spec, global_assignment or
+                                (name in ('gdef', 'xdef') and mode != UNKNOWN and mode >= 0))
                 elif previous is None:
                     # It exists afterwards whichever binding won.
-                    self.assign(key, DECLARED, globally)
+                    self.assign(key, DECLARED, global_assignment)
                 replacement = ''
-            elif name == 'AtBeginDocument':
-                hook = re.match(r'\s*\{', text[pos:])
-                if hook:
-                    first = pos + hook.end()
-                    end = L.find_group_end(text, first-1)
-                    if end is not None:
-                        hooks = self.values.get('begin_hooks', ())
-                        if hooks is not UNKNOWN:
-                            self.assign('begin_hooks', hooks+(text[first:end-1],), globally=True)
-                        pos, replacement = end, ''
+            elif name in HOOKS:
+                spec = hook_spec(name, text, pos, len(text))
+                if not spec:
+                    raise UnknownExecution('unmapped_hook_registration')
+                phase, first, pos = spec
+                key = ('next_hook:' if name == 'AddToHookNext' else 'hook:') + phase
+                hooks = self.values.get(key, ())
+                if hooks is not UNKNOWN:
+                    self.assign(key, hooks+(text[first:pos-1],), globally=True)
+                replacement = ''
+            elif name in ('excludecomment', 'includecomment'):
+                arg = ENV_ARG.match(text, pos)
+                if arg:
+                    self.assign('comment:'+arg[1], name == 'includecomment', global_assignment)
+                    pos, replacement = arg.end(), ''
             elif name == 'documentclass':
                 arg = re.match(r'\s*(\[[^\]]*\]\s*)?\{([^{}]+)\}', text[pos:])
                 if arg:
@@ -510,8 +749,13 @@ class Execution:
                 continue
             elif name in ('input', 'include', 'subfile'):
                 # An include still present here was unavailable (or not inlined).
-                self.assign('unread_source', True)
+                import issues
                 pos = preserved.call_end(text, pos)
+                issues.record('human:source_error', 'conditionals.Execution.run',
+                              where=text[m.start():pos], size=0)
+                if not self.document_active:
+                    raise UnknownExecution('unread_setup_include')
+                self.assign('unread_source', True)
                 replacement = preserved.pack('source_file', text[m.start():pos],
                     status='pending', reason='unread_include', source_stage='conditional_input')
             elif name == 'csname':
@@ -529,7 +773,7 @@ class Execution:
                 pos = end.end() if end else len(text)
                 target = self.values.get(key)
                 if isinstance(target, Setter):
-                    self.assign(target.switch, Switch(target.value), globally)
+                    self.assign(target.switch, Switch(target.value), global_assignment)
                     replacement = ''
                 else:
                     # A computed control sequence can change state. A later
@@ -548,22 +792,57 @@ class Execution:
                         defined = self.defined(target, query_format=True)
                         if defined is not False:
                             value = ExternalAlias('\\'+target, defined)
-                    self.assign(key, value, globally)
+                    self.assign(key, value, global_assignment)
                     self.managed.add(key)
                     pos, replacement = alias.end(), ''
                 else:
                     alias = L.MacroTable.LET_CHAR_RE.match(text, m.start())
                     if not alias:
                         continue
-                    self.assign(alias[1], Macro(0, alias[2], None), globally)
+                    self.assign(alias[1], Macro(0, alias[2], None), global_assignment)
                     self.managed.add(alias[1])
                     pos, replacement = alias.end(), ''
             elif name in ALLOCATORS:
                 arg = REGISTER_DECL.match(text, pos)
                 if arg:
                     key = arg[1] or arg[2]
-                    self.assign(key, DECLARED, globally=True)
+                    binding = {'newtoks': TokenRegister(), 'newsavebox': SavedBox()}.get(name, DECLARED)
+                    self.assign(key, binding, globally=True)
                     pos, replacement = arg.end(), ''
+            elif name in ('sbox', 'usebox') and (arg := REGISTER_DECL.match(text, pos)):
+                key = arg[1] or arg[2]
+                box = self.values.get(key)
+                if not isinstance(box, SavedBox):
+                    raise UnknownExecution('unresolved_box_register')
+                pos = arg.end()
+                if name == 'usebox':
+                    replacement = box.body
+                else:
+                    contents = L.macro_arguments(text, pos, 1, None)
+                    if not contents:
+                        raise UnknownExecution('unbounded_box_contents')
+                    (body,), pos = contents
+                    # A box is typeset at storage time. Reusing literal text and
+                    # math is exact; replaying executable commands at use time is not.
+                    if re.search(r'[\\#%&~]|[\r\n]\s*[\r\n]', body):
+                        raise UnknownExecution('unresolved_box_construction')
+                    self.assign(key, SavedBox(body), global_assignment)
+                    replacement = ''
+            elif isinstance(self.values.get(name), SavedBox):
+                raise UnknownExecution('unmapped_box_operation')
+            elif isinstance(self.values.get(name), TokenRegister):
+                arg = re.compile(r'\s*=?\s*\{').match(text, pos)
+                end = L.find_group_end(text, arg.end()-1) if arg else None
+                if end is None:
+                    raise UnknownExecution('unresolved_token_register_assignment')
+                self.assign(name, TokenRegister(text[arg.end():end-1]), global_assignment)
+                pos, replacement = end, ''
+            elif name == 'the' and (arg := re.compile(r'\s*\\([A-Za-z@]+)').match(text, pos)):
+                stored = self.values.get(arg[1])
+                if isinstance(stored, TokenRegister):
+                    if arg[1] in active:
+                        raise UnknownExecution('recursive_token_register')
+                    pos, replacement = arg.end(), self.run(stored.body, active+(arg[1],), offset+start, in_math(start))
             elif name == 'newcounter':
                 counter = re.match(r'\s*\{([A-Za-z@]+)\}', text[pos:])
                 if counter:
@@ -582,18 +861,20 @@ class Execution:
                 if not arg:
                     continue
                 key = arg[1]
-                self.declare_switch(key, self.switch_defaults.get(key, False), globally)
+                self.declare_switch(key, self.switch_defaults.get(key, False), global_assignment)
                 pos += arg.end()
                 replacement = ''
             elif isinstance(value := self.values.get(name), Setter):
-                self.assign(value.switch, Switch(value.value), globally)
+                self.assign(value.switch, Switch(value.value), global_assignment)
                 replacement = ''
-            elif value is UNEXPANDED_DEF:
+            elif isinstance(value, UnexpandedDef):
                 # Its invocation may contain a global setter. A stale initial
                 # value cannot decide later branches, even after group exit.
                 for key in self.switches():
                     self.assign(key, Switch(None), globally=True)
-                continue
+                pos = preserved.call_end(text, pos)
+                replacement = preserved.pack('prose_macro', text[m.start():pos], status='pending',
+                                             reason='unresolved_expanded_definition', definition=value.source)
             elif isinstance(value, ExternalAlias):
                 replacement = value.token
                 if text[pos:pos+1].isalpha():
@@ -607,12 +888,11 @@ class Execution:
                     continue
                 actuals, pos = args
                 self.expansions += 1
-                expanded = re.sub(r'#([1-9])', lambda h: actuals[int(h[1])-1]
-                                  if int(h[1]) <= len(actuals) else h[0], value.body)
+                expanded = substitute(value.body, actuals)
                 # A zero-argument alias can forward the caller's remaining
                 # arguments to another ordinary macro (\def\show{\render}).
                 alias_names = set()
-                while (alias := re.fullmatch(r'\\([A-Za-z@]+)', expanded)):
+                while (alias := re.fullmatch(r'\\([A-Za-z@]+)\s*', expanded)):
                     target = self.values.get(alias[1])
                     if not isinstance(target, Macro) or alias[1] in alias_names:
                         break
@@ -640,6 +920,14 @@ class Execution:
                 replacement = preserved.pack('prose_macro', text[m.start():pos], status='pending',
                     command=token, reason='conditional_definition', source_stage='conditional_input',
                     offset=offset+m.start())
+            elif name == 'IfFileExists':
+                args = L.macro_arguments(text, pos, 3, None)
+                if args is None:
+                    raise UnknownExecution('unbounded_file_test')
+                (_, yes, no), pos = args
+                self.merge_branches([yes, no], active)
+                replacement = preserved.pack('conditional', text[start:pos], conditional=token,
+                                             status='pending', reason='unobserved_file_lookup')
             elif name == 'ifthenelse' and self.braced_test:
                 args = L.macro_arguments(text, pos, 3, None)
                 if args is None:
@@ -687,7 +975,8 @@ class Execution:
             if replacement is not None:
                 out.extend((text[cursor:m.start()] if not globally else '', replacement))
                 cursor = pos
-        out.append(text[cursor:])
+        if not self.ended:
+            out.append(text[cursor:])
         return ''.join(out)
 
 

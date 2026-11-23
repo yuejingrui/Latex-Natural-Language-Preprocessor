@@ -244,7 +244,7 @@ META_CMDS = (
     "newtheorem", "usepackage", "documentclass", "setlength", "addtolength",
     "newcommand*", "renewcommand*", "pagestyle", "thispagestyle",
     "bibliographystyle", "bibliography", "include", "input", "includeonly",
-    "setcounter", "addtocounter",
+    "setcounter", "addtocounter", "stepcounter", "refstepcounter",
     "addcontentsline", "addtocontents",
 )
 
@@ -1443,6 +1443,25 @@ def drop_command_all_args(text: str, cmds: Sequence[str]) -> str:
     return text
 
 
+def drop_metadata(text: str) -> str:
+    """A group after the last metadata argument belongs to the paper."""
+    arities = {'setcounter': 2, 'addtocounter': 2, 'stepcounter': 1, 'refstepcounter': 1,
+               'setlength': 2, 'addtolength': 2, 'pagestyle': 1, 'thispagestyle': 1,
+               'bibliographystyle': 1, 'bibliography': 1, 'includeonly': 1,
+               'addcontentsline': 3, 'addtocontents': 2}
+    pattern = re.compile(r'\\(' + '|'.join(arities) + r')(?![A-Za-z@])')
+    out, pos = [], 0
+    for m in pattern.finditer(text):
+        if m.start() < pos:
+            continue
+        args = macro_arguments(text, m.end(), arities[m[1]], None)
+        if args is not None:
+            out.extend((text[pos:m.start()], ' '))
+            pos = args[1]
+    out.append(text[pos:])
+    return drop_command_all_args(''.join(out), [cmd for cmd in META_CMDS if cmd not in arities])
+
+
 def normalize_dashes_quotes(text: str) -> str:
     text = text.replace("---", "-").replace("--", "-")
     text = text.replace("``", '"').replace("''", '"')
@@ -1658,7 +1677,7 @@ def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
                     continue
                 i += em.end()
                 continue
-            m = re.match(r"\\begin\{([A-Za-z]+\*?)\}", text[i:])
+            m = re.match(r"\\begin\s*\{([A-Za-z]+\*?)\}", text[i:])
             if m and m.group(1) == "diagram":
                 # a drawing that is not inside a display is still an opaque
                 # object, not prose: left in the text, a texdraw body became 108
@@ -1674,8 +1693,9 @@ def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
                                   text[i: em.end()], env="diagram"))
                 i = em.end()
                 continue
-            if m and (m.group(1) in MATH_ENVS or m.group(1) == 'display'):
+            if m and (m.group(1) in MATH_ENVS or m.group(1) in ('display', 'math')):
                 env = m.group(1)
+                kind = 'inline' if env == 'math' else 'display'
                 after = i + m.end()
                 em = find_env_end(text, after, env)
                 if em is None:
@@ -1684,10 +1704,10 @@ def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
                                    where="display-env", size=1)
                     # an unclosed display env is still mathematics; treating it
                     # as prose turned \mathfrak{F}=1 into a sentence (AUDIT.md 22)
-                    spans.append(Span(i, n, "display", text[after:], env=env))
+                    spans.append(Span(i, n, kind, text[after:], env=env))
                     i = n
                     continue
-                spans.append(Span(i, em.end(), "display",
+                spans.append(Span(i, em.end(), kind,
                                   text[after: em.start()], env=env))
                 i = em.end()
                 continue
@@ -1790,9 +1810,13 @@ def strip_math(text: str) -> str:
 #: things that may follow the last punctuation mark of a display without being
 #: part of the mathematics: the end of an inner block, a tag switch
 TRAILER = r"(?:\\end\{[A-Za-z]+\*?\}|\\notag|\\nonumber)"
-#: a display may end on ":" or "!" too; leaving the mark inside the body made the
-#: sentence look cut (AUDIT.md small items)
-TRAILING_PUNCT_RE = re.compile(r"([.,;:!?])((?:\s*" + TRAILER + r")*)\s*$")
+# Inside the math delimiters "!" may be a postfix operator (n!, n!!).
+TRAILING_PUNCT_RE = re.compile(r"([.,;:?])((?:\s*" + TRAILER + r")*)\s*$")
+
+# These substitutions depend on the active math style or a document counter.
+# Keeping their source protects operands even when the name table knows them.
+COUNTER_TOKEN = r'\\the(?:equation|eqnarray|section|subsection|subsubsection|figure|table|chapter|part|page|appendix|footnote|enumi|enumii|enumiii|enumiv|theorem|lemma|definition|proposition|corollary|remark|example)(?![A-Za-z@])'
+CONTEXTUAL_MATH = re.compile(r'\\mathchoice(?![A-Za-z@])|' + COUNTER_TOKEN)
 
 
 def strip_trailing_punct(body: str) -> Tuple[str, str]:
@@ -1804,7 +1828,13 @@ def strip_trailing_punct(body: str) -> Tuple[str, str]:
     body = body.rstrip()
     m = TRAILING_PUNCT_RE.search(body)
     if m:
-        return body[: m.start()].rstrip() + m.group(2), m.group(1)
+        prefix = body[:m.start()]
+        # The punctuation token in \, or \right. belongs to the formula.
+        if (len(prefix) - len(prefix.rstrip('\\'))) % 2:
+            return body, ""
+        if m[1] == '.' and re.search(r'\\(?:left|right|middle|[bB]igg?[lrm]?)\s*$', prefix):
+            return body, ""
+        return prefix.rstrip() + m.group(2), m.group(1)
     return body, ""
 
 
@@ -2645,7 +2675,7 @@ class LatexToNL:
             # adds them to MATH_ENVS / MATH_INNER_ENVS / LIST_ENVS instead.
             if "statement" not in self.unit_envs:
                 self.unit_envs = tuple(self.unit_envs) + ("statement",)
-        body = keeper.execute_document(preamble, body, self.macros, styles)
+        body = keeper.execute_document(preamble, body, self.macros, styles, tex)
         body = self.macros.expand(body)
         body = keeper._ifthenelse(body)
         body = normalize.conditionals.preserve_late_conditions(body)
@@ -2783,7 +2813,7 @@ class LatexToNL:
         environment is a container, so its markers go and its content stays as
         its own paragraph.
         """
-        known = (set(MATH_ENVS) | set(MATH_INNER_ENVS) | set(self.unit_envs)
+        known = ({'math'} | set(MATH_ENVS) | set(MATH_INNER_ENVS) | set(self.unit_envs)
                  | set(LIST_ENVS) | set(DROP_ENVS))
         begin_re = re.compile(r"\\begin\{([A-Za-z]+\*?)\}")
         while True:
@@ -2817,14 +2847,14 @@ class LatexToNL:
     # -- stage: drop document-level material ----------------------------
     def _drop_meta(self, body: str) -> str:
         body = drop_command_with_arg(body, ("thanks", "footnote"))
-        body = drop_command_all_args(body, META_CMDS)
+        body = drop_metadata(body)
         body = unwrap_layout(body)
         for cmd in ("maketitle", "tableofcontents", "newpage", "clearpage",
                     "noindent", "centering", "small", "large", "normalsize",
                     "bfseries", "itshape", "par", "hfill", "vfill",
                     "bigskip", "medskip", "smallskip", "leavevmode",
                     "allowbreak", "appendix", "frontmatter", "mainmatter"):
-            body = re.sub(r"\\" + cmd + r"(?![A-Za-z])(\s*\{[^{}]*\})?", " ", body)
+            body = re.sub(r"\\" + cmd + r"(?![A-Za-z@])", " ", body)
         for env in DROP_ENVS:
             while True:
                 m = re.search(r"\\begin\{" + re.escape(env) + r"\}", body)
@@ -3492,7 +3522,7 @@ class LatexToNL:
         """Turn one math span into one or several table records."""
         unknown = unknown_commands(body)
         drawing = bool(re.search(r'\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})', body))
-        if unknown and not drawing:
+        if (unknown or CONTEXTUAL_MATH.search(body)) and not drawing:
             # No whitelist completion required. One formula, intact arguments,
             # no qquad/side-condition/slot rewriting or inferred mathematical role.
             core, punct = strip_trailing_punct(body)
@@ -3502,8 +3532,9 @@ class LatexToNL:
                                 env=span.env, label=span.label, trailing_punct=punct,
                                 flags=['opaque_formula'], context_before=before[-120:],
                                 context_after=after[:80])
-            self._formula_diagnostic(pid, 'unrecognized_commands',
-                'Formula preserved without interpreting internal commands', commands=unknown)
+            if unknown:
+                self._formula_diagnostic(pid, 'unrecognized_commands',
+                    'Formula preserved without interpreting internal commands', commands=unknown)
             return [rec]
         parts: List[str] = [body]
         side: List[str] = []

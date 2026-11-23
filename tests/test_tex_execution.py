@@ -44,6 +44,17 @@ class ProjectCase(unittest.TestCase):
 
 
 class TeXExecution(ProjectCase):
+    def test_missing_input_only_blocks_an_executed_call(self):
+        for pre, body, code in [('', r'Kept. \iffalse\input{absent}\fi', 0),
+                                ('', r'Kept. \input{absent}', 3),
+                                (r'\input{absent}', 'Kept.', 3)]:
+            with self.subTest(pre=pre, body=body):
+                self.main.write_text(article(body, pre), encoding='utf-8')
+                norm = self.out / 'normalized.tex'
+                self.script('normalize', self.main, '-o', norm, '--issues', self.out/'issues_normalize.json')
+                self.script('latex2nl', norm, '--canonical', '-o', self.out)
+                self.script('verify_output', self.out, '--strict', code=code)
+
     def test_missing_engine_preserves_sources_and_blocks_acceptance(self):
         self.main.write_text(article(r'\input{one}'), encoding='utf-8')
         (self.project / 'one.tex').write_text('Source line.', encoding='utf-8')
@@ -77,6 +88,49 @@ class TeXExecution(ProjectCase):
 
 @unittest.skipUnless(shutil.which('pdflatex') and shutil.which('pdftotext'), 'TeX/PDF tools unavailable')
 class CompiledExecution(ProjectCase):
+
+    def test_hooks_exclusions_and_formula_boundaries_match_pdf(self):
+        pre = '\n'.join([r'\pagestyle{empty}\usepackage{comment,etoolbox}',
+                         r'\excludecomment{draftonly}\newenvironment{claim}[1]{Given #1. }{}',
+                         r'\AfterEndPreamble{Start $a$. }',
+                         r'\AtBeginEnvironment{claim}{Assume $p$. }',
+                         r'\AtEndEnvironment{claim}{Done $e$. }',
+                         r'\AddToHookNext{enddocument}{Final $z$.}'])
+        body = '\n'.join([r'\begin{draftonly}', 'Hidden $h$.', r'\end{draftonly}',
+                          r'\begin{claim}{$q$}Use \begin{math}n!\end{math} here. \end{claim}'])
+        self.main.write_text(article(body, pre), encoding='utf-8')
+        subprocess.run(['pdflatex', '-no-shell-escape', '-halt-on-error', '-interaction=batchmode',
+                        self.main.name], cwd=self.project, capture_output=True, check=True, timeout=60)
+        visible = subprocess.check_output(['pdftotext', 'main.pdf', '-'], cwd=self.project).split()
+        self.assertEqual(b' '.join(visible), b'Start a. Assume p. Given q. Use n! here. Done e. Final z.')
+        expected = ['Start MATH1.', 'Assume MATH2.', 'Given MATH3.', 'Use MATH4 here.',
+                    'Done MATH5.', 'Final MATH6.']
+        for normalize_first, flags in [(False, ['--tex-engine', 'pdflatex']),
+                                       (True, ['--tex-engine', 'pdflatex']), (True, [])]:
+            with self.subTest(normalize_first=normalize_first, flags=flags):
+                if normalize_first:
+                    norm = self.out / 'normalized.tex'
+                    self.script('normalize', self.main, *flags, '-o', norm)
+                    self.script('latex2nl', norm, '--canonical', '-o', self.out)
+                else:
+                    self.script('latex2nl', self.main, *flags, '-o', self.out)
+                self.script('verify_output', self.out, '--strict')
+                self.assertEqual((self.out / 'sentences.txt').read_text().splitlines(), expected)
+                self.assertEqual([f['expanded'] for f in self.read('formulas.json')], ['a','p','q','n!','e','z'])
+
+    def test_register_scope_file_lookup_and_counter_per_use(self):
+        pre = (r'\newcount\scopeval\scopeval=1\def\val{a}{\globaldefs=\scopeval\def\val{x}}'
+               r'\setcounter{section}{2}')
+        body = (r'\IfFileExists{article.cls}{Value $\val^{\thesection}$. }{Wrong. }'
+                r'\stepcounter{section}\IfFileExists{nlprep-absent-file.tex}{Wrong. }{Again $x^{\thesection}$.}')
+        self.main.write_text(article(body, pre), encoding='utf-8')
+        self.script('latex2nl', self.main, '--tex-engine', 'pdflatex', '-o', self.out)
+        self.script('verify_output', self.out, '--strict')
+        self.assertEqual([f['expanded'] for f in self.read('formulas.json')], ['x^{2}', 'x^{3}'])
+        self.script('latex2nl', self.main, '-o', self.out)
+        self.script('verify_output', self.out, '--strict', code=3)
+        item, = self.read('content_todo.json')['items']
+        self.assertIn(r'\globaldefs=\scopeval', item['raw'])
 
     def test_document_closer_and_math_switch_match_pdf(self):
         pre = r'\pagestyle{empty}\newif\ifdraft\edef\enable{\noexpand\drafttrue}\enable'
