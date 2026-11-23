@@ -102,6 +102,12 @@ check("a placeholder after a letter is still found",
       any(s["formulas"] for s in doc["sentences"]),
       str([(s["text"], s["formulas"]) for s in doc["sentences"]]))
 
+# F5 (MERGE-PLAN 3): a template's \th before a reference is an empty marker
+norm, doc = run("\\begin{proposition}\\th\\label{a} Let MATH1 be a set."
+                "\\end{proposition}\nAs in \\th\\ref{a}, MATH2 holds.\n")
+sent = " ".join(texts(doc))
+check("the authoring marker is dropped", "\\th" not in sent, sent)
+
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
 sys.exit(1 if bad else 0)

@@ -2501,6 +2501,14 @@ class Normalizer:
             body, k = re.subn(r"\\" + cmd + r"(?![A-Za-z])", "", body)
             if k:
                 self.stats["layout_removed:" + cmd] += k
+        # \th is TeX's thorn character, but this corpus uses it as an empty
+        # authoring marker right before a reference or a label ("from \th\ref{x}",
+        # "\begin{proposition}\th\label{x}"); the class that made it empty is not
+        # shipped with the source (MERGE-PLAN F5)
+        body, k = re.subn(r"\\th(?![A-Za-z])\s*(?=\\(?:ref|eqref|label|cite|autoref|cref)\b)",
+                          "", body)
+        if k:
+            self.stats["meta_marker:th"] += k
         body = self._drop_section_machinery(body)
         body = self._drop_inline_tikz(body)
         return self._apply_names(body)
