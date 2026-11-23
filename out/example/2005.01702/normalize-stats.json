@@ -1,15 +1,20 @@
 {
-  "kept_macros": {
-    "hooklongleftarrow": "\\longleftarrow\\joinrel\\defparamok",
-    "sslash": "/\\mkern-6mu/",
-    "acom": "\\todo[inline,color=green!20]{ Alex: #1 }",
-    "renc": "\\renewcommand",
-    "ssslash": "/\\mkern-6mu/\\mkern-6mu/",
-    "nc": "\\newcommand"
-  },
-  "input": "/home/roger/gted/newarticle/2005.01702/SympSing.tex",
+  "input": "2005.01702/SympSing.tex",
   "input_chars": 79909,
+  "kept_macros": {
+    "acom": "\\todo[inline,color=green!20]{ Alex: #1 }",
+    "hooklongleftarrow": "\\longleftarrow\\joinrel\\defparamok",
+    "nc": "\\newcommand",
+    "renc": "\\renewcommand",
+    "sslash": "/\\mkern-6mu/",
+    "ssslash": "/\\mkern-6mu/\\mkern-6mu/"
+  },
+  "labels_unrendered": {},
   "output_chars": 80308,
+  "outside_math_vocabulary": {},
+  "outside_vocabulary": {
+    "ssslash": 1
+  },
   "stats": {
     "alias:longrightarrow->rightarrow": 16,
     "content_preserved:figure": 1,
@@ -39,10 +44,5 @@
     "unwrap:emph": 1
   },
   "unknown_envs": {},
-  "outside_vocabulary": {
-    "ssslash": 1
-  },
-  "outside_math_vocabulary": {},
-  "vocabulary_scope_version": 2,
-  "labels_unrendered": {}
+  "vocabulary_scope_version": 2
 }
