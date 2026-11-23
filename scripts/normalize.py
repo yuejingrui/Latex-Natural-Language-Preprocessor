@@ -1144,12 +1144,35 @@ class Normalizer:
         return body
 
     def _preserve_notes(self, body: str) -> str:
-        pat = re.compile(r"\\(footnote|footnotetext|symbolfootnote|marginpar)(?![A-Za-z@])\s*(?:\[[^\]]*\]\s*)?\{")
+        # A note command that opens a group is the normal shape.  One that does
+        # not (``\footnote`` alone, or a note inside maths) used to fall through
+        # to _drop_bare and lose its content with only a ledger entry behind it;
+        # it is packed as pending instead, so nothing leaves the paper.
+        pat = re.compile(r"\\(footnote|footnotetext|symbolfootnote|marginpar)"
+                         r"(?![A-Za-z@])")
         out, pos = [], 0
         for m in pat.finditer(body):
             if m.start() < pos:
                 continue
-            end = L.find_group_end(body, m.end()-1)
+            cursor = m.end()
+            while cursor < len(body) and body[cursor] in " \t\n":
+                cursor += 1
+            if cursor < len(body) and body[cursor] == "[":
+                bracket = body.find("]", cursor)
+                if bracket >= 0:
+                    cursor = bracket + 1
+                    while cursor < len(body) and body[cursor] in " \t\n":
+                        cursor += 1
+            if cursor >= len(body) or body[cursor] != "{":
+                stop = cursor + 1 if cursor < len(body) else cursor
+                out.append(body[pos:m.start()])
+                out.append(preserved.pack(m.group(1), body[m.start():stop],
+                           status='pending', reason='note_without_argument',
+                           source_stage='expanded_body', offset=m.start()))
+                self.stats["content_preserved:" + m.group(1)] += 1
+                pos = stop
+                continue
+            end = L.find_group_end(body, cursor)
             if end is None:
                 out.append(body[pos:m.start()])
                 out.append(preserved.pack(m.group(1), body[m.start():],
@@ -1163,7 +1186,7 @@ class Normalizer:
             punctuation = tail.group(1) if tail else ""
             out.append(before[:tail.start()] if tail else before)
             out.append(preserved.pack(m.group(1), body[m.start():end],
-                       body=self._clean_content(body[m.end():end-1]),
+                       body=self._clean_content(body[cursor + 1:end - 1]),
                        status="ready",
                        source_stage="expanded_body", offset=m.start()))
             out.append(punctuation)
