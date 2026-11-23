@@ -42,3 +42,8 @@ desktop.ini
 out/runs/
 out/baseline-runs/
 out/tmp/
+
+# ---- Scratch space ----
+# One-off scripts written while working in this checkout.  They are evidence
+# for a change, not part of the package: keep them on disk, never commit them.
+.tmp/
