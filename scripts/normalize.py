@@ -779,6 +779,7 @@ class Normalizer:
         # Preserve semantic side content before any layout/name cleanup. Shield
         # newly created capsules in this pass as well as ones from prior passes.
         body = self._preserve_floats(body)
+        body = self._preserve_graphics(body)
         body = self._preserve_notes(body)
         body = preserved.restore_calls(body, self.held_calls)
         body = self.preserve_prose_calls(body, macros)
@@ -1093,6 +1094,35 @@ class Normalizer:
                        previews=captions, source_stage="expanded_body", offset=m.start()))
             self.stats["content_preserved:" + env] += 1
             pos = stop
+        out.append(body[pos:])
+        return ''.join(out)
+
+    #: A picture is not prose: ``\includegraphics[opt]{path}`` outside a float
+    #: (``\begin{center}``, a bare ``\begin{equation}``) used to survive into a
+    #: sentence as the literal command and its file path -- six of them in
+    #: 1811.02461 reached the sentence stream and tripped the C2 check.  It is
+    #: preserved as a content block like a float, so nothing is lost and no
+    #: control word reaches a sentence.
+    GRAPHIC_RE = re.compile(
+        r"\\(?:includegraphics|includesvg|includestandalone)\*?(?![A-Za-z@])"
+        r"\s*(?:\[[^\]]*\]\s*)*\{")
+
+    def _preserve_graphics(self, body: str) -> str:
+        out, pos = [], 0
+        for m in self.GRAPHIC_RE.finditer(body):
+            if m.start() < pos:
+                continue
+            end = L.find_group_end(body, m.end() - 1)
+            if end is None:
+                continue
+            raw = body[m.start():end]
+            out.append(body[pos:m.start()])
+            out.append(preserved.pack("graphic", raw, status="pending",
+                                      reason="graphic_not_parsed",
+                                      source_stage="expanded_body",
+                                      offset=m.start()))
+            self.stats["content_preserved:graphic"] += 1
+            pos = end
         out.append(body[pos:])
         return ''.join(out)
 

@@ -1334,6 +1334,22 @@ ACCENT_LETTER_RE = re.compile(
     r"\\([uvHckbr])\s*(?:\{([A-Za-z])\}|\s([A-Za-z]))")
 
 
+#: ``\i`` and ``\j`` are dotless letters, not accents: they carry a base
+#: character that the accent pass needs.  ``\v{S}\v{t}ov\'\i\v{c}ek`` kept
+#: both command names because neither regex could see a letter after the
+#: accent, and ``Be\u{\i}linson`` lost its breve.  They are replaced first,
+#: and only when no argument follows -- a paper that defines ``\i`` as a macro
+#: of its own keeps it.
+DOTLESS_RE = re.compile(r"\\([ij])(?![A-Za-z{])")
+
+#: The same lost argument, in the shape the brace guard leaves behind:
+#: ``Be\u{\i}linson`` loses its braces first and reaches this pass as
+#: ``Be\u\ilinson``.  TeX would read that as the undefined ``\ilinson``, so
+#: only the accent-plus-dotless shape is repaired here, never a name the paper
+#: might define.
+MANGLED_ACCENT_RE = re.compile(r"\\([uvHckbr])\\([ij])(?=[A-Za-z])")
+
+
 def apply_accents(text: str) -> str:
     def repl(m: "re.Match[str]") -> str:
         acc = ACCENTS.get(m.group(1))
@@ -1342,6 +1358,10 @@ def apply_accents(text: str) -> str:
         base = m.group(2) or m.group(3)
         return unicodedata.normalize("NFC", base + acc)
 
+    text = MANGLED_ACCENT_RE.sub(
+        lambda m: unicodedata.normalize("NFC", m.group(2) + ACCENTS[m.group(1)]),
+        text)
+    text = DOTLESS_RE.sub(lambda m: m.group(1), text)
     text = ACCENT_SYMBOL_RE.sub(repl, text)
     text = ACCENT_LETTER_RE.sub(repl, text)
     return text

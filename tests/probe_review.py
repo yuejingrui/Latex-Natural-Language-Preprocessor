@@ -108,6 +108,25 @@ norm, doc = run("\\begin{proposition}\\th\\label{a} Let MATH1 be a set."
 sent = " ".join(texts(doc))
 check("the authoring marker is dropped", "\\th" not in sent, sent)
 
+# C2: a bare \includegraphics outside a float is a picture, not prose
+norm, doc = run("The quiver is given by\n\\begin{center}\n"
+                "  \\includegraphics[width=0.33\\textwidth]{figures/Delta13}\n"
+                "\\end{center}\nThe elements are highlighted.\n")
+sent = " ".join(texts(doc))
+check("a bare graphic never reaches a sentence",
+      "includegraphics" not in sent and "figures/" not in sent, sent)
+check("the bare graphic is preserved as pending",
+      any(b["kind"] == "graphic" and "figures/Delta13" in b["raw"]
+          and b["status"] == "pending" for b in doc["content_blocks"]),
+      doc["content_blocks"])
+
+# C2: an accent on a dotless letter keeps its base
+for body, want in ((r"Be\u{\i}linson proved it.\n", "Be\u012dlinson"),
+                   (r"Groth and \v{S}\v{t}ov\'\i\v{c}ek showed it.\n", "\u0160\u0165ov\u00ed\u010dek")):
+    norm, doc = run(body)
+    sent = " ".join(texts(doc))
+    check("an accent keeps its base %r" % want, want in sent and "\\i" not in sent, sent)
+
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
 sys.exit(1 if bad else 0)
