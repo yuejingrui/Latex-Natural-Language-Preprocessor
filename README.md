@@ -1,9 +1,6 @@
 # 切分层：LaTeX → 句子流 + 公式表
 
-**当前规则（2026-11-23 第二次调整）：** 公式命令表不是切分准入名单。数学边界明确时，未知命令按完整 `opaque` 公式保留；未识别命令和文字槽角色输出到 `formula_diagnostics.json` 等下游信息，不计入切分 pending。`unresolved.log` 只承载本轮切分疑点。结构错误、未定句界/条件和未切分内容仍阻止通过。详见 [RULES.md](RULES.md) 开头及 [运行对比](../../切分规则调整_2026-11-23/规则调整与运行对比.md)。
-
-2026-11-23 修复后的行为、数据接口与验收结果见 [修复说明](REPAIR-2026-11-23.md)。本文原有的较早测试数字和未修状态保留为历史记录；涉及脚注/浮动块删除、纯公式过滤、条件默认取第一支及 strict 退出码的旧描述，以修复说明为准。
-
+2026-11-23 版支持按源码顺序静态处理论文，也可以用论文指定的 TeX 引擎观测选支、读文件和钩子。数学边界明确时保留未知公式及其参数。缺失的正文定义、未决分支和未切分的内容写入待办。各轮修复、反例与最终验证见 [11 月 23 日修复汇总](REPAIR-2026-11-23.md)。
 
 这一包只做**切分**：把一篇数学论文的 `.tex` 变成两样东西——
 
@@ -84,14 +81,14 @@ $trace.events | Format-Table
 
 本例的严格退出码为 0，句子依次为 `Draft claim.`、`Included result for MATH1.`、`Final conclusion.`。在 `formulas.json` 中，`MATH1.raw` 为 `x^2`。直接切分也接受该选项，例如 `python -X utf8 scripts/latex2nl.py tests/fixtures/tex_execution/main.tex --tex-engine pdflatex -o "$run-direct"`。
 
-`execution.json` 的 `sites` 给出站点编号、相对文件名、行号和源码偏移，`events` 按执行顺序引用这些编号。`status` 为 `observed` 表示已回放本次跟踪的站点，`partial` 表示部分正文条件保留两支，`pending` 表示此次构建或回放无法确定有效正文。后两种情况在切分后的 `content_todo.json` 中可查原文。整篇切分是否通过以 `verify_output.py --strict` 为准。
+`execution.json` 的 `sites` 给出站点编号、相对文件名、行号和源码偏移，`events` 按执行顺序引用这些编号。`status` 为 `observed` 表示已回放本次跟踪的站点，`partial` 表示未观测的局部条件或整条公式进入待办，`pending` 表示此次构建或回放无法确定有效正文。后两种情况在切分后的 `content_todo.json` 中可查原文。整篇切分是否通过以 `verify_output.py --strict` 为准。
 
-不开启该选项时仍走静态切分。如需切换草稿和定稿，请使用论文实际采用的入口文件或源码配置。`--switch`、额外的 `--style` 和 `--no-inputs` 属于静态模式。`--canonical` 读取上一阶段生成的文件。各版本的产物应分别写入独立运行目录。
+未指定引擎时走静态切分。若原稿依赖 `\includeonly` 排除章节或 `\endinput` 截断子文件，应指定实际 TeX 引擎。最终代码的静态反例分别带入了被排除的章节和结束位置之后的赋值，两次都错误返回 0。见 [当前限制](OPEN.md)。如需切换草稿和定稿，请使用论文实际采用的入口文件或源码配置。`--switch`、额外的 `--style` 和 `--no-inputs` 属于静态模式。`--canonical` 读取上一阶段生成的文件。各版本的产物应分别写入独立运行目录。
 
 ### 2.1 不接模型（只做切分）
 
 ```sh
-cd nlprep-切分            # 或仓库里的 nlprep/
+# 在含 scripts/ 和 tests/ 的代码包根目录运行
 RUN=/tmp/run && mkdir -p $RUN
 
 # 1. 归一化
@@ -110,7 +107,7 @@ python3 scripts/split_audit.py --run '/tmp/runs/*' -o out/split-audit-baseline.m
 ```
 
 不接模型时，判不准的句界按默认（`split`）处理，公式里的短语角色留空（`unclassified`），
-题目留在 `sentence_todo.json`、`slot_todo.json` 里，什么也不会丢。
+题目留在 `sentence_todo.json`、`slot_todo.json` 里。句界待办阻止严格通过，未定文字槽角色进入下游诊断。
 
 ### 2.2 接模型（切分层的两类题）
 
@@ -195,7 +192,12 @@ When $\operatorname{dim} Y=1$, Katz proved Simpson's conjecture by describing ..
 |:--|:--|:--|
 | `normalized.tex` | normalize | 规范化后的全文 |
 | `normalize-stats.json` | normalize | 改写计数与报告 |
-| `issues_normalize.json` | normalize | 归一化阶段的账本 |
+| `issues_normalize.json` | normalize | 指定 `--issues` 时写入的归一化账本 |
+| `execution.json` | 启用 `--tex-engine` 的入口 | 构建、站点、事件、回放状态和原因 |
+| `content_blocks.json` | latex2nl | 脚注、浮动体、未定条件等块的原文与父子句锚点 |
+| `content_todo.json` / `conditional_todo.json` | latex2nl | 待处理内容及独立未定条件，有相应项目时生成 |
+| `formula_diagnostics.json` | latex2nl | 公式内部未知命令和未定文字槽角色 |
+| `split_status.json` | latex2nl | 句子、公式与内容块计数，切分待办与下游诊断 |
 | `sentences.jsonl` | latex2nl | 每句一行的元数据（§4.1） |
 | `sentences.txt` | latex2nl | 只有句子文本，一句一行 |
 | `sentences.tok.txt` | latex2nl | 空格分隔的词元，一句一行，喂 DepCCG |
@@ -246,10 +248,10 @@ danmark 的分布：`env` 里 `prose` 856、`proof` 299、`remark` 66、`item` 3
 | `orphan` | 所在句子被过滤掉时为真（公式仍保留在表里） |
 | `unit`、`env` | 所属单元与环境 |
 | `context_before`、`context_after`、`prev_sentence` | 上下文 |
-| `ref_kind`、`ref_target` | 引用类：`ref`/`cite` 与目标标签 |
+| `ref_kind`、`ref_target` | 引用类别与目标。`content` 指向 `content_blocks.json` 中的块 ID |
 | `flags` | 公式级标记（下表） |
 
-`role` 的取值（初判，依据是公式顶层的关系符号与触发词）：
+完整保留的公式使用 `opaque=true` 和 `role="opaque"`。`expanded` 保留公式体和分组，仅分离适用的末尾标点。下表为其余公式的启发式角色及 danmark 历史计数。
 
 | 角色 | 含义 | danmark |
 |:--|:--|--:|
@@ -266,13 +268,7 @@ danmark 的分布：`env` 里 `prose` 856、`proof` 299、`remark` 66、`item` 3
 
 ### 4.3 `unresolved.log`
 
-一行一条，格式 `位置: 说明`，例如：
-
-```
-MATH112: formula uses commands not understood: \curvearrowright
-```
-
-名字层（§7.2 的第 4 类题）会从这里收集"没人认识的命令"。
+切分阶段把未解决的句界等问题按位置写入日志。已知数学边界内遇到 `\accentset{\ast}{W}` 时，公式表保留完整操作数，未知命令列入 `formula_diagnostics.json`。早期运行中的 `unresolved.log` 可能混有公式解释问题，重新切分可以得到当前分类。
 
 ### 4.4 `normalize-stats.json`
 
@@ -290,8 +286,10 @@ MATH112: formula uses commands not understood: \curvearrowright
 | 键 | 内容 |
 |:--|:--|
 | `counts` | 每个 kind 的条数 |
-| `sizes` | 每个 kind 涉及的字符数（删掉了多少） |
-| `hard` | 闸门为"硬"的条目 |
+| `sizes` | 按 kind 汇总的涉及字符数，既可计删除量也可计保留或诊断范围 |
+| `hard` | 合并账本中的硬错误数 |
+| `status`、`pending` | 严格状态及阻止通过的待处理项目 |
+| `scope`、`downstream_diagnostics` | 切分检查范围及独立的公式解释诊断 |
 | `kinds` | 本次出现的 kind 及其 `gate`/`route` |
 | `entries` | 逐条记录：`kind`、`site`（哪段代码）、`route`、`gate`、`where`、`size` |
 | `checks` | C1–C16 每项的命中数 |
@@ -305,15 +303,16 @@ MATH112: formula uses commands not understood: \curvearrowright
 
 ---
 
-## 5. 本包里的六个脚本
+## 5. 本包脚本
 
-| 脚本 | 行数 | 一句话 |
-|:--|--:|:--|
-| `scripts/normalize.py` | 2,970 | 把各种写法收成一种规范形状，只改形式、不碰语义 |
-| `scripts/latex2nl.py` | 4,587 | 从规范形状切出句子流、公式表和题目文件 |
-| `scripts/verify_output.py` | 410 | 看输出"像不像一篇论文"：C1–C16 检查，写账本 |
-| `scripts/split_audit.py` | 160 | 把"没有句末标点的句子"按原因分类，出 Markdown 清单 |
-| `scripts/issues.py` | 143 | 账本机制；被其余四个 import，不单独运行 |
+| 脚本 | 职责 |
+|---|---|
+| `normalize.py`、`latex2nl.py` | 归一化、切句、公式记录和内容锚点 |
+| `conditionals.py`、`format_names.py` | 维护源码顺序、局部状态和宏绑定，查询标准格式中的名称 |
+| `tex_execution.py` | 执行原稿和带标记的副本，回放生效源码 |
+| `preserved.py` | 将须保留的内容封装进规范化文本，跨进程恢复原文 |
+| `verify_output.py`、`issues.py` | 检查产物、关联和账本，给出严格退出状态 |
+| `sentences_md.py`、`split_audit.py` | 导出逐句 Markdown，汇总一批运行的句末边界 |
 
 ### 5.1 `normalize.py`：归一化
 
@@ -327,13 +326,13 @@ MATH112: formula uses commands not understood: \curvearrowright
 | 步 | 做什么 | 说明 |
 |--:|:--|:--|
 | 1 | 去注释 | 只有注释的行整行去掉，不留空行（TeX 里这种行不产生输出）；`\%` 保留 |
-| 2 | 读宏定义并展开 | `\newcommand`/`\def`/`\let`/`\DeclareMathOperator`，分隔参数宏（`\def\[#1]#2{…}`）、字符别名（`\let\x=a`）；嵌套调用按轮展开（最多 8 轮）；展开后会出现没人认识的名字的宏**保留宏名**，记进 `kept_macros` |
-| 3 | 判条件分支 | `\ifdefined`、`\ifthenelse`、`\ifcase`（字面数字）、`\ifodd`、`\iffalse`；判不了的完整保存为 pending 内容块 |
+| 2 | 执行声明和宏调用 | 普通宏按调用点的定义展开，分组退出时恢复局部状态。支持的 `\edef` 在定义时求值。分隔参数和专门声明由宏表处理 |
+| 3 | 判条件、文件与钩子 | 静态读取开关、字面数值和受支持的比较。`--tex-engine` 利用当次执行事件选择正文与公式，覆盖章节排除、文件查找和可定位钩子。未决条件连同分支一起保存 |
 | 4 | 去掉不带命题内容的机制 | 版式、尺寸与间距（连同操作数）、参考文献（含裸 `\thebibliography`）、浮动块完整保存为 pending，脚注另成单元并挂接正文、`\label` 外提到公式前 |
 | 5 | 环境归成五类 | 见下表；文本块拆壳；论文用 `\newtheorem` 声明的类按定理处理；未知环境保留并报告 |
 | 6 | 同形改写与去排版 | `\le`→`\leq` 这类同一字形的不同拼写合并；`\left`/`\bigl` 等尺寸、细空格去掉；**字形不同的不合并**（`\epsilon`/`\varepsilon`、`\subset`/`\subseteq`） |
 | 7 | 名字表 | 命令按 `tex_names.json`（TeX 自己说的）、`name_overrides.json`（人工更正）、`name_answers.json`（问答得到的答案，可按篇）决定 `allow`/`font`/`unwrap`/`ignore`/`expand` |
-| 8 | 固定点检查 | 输出再跑一遍应不变；`--check` 时同时断言词汇封闭 |
+| 8 | 固定点检查 | 输出再跑一遍应不变；`--check` 时核对固定点并报告词表统计 |
 
 五类规范形式：
 
@@ -352,10 +351,12 @@ MATH112: formula uses commands not understood: \curvearrowright
 | `-o FILE` | 规范化结果 |
 | `--stats FILE` | 改写计数与报告（§4.4） |
 | `--issues FILE` | 本段账本 |
+| `--tex-engine ENGINE` | 对原始主文件执行 pdfLaTeX、XeLaTeX 或 LuaLaTeX，按实际事件回放 |
+| `--switch ifNAME=true/false` | 设置静态开关初值，后续赋值按源码顺序生效 |
 | `--style FILE` | 额外读一个 `.sty` 的宏（可重复） |
 | `--no-inputs` | 不内联 `\input`/`\include` |
 | `--paper-id ID` | 读 `data/name_answers.json` 里这篇自己的名字答案（同名在不同论文可含义不同） |
-| `--check` | 断言固定点与词汇封闭 |
+| `--check` | 检查再次归一化后文本是否相同 |
 | `--self-test` | 内置用例 |
 
 ### 5.2 `latex2nl.py`：切分
@@ -364,10 +365,10 @@ MATH112: formula uses commands not understood: \curvearrowright
 
 | 步 | 做什么 | 关键规则 |
 |--:|:--|:--|
-| 1 | 去掉无命题内容的标记 | 前言、重音等；`\cite`/`\ref`/`\eqref` 换成 `REFn`，`ref_target` 保留标签；`\href{url}{text}` 留 `text` |
+| 1 | 准备正文及附属内容 | 读取导言区定义和静态状态或执行回放结果。脚注和浮动体建立正文锚点，数学重音连同其参数保留 |
 | 2 | 切单元 | `statement`、`list`、每个 `\item` 各成单元；正文按空行分段；display 前的空行只在前文有句末标点时才算分段；display 后小写续写时并回；display 和 diagram 内部的空行不算分段 |
-| 3 | 找公式 span | `$…$`、`\(…\)`、`\ensuremath{…}`、`$$…$$`、`\[…\]`、`display`/`grid`/`diagram`；扫 `$` 时跳过组内的 `$`；未闭合的 `$$`/`\[` 把余下部分当 display 并记 `math:unclosed` |
-| 4 | 生成公式记录 | display 按 `\qquad` 拆成多条；剥掉末尾的 `.,;:!?` 放进 `trailing_punct`；分出侧条件；`\text{…}`（以及 `\mbox`、`\textrm` 等）换成 `<TXTn>` 槽并查 `slot_roles.json` 定角色；槽里其实是一个直立名字（`\text{Hom}`）时提升为 `\operatorname{Hom}` |
+| 3 | 找公式 span | `$…$`、`\(…\)`、`math` 环境、`\ensuremath{…}`、`$$…$$`、`\[…\]`、`display`/`grid`/`diagram`；扫 `$` 时跳过组内的 `$`；未闭合的 `$$`/`\[` 把余下部分当 display 并记 `math:unclosed` |
+| 4 | 生成公式记录 | 数学边界内的末尾 `!` 留在公式中。适用的 `.,;:?` 可以分离。已知公式可提取文字槽、侧条件或按顶层 `\qquad` 拆分。`opaque` 公式保留分组和构造，包括 `\mathchoice` 的四个分支 |
 | 5 | 写占位符 | 公式在句中留下 `MATHn`；相邻占位符之间补空格；粘在后面的词缀（`-module`）记进 `affix` |
 | 6 | 切句子 | 句末 `.?!:;`；例外：`e.g.`、`i.e.`、`abbreviations.json` 里的缩写、两个以上连写的首字母、公式内的标点；句点后面是小写词时**仍然断开**，但写进 `sentence_todo.json`（§7） |
 | 7 | display 结尾判句界 | 看 display 后面的第一个字符：大写断句、小写续句；看不出时按公式自带的标点，再不行记 `sentence_end_unclear` |
@@ -377,18 +378,20 @@ MATH112: formula uses commands not understood: \curvearrowright
 
 | 选项 | 作用 |
 |:--|:--|
-| `--canonical` | 输入是 `normalize.py` 的输出（**正常使用都要加**）；不加则按原始 `.tex` 处理，只适合调试 |
+| `--canonical` | 读取 `normalize.py` 已生成的规范化文本。原始 `.tex` 可直接切分，也可指定 `--tex-engine` |
 | `-o DIR` | 输出目录（默认 `nlprep_out`） |
 | `--issues FILE` | 账本 |
 | `--paper-id ID` | 读这篇的名字答案 |
 | `--merge-sentence-answers FILE` | 合并句界答案（§7.7） |
-| `--merge-slot-answers FILE` | 合并短语角色答案；**会写进 `--slot-table` 指定的表**（默认 `data/slot_roles.json`） |
+| `--merge-slot-answers FILE` | 合并短语角色答案，写入 `--slot-table` 指定的表（默认 `data/slot_roles.json`） |
 | `--slot-table FILE` | 短语 → 角色表的位置 |
 | `--sentence-todo FILE` / `--slot-todo FILE` | 题目文件写到别处（默认在 `-o` 目录里） |
 | `--proposition-form {bare,holds}` | 命题类占位符写成 `MATH7` 还是 `MATH7 holds` |
 | `--max-words N` | 超过 N 词的句子标 `too_long_for_spring`（SPRING 会丢弃 100 词以上的输入；默认 90） |
 | `--tok-mode {ptb,space}` / `--no-tok` | 词元流的切法 / 不写词元流 |
 | `--no-merge-display` / `--no-split-qquad` | 不把 display 并回句子 / 不按 `\qquad` 拆公式 |
+| `--tex-engine ENGINE` | 对原始主文件执行 pdfLaTeX、XeLaTeX 或 LuaLaTeX，按实际事件回放 |
+| `--switch ifNAME=true/false` | 设置静态开关初值，后续赋值按源码顺序生效 |
 | `--style FILE` | 额外读一个 `.sty` |
 | `--limit N` | 在标准输出打印前 N 句 |
 | `--self-test` | 内置用例 |
@@ -407,17 +410,17 @@ MATH112: formula uses commands not understood: \curvearrowright
 | C4 | 软 | 句子不超过 2 个词元且无句末标点 |
 | C5 | 软 | 句子以 `MATH`/`REF` 开头且前一句无句末标点 |
 | C6 | 硬 | 公式 `expanded` 里有 `$` 或 `\intertext` |
-| C7 | 软 | 行内公式 `raw` 的花括号不配对 |
+| C7 | 硬 | 检查行内及行间公式花括号的深度和顺序，跳过转义花括号 |
 | C8 | 软 | `section`/`title` 里有 `$` |
 | C9 | 硬 | 公式里有 4 个以上连续英文词（散文进了公式） |
 | C10 | 硬 | `expanded` 里有 `grid`/`diagram` 以外的 `\begin{…}` |
 | C11 | 软 | `grid{cases}` 的角色不是 piecewise |
-| C12 | 硬 | 句子里出现 `REFn}`，或 `ref_target` 里有 `{` |
-| C13 | 软 | `ref_target` 在全文找不到对应 `\label`（多为外部引用） |
+| C12 | 硬 | 句中悬空的 `REFn}`，或引用目标的花括号失配 |
+| C13 | 软 | 文内交叉引用缺少对应标签。文献引用及内容块锚点跳过此项 |
 | C14 | 硬 | 词汇外的名字出现在句子里 |
 | C16 | 软 | display 读起来像散文（3 个以上连续英文词） |
 
-编号没有 C15。各项的来源与抽样精度见 `GAPS.md` §5。
+另外检查句子、公式、内容块和词元的关联，核对保留原文、待办状态和公式输出。`opaque` 公式采用完整性检查并跳过 C6/C9/C10。编号没有 C15。各项的来源与抽样精度见 `GAPS.md` §5。
 
 **严格模式退出码**：0 无硬错误/待办，1 硬错误，2 缺失或损坏产物，3 待处理。非严格模式读取成功返回 0，具体状态在 issues.json。
 
@@ -655,7 +658,7 @@ Answer as JSON: {"answers": [{"n": 1, "answer": "join"}, ...]}
 **常用开关**：`--dry-run`（只打印题目，不发请求）、`--limit N`（最多问 N 道）、`--batch N`、
 `--show-reply`（打印模型原始回复，调试用）。
 
-### 7.8 `run_paper.sh` 里的问答顺序
+### 7.8 上游全链脚本 `run_paper.sh` 的问答顺序
 
 ```
 normalize → latex2nl → lexicon                       （带上已有答案）
@@ -675,7 +678,7 @@ roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles
 `--no-ask` 跳过所有提问（只用已有答案），`--no-names` 只跳过名字层。退出码 3 不算失败
 （`DECISIONS.md` D11）：全语料批量运行照常继续，但状态 3 的论文不能当干净数据交给下游。
 
-### 7.9 没有答案时会怎样
+### 7.9 上游全链缺少答案时的处理
 
 | 题目 | 没答时的做法 | 会不会丢内容 |
 |:--|:--|:--|
@@ -731,12 +734,21 @@ cp /home/roger/gted/nlprep/scripts/{pending_names,ask_boundaries,ask_slots}.py s
 | `tests/probe_split.py` | 句界、缩写、注释行、分段 | 26 绿 |
 | `tests/probe_envs.py` | 五条环境规则与回归 | 13 绿 |
 | `tests/probe_brace.py` | 裸花括号五条 + `\ensuremath` 三条 | 9 绿 |
-| `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 8 绿 |
-| `tests/probe_audit.py` | `AUDIT.md` §2 的复现（未闭合环境、`\ifcase`、`\end {env}`…） | 39 绿 |
+| `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 通过，2 项缺语料 |
+| `tests/probe_audit.py` | `AUDIT.md` §2 的复现（未闭合环境、`\ifcase`、`\end {env}`…） | 31 通过，8 项缺上游模块 |
 | `tests/probe_review.py` | 复核意见的五类边界：`.)`、列表标签、冒号后 display、引用粘字、图注 | 10 绿 |
-| `tests/run_all.py`（仓库） | 串起全部 29 个套件；不在本包里 | 29/29 |
+| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、宏作用域、条件验收和 TeX 执行回放 | 87 通过 |
 
-每条探针都是一个最小输入，修之前应当失败、修之后通过。提问脚本另有 `--self-test`（不联网）。
+在代码包根目录用 PowerShell 复验。独立 PDF 对照需能从 PATH 调用 `pdflatex` 和 `pdftotext`。单元测试在终端报告结果，用例使用临时目录。
+
+```powershell
+python -X utf8 -m unittest discover -s tests -p "test_*.py" -v
+Get-ChildItem tests/probe_*.py | ForEach-Object { python -X utf8 $_.FullName; if ($LASTEXITCODE) { throw $_.Name } }
+foreach ($script in 'normalize','latex2nl','verify_output') {
+    python -X utf8 "scripts/$script.py" --self-test
+    if ($LASTEXITCODE) { throw $script }
+}
+```
 
 ---
 
@@ -778,12 +790,12 @@ cp /home/roger/gted/nlprep/scripts/{pending_names,ask_boundaries,ask_slots}.py s
 ### 10.3 错误必须可见
 
 每处"放过、丢弃、猜测"都进账本；输出另有 C1–C16 检查；无句末标点的句子有分类清单；
-判不准的写成题目文件；每条规则有探针。闸门只看硬检查。
+判不准的写成题目文件；每条规则有探针。严格验收同时检查硬错误、产物有效性和切分待办。
 
 
 ## 10.5 本包附带的一次运行（example/）
 
-`out/example/2005.01702/` 是用本包脚本对 `2005.01702`（SympSing.tex）跑出来的完整产物：
+`out/example/2005.01702/` 保存了 `2005.01702` 的历史运行产物和可重放的归一化源码：
 `normalized.tex`、`normalize-stats.json`、`sentences.jsonl`、`formulas.json`、`issues.json`、
 `sentences.md`。可以直接对照本文 §4 的文件说明，也可以拿来试 `verify_output.py` 与 `sentences_md.py`：
 
@@ -794,20 +806,16 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 
 ---
 
-## 11. 当前数字
+## 11. 2026-11-23 验收结果
 
-| 指标 | 值 | 来源 |
-|:--|--:|:--|
-| 全仓库探针 | 29/29 | `tests/run_all.py`，2026-11-21 |
-| danmark（单篇，用本包脚本） | 1,348 句；`verify_output --strict` 硬检查 0 | 2026-11-21 实跑 |
-| 2005.01702（本包脚本） | 357 句 / 779 公式；硬检查 0 | `out/example/2005.01702/` |
-| 22 篇基线 | 硬检查 0；`unresolved:line` 671、`drop:empty_sentence` **59**、`display:orphan` **36** | `out/ledger-baseline.md`（2026-11-21） |
-| 全语料（5,614 篇） | 空 display 0；公式体带 `$` 0 | `out/corpus-audit/report.md`（11-20 15:57；之后又有修复，**未重跑**） |
-| 20 篇 C7 / C1 / C2 / C6 / C16 | 全 0 | 提交 `d3e7500` 之后 |
-| 21 篇无句末标点 | 324 句，分类见清单 | `out/split-audit-baseline.md` |
-| 内置自测 | `normalize.py --self-test` **4 条失败**（`\ifthenelse` 两条、链接文本、note/tag）；`latex2nl.py --self-test` **1 条失败**（未知缩写保留句点） | 仓库 HEAD 实测；探针全绿，自测没跟上 |
+| 范围 | 结果 |
+|---|---|
+| 包内测试 | 87 项单元测试、95 项探针和 3 个脚本自测通过。另有 10 项因上游模块或语料缺失跳过 |
+| 46 个原稿的三条切分路径 | 138 次严格验收，129 次通过并核对公式操作数和 PDF 可见文字顺序，9 次保留原文待处理，0 次硬错误 |
+| 另测的 9 个早期反例 | 启用 TeX 后，全部与此前独立 PDF 的正文一致，严格退出码均为 0 |
+| 附带论文 2005.01702 | 从归一化源码重放得到 357 句、621 条数学公式和 158 条引用。14 个基线文件逐字节一致，硬错误为 0，历史删除和未解决项使严格退出码为 3 |
 
----
+仓库中 22 篇账本和 21 篇句末审计是 11 月 21 日的快照。11 月 23 日的统计范围见 [修复汇总](REPAIR-2026-11-23.md)。
 
 ## 12. 边界与取舍（不是缺陷）
 
@@ -818,7 +826,7 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 | `Proof of Proposition REF257` 这类标题 | 判为非句子 |
 | 公式角色只做初判 | 依据是顶层关系符号，不看句中位置（`a large class of $\mathcal N=4$ theories` 里的公式会被初判为 proposition）；最终角色由 `roles` 与下游确认 |
 | 句点后是小写词时先断开 | 宁可多切一刀并出题，也不悄悄合并 |
-| 未修项 | 见本包的 `OPEN.md`；切分层相关的已全部关闭 |
+| 未修项 | 见 [当前限制](OPEN.md)，包括未定位的执行事件和复杂宏的源码映射 |
 
 ---
 

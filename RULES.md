@@ -1,5 +1,12 @@
 # 处理规则总表
 
+## 钩子、分组与公式边界
+
+1. 文档开始、导言结束、文档结束、环境开始和环境结束的已支持钩子，在对应位置插入其生效内容。环境的持久钩子每次进入或退出时执行，一次性钩子执行一次。自定义环境的字面开始、结束文字及其参数都属于论文内容。按行处理 `comment` 宏包声明的排除与恢复区段，排除区段里的公式和文件调用都不参与切分。
+2. 普通宏跟随调用点的作用域。对支持的 `\edef` 和 `\xdef`，在定义点展开可静态求值的操作数，`\noexpand` 保护的标记留到调用时处理。`\aftergroup` 队列按登记顺序在当前分组结束后执行。`\globaldefs` 决定后续赋值的作用域。字面整数按源码处理，受支持的计数寄存器操作数可以从实际构建中读取，无法判定作用域时进入待办。
+3. `\begin{math}…\end{math}` 是行内公式。数学边界内的末尾感叹号保留在公式中，包括 `n!`、`n!!`；公式外的标点按正文规则切句。`\mathchoice` 连同四个分支完整保存。计数器出现在公式中时保留原操作数，执行模式可将单独放在花括号里的受支持计数器替换为当次观测到的数值。
+4. 固定参数数目的计数、长度和目录命令只消耗实际参数。例中 `\setcounter{section}{2}{Keep $x$.}` 的第三组生成正文和公式。`\IfFileExists` 可按 TeX 实际执行的分支切分，静态模式保留未定分支。
+
 ## 真实构建中的正文选择
 
 1. 启用 `--tex-engine` 时，先对同一份项目分别进行原样构建和带执行标记的构建，再归一化。两次构建使用相同引擎、同名主文件、独立的辅助文件和关闭 shell escape 的参数。出现常见交叉引用重跑提示时各自最多运行三遍。最终两份 PDF 的提取文本、项目内输入文件列表和编译遍数必须一致。
@@ -27,15 +34,13 @@
 
 例：`$\mySpecialOperator{x}{y}$` 无需注册命令即可输出 MATH 占位符，完整保存 `\mySpecialOperator{x}{y}`。`$\accentset{\ast}{W}$` 也采用这一通用规则，不为星号补数学解释。
 
-2026-11-23 修复后的行为、数据接口与验收结果见 [修复说明](REPAIR-2026-11-23.md)。本文原有的较早测试数字和未修状态保留为历史记录；涉及脚注/浮动块删除、纯公式过滤、条件默认取第一支及 strict 退出码的旧描述，以修复说明为准。
+当日各轮变更、严格退出码和反例对照见 [11 月 23 日修复汇总](REPAIR-2026-11-23.md)。
 
 
 这张表回答一个问题：**遇到一种 LaTeX 构造，管线怎么判**。
 它不按 TeX 的 atom 类（mathord/mathrel/…）判，按**它在论文里是内容还是排版**判。
 
-第二节到第四节由 `scripts/rules_table.py` 从代码生成，**不要手改**：
-`python3 scripts/rules_table.py --check` 会在表和代码不一致时失败，
-`--write` 重新生成。第五到第八节是散文，改动请直接改。
+第 2 节的命令表取自本包 `Normalizer`。第 3、4 节列环境及答案库，上游历史抽样数字列在第 8 节。
 
 ---
 
@@ -45,35 +50,33 @@
 |:--|:--|:--|:--|:--|
 | 1 | **读声明**：名字是寄存器/环境，不是词 | 论文自己声明过 | `\newlength\bshft`、`\newsavebox\myboxA`、`\newtheorem{rmk}{Remark}` | `normalize()` 里扫 `newlength/newdimen/newskip/newcount/newtoks/newsavebox/newbox/newif/chardef/mathchardef`；`read_theorem_decls()` |
 | 2 | **保内容、丢外壳** | 外壳只说明怎么画 | `\abs{x}`→`|x|`、`\scalerel*{(}{x}`→`(` | `_unwrap_one`、`_unwrap_last_arg`、`_unwrap_first_arg`、`_wrap_arg`、`UNWRAP_ONE` |
-| 3 | **整条丢** | 不印任何内容 | 间距 `\medspace`、`\special{…}`、`\vrule`、`\marginpar{…}`、`\tag{…}`、`\proof[…]` | `BARE_ONE`（连参数）、`BARE_DROP`（只丢名）、`PLUMBING` |
+| 3 | **清理排版** | 只消耗该命令的操作数 | 间距 `\medspace`、尺寸、计数器更新。`\marginpar` 等注释内容另存，`\tag` 可保留为公式标签 | `drop_metadata`、`_drop_bare`、`_preserve_notes` |
 | 4 | **改写为等价** | 同义，换个写法 | `\nicefrac`/`\mfrac`→`\frac`、`\colonequals`→`:=`、`\dots`→`…` | `_drop_bare` 里的 `re.sub` 段 |
 | 5 | **环境标记**：容器按十类处理 | 环境语义 | `display`/`grid`/`list`/`statement`/`diagram`/`drop`… | `_envs()`、`data/env_classes.json` |
 | 6 | **影响切分且未定 → 队列** | 正文命令、隐藏边界或条件分支未定；公式内部未知命令只保留并记录下游诊断 | 正文里的未定义宏；公式里的 `\vb` 等可原样保留 | `unresolved.log` / `content_todo.json`；公式信息见 `formula_diagnostics.json` |
 
 **先判 1，再判 2/3/4，最后才是 5**：声明过的名字在展开时就已经消失，轮不到后面几类。
 
-<!-- BEGIN GENERATED -->
-## 二、命令：各表里都有什么（本节目动生成，不要手改）
+## 二、命令：各表里都有什么（11 月 23 日实现）
 
 | 表 | 条数 | 内容 |
 |:--|--:|:--|
-| `BARE_ONE`（丢名 + 最多 3 组参数） | 37 | `\vspace`, `\hspace`, `\rule`, `\phantom`, `\hphantom`, `\vphantom`, `\footnote`, `\thanks`, `\color`, `\index`, `\glossary`, `\thispagestyle`, `\pagestyle`, `\bibliography`, `\bibliographystyle`, `\refstepcounter`, `\stepcounter`, `\ytableausetup`, `\setunitscale`, `\usetikzlibrary`, `\hypersetup`, `\geometry`, `\definecolor`, `\ctikzset`, `\tikzset`, `\pgfplotsset`, `\xymatrixrowsep`, `\xymatrixcolsep`, `\symbolfootnote`, `\Needspace`, `\dedicatory`, `\special`, `\originalleft`, `\originalright`, `\printbibliography`, `\bibliographystyle`, `\nocite` |
+| `BARE_ONE`（最多一组参数） | 39 | `\vspace`, `\hspace`, `\rule`, `\phantom`, `\hphantom`, `\vphantom`, `\footnote`, `\thanks`, `\color`, `\index`, `\glossary`, `\thispagestyle`, `\pagestyle`, `\bibliography`, `\bibliographystyle`, `\refstepcounter`, `\stepcounter`, `\ytableausetup`, `\setunitscale`, `\usetikzlibrary`, `\hypersetup`, `\geometry`, `\definecolor`, `\ctikzset`, `\tikzset`, `\pgfplotsset`, `\xymatrixrowsep`, `\xymatrixcolsep`, `\symbolfootnote`, `\Needspace`, `\footnotetext`, `\dedicatory`, `\special`, `\selectlanguage`, `\originalleft`, `\originalright`, `\printbibliography`, `\bibliographystyle`, `\nocite` |
 | `BARE_DROP`（只丢名） | 80 | `\maketitle`, `\tableofcontents`, `\appendix`, `\frontmatter`, `\mainmatter`, `\printindex`, `\listoffigures`, `\listoftables`, `\linebreak`, `\nolinebreak`, `\null`, `\strut`, `\bigskip`, `\medskip`, `\smallskip`, `\noindent`, `\indent`, `\centering`, `\raggedright`, `\raggedleft`, `\selectfont`, `\normalsize`, `\small`, `\footnotesize`, `\scriptsize`, `\tiny`, `\large`, `\Large`, `\LARGE`, `\huge`, `\Huge`, `\bfseries`, `\itshape`, `\rmfamily`, `\sffamily`, `\ttfamily`, `\mdseries`, `\upshape`, `\scshape`, `\slshape`, `\rm`, `\it`, `\bf`, `\em`, `\sf`, `\tt`, `\sc`, `\sl`, `\cal`, `\bold`, `\hfil`, `\vfil`, `\normalfont`, `\global`, `\relax`, `\and`, `\quad`, `\qquad`, `\endgraf`, `\appendices`, `\newpage`, `\clearpage`, `\samepage`, `\protect`, `\nonumber`, `\notag`, `\allowbreak`, `\ignorespaces`, `\unskip`, `\qed`, `\qedhere`, `\endproof`, `\endproofqed`, `\boldmath`, `\unboldmath`, `\fussy`, `\sloppy`, `\raggedbottom`, `\flushbottom`, `\xspace` |
-| `UNWRAP_ONE`（留参数） | 7 | `\ensuremath`, `\enquote`, `\emph`, `\textnormal`, `\reflectbox`, `\ThisStyle`, `\ooalign` |
-| `PLUMBING`（`@` 内部名） | 14 | `\m@th`, `\m@the`, `\if@compatibility`, `\if@tempswa`, `\tf@size`, `\sf@size`, `\ssf@size`, `\tagform@`, `\y@ng`, `\y@@optargI`, `\to@size`, `\p@`, `\ex@`, `\@tempskipa` |
-| `DEF_CMDS`（读定义后丢） | 38 | `\newcommand`, `\renewcommand`, `\providecommand`, `\DeclareMathOperator`, `\DeclareRobustCommand`, `\newtheorem`, `\newenvironment`, `\renewenvironment`, `\newif`, `\newlength`, `\newcount`, `\newcounter`, `\newdimen`, `\newbox`, `\newsavebox`, `\newtoks`, `\DeclareMathSymbol`, `\DeclareMathAlphabet`, `\DeclareSymbolFont`, `\DeclareSymbolFontAlphabet`, `\DeclareMathDelimiter`, `\DeclareMathAccent`, `\newfont`, `\NewDocumentCommand`, `\RenewDocumentCommand`, `\DeclareDocumentCommand`, `\ProvideDocumentCommand`, `\DeclarePairedDelimiter`, `\newtheoremstyle`, `\theoremstyle`, `\NewDocumentEnvironment`, `\RenewDocumentEnvironment`, `\newtcolorbox`, `\newmdenv`, `\lstnewenvironment`, `\newfloat`, `\newlist`, `\newcases` |
-| `TITLE_CMDS`（连参数丢） | 17 | `\title`, `\author`, `\date`, `\thanks`, `\address`, `\email`, `\affiliation`, `\affil`, `\orcid`, `\keywords`, `\subjclass`, `\subjectclass`, `\preprint`, `\dedication`, `\pacs`, `\msc`, `\AMSclass` |
+| `UNWRAP_ONE`（保留参数） | 6 | `\enquote`, `\emph`, `\textnormal`, `\reflectbox`, `\ThisStyle`, `\ooalign` |
+| `PLUMBING`（内部命令） | 14 | `\m@th`, `\m@the`, `\if@compatibility`, `\if@tempswa`, `\tf@size`, `\sf@size`, `\ssf@size`, `\tagform@`, `\y@ng`, `\y@@optargI`, `\to@size`, `\p@`, `\ex@`, `\@tempskipa` |
+| `DEF_CMDS`（声明） | 38 | `\newcommand`, `\renewcommand`, `\providecommand`, `\DeclareMathOperator`, `\DeclareRobustCommand`, `\newtheorem`, `\newenvironment`, `\renewenvironment`, `\newif`, `\newlength`, `\newcount`, `\newcounter`, `\newdimen`, `\newbox`, `\newsavebox`, `\newtoks`, `\DeclareMathSymbol`, `\DeclareMathAlphabet`, `\DeclareSymbolFont`, `\DeclareSymbolFontAlphabet`, `\DeclareMathDelimiter`, `\DeclareMathAccent`, `\newfont`, `\NewDocumentCommand`, `\RenewDocumentCommand`, `\DeclareDocumentCommand`, `\ProvideDocumentCommand`, `\DeclarePairedDelimiter`, `\newtheoremstyle`, `\theoremstyle`, `\NewDocumentEnvironment`, `\RenewDocumentEnvironment`, `\newtcolorbox`, `\newmdenv`, `\lstnewenvironment`, `\newfloat`, `\newlist`, `\newcases` |
+| `TITLE_CMDS`（标题元数据） | 17 | `\title`, `\author`, `\date`, `\thanks`, `\address`, `\email`, `\affiliation`, `\affil`, `\orcid`, `\keywords`, `\subjclass`, `\subjectclass`, `\preprint`, `\dedication`, `\pacs`, `\msc`, `\AMSclass` |
 
-正则类（`_drop_bare` 里，不占表；`--check` 会确认每条正则还在代码里）：
+布局清理还会处理下列形式。执行条件和公式保护先于布局清理。
 
 | 规则 | 处理 |
 |:--|:--|
 | `\@… (not \@startsection)` | 见表头动作 |
 | `\SavedStyle* (mathstyle placeholder)` | 见表头动作 |
 | `\m@th glued to a letter (\m@thV)` | 见表头动作 |
-| `\ifnum\mathgroup=\X (font test)` | 见表头动作 |
-| `\the<counter> (head)` | 见表头动作 |
-| `\the<counter> (tail)` | 见表头动作 |
+| `\ifnum\mathgroup` 字体条件 | 条件执行阶段处理，无法确定时保存各分支 |
+| `\the<counter>` | 数学边界内保留操作数，支持的独立花括号操作数可以读取实际数值 |
 | `declared register names` | 见表头动作 |
 | `\big/\Big/\bigg/\Bigg (+l/m/r)` | 见表头动作 |
 | `\ae` | 见表头动作 |
@@ -89,7 +92,7 @@
 | `\SREF -> section sign` | 见表头动作 |
 | `brace group with a unit is a length` | 见表头动作 |
 
-## 三、环境：十类（本节目动生成）
+## 三、环境：十类
 
 | 类 | 成员 |
 |:--|:--|
@@ -106,7 +109,7 @@
 
 命题的 kind（`statement_kinds`，共 25 种）：theorem(4)、lemma(2)、proposition(3)、corollary(3)、claim(1)、conjecture(3)、definition(3)、example(2)、remark(3)、question(1)、proof(3)、assumption(3)、observation(1)、fact(1)、notation(1)、construction(1)、warning(1)、thought(1)、plan(1)、guess(1)、algorithm(1)、counterexample(1)、exercise(1)、problem(1)、homework(2)
 
-## 四、答案库（本节目动生成）
+## 四、答案库
 
 | 范围 | 动作 | 条数 | 例子 |
 |:--|:--|--:|:--|
@@ -119,7 +122,6 @@
 | 按篇 | `font` | 17 | 1701.08152:scriptscriptstyleaff, 1809.03803:delimsize, 1904.09434:mathfontb, 2102.08797:itshapeProof, 2103.10137:sffamilyH, 2103.10137:sffamilyIndCoh |
 | 按篇 | `ignore` | 48 | 1309.3267:needspace, 1405.2608:psfrag, 1409.0501:example, 1505.06548:boxrwidth, 1505.06548:boxwidth, 1505.06548:sembox |
 | 按篇 | `unwrap` | 8 | 1811.02461:setP, 1912.12721:cyrs, 2010.02884:stackinset, 2103.04368:widering, 2103.10137:sffamilyE, 2103.10137:sffamilyEis |
-<!-- END GENERATED -->
 
 ## 五、公式里的三个结构性坑（已修，容易复发）
 
@@ -142,27 +144,16 @@
 
 ---
 
-## 七、流程顺序（改代码时按这个顺序找位置）
+## 七、源码选择和切分顺序
 
-```
-read_source        内联 \input/\include
-macros.parse       读宏定义（含 \def/\let/声明别名）
-丢弃定义            DEF_CMDS，保留宏表
-展开                macros.expand
-_META_ / TITLE_     连参数丢
-_drop_bare          动作 2/3/4 全在这里
-环境                _envs → 十类
-清理                section 机械、行内 tikz、bibliography、thin space
-```
+1. 原始文件走静态 `read_source` 或 `tex_execution.observe`。后者在临时副本中独立构建，再按已验证事件放回源码。`--canonical` 直接读取已保存的规范化产物。
+2. `Normalizer.execute_document` 与 `conditionals.Execution` 维护正文起止、调用点定义、组作用域和延迟动作。局部无法判定的正文条件带原文保存，影响整个文档的未定状态可以保留整稿。
+3. 在清理布局、名称和环境前，先保存附属内容、未知正文调用和需原样保留的公式。元数据命令按参数数目消费。规范化结果可跨进程重读。
+4. `latex2nl` 按单元定位公式并建立占位符和记录，切句、分词、挂接附属内容。`verify_output` 检查双向关联、原文、词元、账本与待办，输出严格状态。
 
-`latex2nl` 侧再接：`find_math_spans`（含未闭合）→ `_clean_segment`（容器标记、间距）→
-句子切分 → tokenize（**无损**，`_` 也是 token）→ 公式记录。
+## 八、上游 1,123 篇历史抽样
 
----
-
-## 八、当前数字（1,123 篇抽样，起点 → 现在）
-
-| 指标 | 起点 | 现在 |
+| 指标 | 11 月 16 日起点 | 当轮修复后 |
 |:--|--:|--:|
 | 词表外命令 | 51,694 次 | **34,481** |
 | 未知环境 | 12,066 次 | **623** |

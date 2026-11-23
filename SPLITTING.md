@@ -1,9 +1,13 @@
 # 切分层：句子、环境、边界
 
-2026-11-23 第二次规则调整：切分验收不依赖公式命令表覆盖。明确数学边界内的未知命令按完整 opaque 公式保留；命令/文字角色的未识别信息进入下游诊断，不计入切分 pending。未知正文命令、未闭合数学边界、未定条件和内容失联仍检查。具体规则见 [RULES.md](RULES.md) 开头。
+## 11 月 23 日的切分顺序
 
-2026-11-23 修复后的行为、数据接口与验收结果见 [修复说明](REPAIR-2026-11-23.md)。本文原有的较早测试数字和未修状态保留为历史记录；涉及脚注/浮动块删除、纯公式过滤、条件默认取第一支及 strict 退出码的旧描述，以修复说明为准。
+1. 对原始项目按源码顺序处理宏和条件。指定 `--tex-engine` 时，先从实际构建确定有效章节、条件分支、排除环境和钩子，在执行位置放回源码。静态模式遇到无法判定的调用或状态时保存待办。
+2. 确定正文与数学边界。`\begin{math}…\end{math}` 是行内公式。`\mathchoice` 保留四个参数，未知命令保留整个公式。公式内部末尾的 `!` 属于公式，`$n!$.` 产生 `MATH1.` 和公式 `n!`。
+3. 为纯公式定理、中文正文和附属内容建立记录。脚注子句和浮动体标题通过 REF 关联，未切分的布局块保留原文。与正文相邻的独立组如 `\setcounter{section}{2}{Keep $x$.}` 的第三组仍需切分。
+4. 严格验收核对句子、公式、内容块、待办和词元。87 项单元测试和 95 项探针通过。各轮反例、执行模式差异和三路径 PDF 对照见 [11 月 23 日修复汇总](REPAIR-2026-11-23.md)。
 
+## 早期语料与规则沿革
 
 2026-11-20。本文是 `SPLIT-AUDIT.md`、`ENV-HANDLING.md`、`COMMAND-AS-ENV.md`、
 `BRACE-LEAK.md` 四份文档的合并与去重——它们讲的是同一层：`normalize` → `latex2nl`
@@ -13,7 +17,7 @@
 
 ---
 
-## 1. 这一层的不变量（当前 HEAD 实测）
+## 1. 11 月 20–21 日的语料基线
 
 | 不变量 | 结果 |
 |:--|:--|
@@ -75,13 +79,13 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 
 ---
 
-## 3. 环境：未知环境怎么处理
+## 3. 环境分类与未知环境的处理
 
 ### 3.1 现状与规模
 
 | 位置 | 处理 | 计数 |
 |:--|:--|:--|
-| `normalize._expand_declared_envs` | 论文的 `\newenvironment`：begin 开了环境 → 展开；否则原样保留 | `declared_env_kept:X` |
+| `conditionals.Execution`、`normalize._expand_declared_envs` | 先按输入顺序处理受支持的自定义环境、参数和钩子，再按声明展开可识别的包裹环境或保留容器 | `declared_env_kept:X` 等 |
 | `normalize._envs` | 表里没有、也没声明成定理的环境原样保留 | `env_unknown:X`、`unknown_envs` |
 | `latex2nl._unwrap_unknown_envs` | **拆壳**：去掉首尾标记、保留体 | `unwrapped_envs` |
 
@@ -89,7 +93,7 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 
 201 篇抽样（normalize 之后）：仍未知 **27 名 / 117 次**（改前 25 名 / 215 次）。
 头部是论文自定义块：`prooff` 23、`Def` 13、`fct` 11、`ex` 10、`dfn` 9、`rmk` 9、
-`customthm` 6、`Th` 6 ——它们要么在 `.sty` 里声明（我们只读源文件），要么用了
+`customthm` 6、`Th` 6 ——当时的未分类原因包括样式文件中的声明及
 `\declaretheorem`。
 
 ### 3.2 五条规则（已实现，2026-11-18）
@@ -104,7 +108,7 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 
 外加：带星号的名字未知、基名已知时回退基名（`description*` → `description`）。
 
-### 3.3 为什么不交给 TeX，也不交给模型
+### 3.3 环境类别的依据
 
 环境含义都有权威来源：`env_classes.json`、论文自己的 `\newtheorem`/`\newenvironment`、
 以及 TeX 的语义 `\begin{X}` = `\X`。按 `LLM-SCOPE.md` 的顺序，有权威来源 → 代码。
@@ -233,4 +237,4 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 | `probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 |
 | `probe_audit.py` | AUDIT §2 的 19 条复现（含未闭合环境、`\ifcase`、`\tag`、孤立反斜杠、`\end {env}`） |
 
-`run_all.py` 全部串起来跑。
+本包另附 `tests/probe_review.py`，检查括号后句点、列表标签、display 和图注等边界。可在代码包根目录运行六个 `probe_*.py`，再运行 `python -X utf8 -m unittest discover -s tests -v`。包含三个脚本自测的完整命令见 [README](README.md#8-测试)。
