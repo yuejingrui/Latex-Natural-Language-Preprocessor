@@ -1,0 +1,11 @@
+\documentclass{article}
+\newif\ifdraft
+\edef\enable{\noexpand\drafttrue}
+\enable
+\includeonly{first}
+\AtEndDocument{Final conclusion.}
+\begin{document}
+\ifdraft Draft claim.\else Published claim.\fi
+\include{first}
+\include{second}
+\end{document}

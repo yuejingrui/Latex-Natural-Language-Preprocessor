@@ -1028,6 +1028,12 @@ class Normalizer:
             if name not in named and name not in listed:
                 execution.load_package(name)
         body = execution.begin_document(preamble, body)
+        # Earlier literal closers may have been discarded with a branch;
+        # conversely an executed macro can have emitted the first real closer.
+        if re.search(r'\\end\s*\{document\}', body):
+            end = next((m for m in L.document_markers(body) if m[1] == 'end'), None)
+            if end:
+                body = body[:end.start()]
         # Only the interpreter may expand a managed name, even if its
         # declaration was skipped, or the call preceded its declaration.
         for key in (execution.managed | ordinary) - skip:
@@ -3080,6 +3086,9 @@ def main(argv: List[str] = None) -> int:
                     help="local .sty to read macros from (repeatable)")
     ap.add_argument("--no-inputs", action="store_true",
                     help="do not inline \\input / \\include")
+    import tex_execution
+    ap.add_argument("--tex-engine", choices=tex_execution.ENGINES,
+                    help="observe a clean build of the source project before normalization")
     ap.add_argument("--stats", help="write a JSON report here")
     ap.add_argument("--issues", metavar="PATH", default="",
                     help="write the ledger of let-throughs here")
@@ -3099,10 +3108,19 @@ def main(argv: List[str] = None) -> int:
         ap.error("give a .tex file or --self-test")
     n = Normalizer(paper=args.paper_id or "", switches=dict(args.switch))
 
-    with open(args.tex, encoding="utf-8", errors="replace") as fh:
-        tex = fh.read() if args.no_inputs else read_source(args.tex, sources=n.sources)
-    if args.no_inputs:
+    if args.out and not args.tex_engine:
+        tex_execution.clear_report(os.path.dirname(args.out))
+    if args.tex_engine:
+        if not args.out or args.no_inputs or args.style or args.switch:
+            ap.error("--tex-engine requires -o and uses the project's own inputs, styles and switches")
+        report_path = os.path.join(os.path.dirname(args.out), 'execution.json')
+        tex = tex_execution.observe(args.tex, args.tex_engine, report_path, n.sources)
+    elif args.no_inputs:
+        with open(args.tex, encoding="utf-8", errors="replace") as fh:
+            tex = fh.read()
         n.sources[os.path.abspath(args.tex)] = tex
+    else:
+        tex = read_source(args.tex, sources=n.sources)
     styles = list(args.style)
     if not args.no_inputs:
         styles += local_styles(args.tex, tex)

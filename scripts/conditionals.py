@@ -194,13 +194,20 @@ class Macro:
 UNKNOWN = object()
 ABSENT = object()
 DECLARED = object()
+UNEXPANDED_DEF = object()
 SIMPLE_CMD = re.compile(r'\\(?:newcommand|renewcommand|providecommand|DeclareRobustCommand)'
                         r'\*?\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))'
                         r'\s*(?:\[(\d)\]\s*)?(?:\[([^\]]*)\]\s*)?\{')
 SIMPLE_DEF = re.compile(r'\\(?:g?def)\s*\\([A-Za-z@]+)((?:\s*#[1-9])*)\s*\{')
+QUOTED_DEF = re.compile(r'\\[ex]def\s*\\([A-Za-z@]+)\s*\{\\noexpand\s*(\\[A-Za-z@]+)\s*\}')
 
 
 def ordinary_definition(text, match, end):
+    # A single \noexpand token survives an expanded definition unchanged.
+    # Its binding is looked up when the new macro is called.
+    if match[0] in (r'\edef', r'\xdef'):
+        head = QUOTED_DEF.fullmatch(text, match.start(), end)
+        return (head[1], Macro(0, head[2], None)) if head else None
     head = SIMPLE_CMD.match(text, match.start())
     if head:
         name = head[1] or head[2]
@@ -463,13 +470,14 @@ class Execution:
                     if name in ('def', 'gdef', 'edef', 'xdef'):
                         key = re.match(r'\s*\\([A-Za-z@]+)', text[m.end():])
                         if key:
-                            self.assign(key[1], DECLARED, globally or name in ('gdef', 'xdef'))
+                            value = UNEXPANDED_DEF if name in ('edef', 'xdef') else DECLARED
+                            self.assign(key[1], value, globally or name in ('gdef', 'xdef'))
                     continue
                 key, spec = parsed
                 self.managed.add(key)
                 previous = self.defined(key, query_format=True) if name == 'providecommand' else False
                 if previous is False:
-                    self.assign(key, spec, globally or name == 'gdef')
+                    self.assign(key, spec, globally or name in ('gdef', 'xdef'))
                 elif previous is None:
                     # It exists afterwards whichever binding won.
                     self.assign(key, DECLARED, globally)
@@ -580,6 +588,12 @@ class Execution:
             elif isinstance(value := self.values.get(name), Setter):
                 self.assign(value.switch, Switch(value.value), globally)
                 replacement = ''
+            elif value is UNEXPANDED_DEF:
+                # Its invocation may contain a global setter. A stale initial
+                # value cannot decide later branches, even after group exit.
+                for key in self.switches():
+                    self.assign(key, Switch(None), globally=True)
+                continue
             elif isinstance(value, ExternalAlias):
                 replacement = value.token
                 if text[pos:pos+1].isalpha():

@@ -385,7 +385,7 @@ def check_links(doc, normalized):
         ref = by_id.get(b['anchor_ref'], {})
         if ref.get('ref_target') != b['id'] or ref.get('ref_kind') != 'content':
             hit(b['id']+' invalid anchor reference')
-        if b.get('kind') in ('conditional', 'conditional_formula'):
+        if b.get('kind') in ('conditional', 'conditional_formula', 'tex_execution'):
             if b.get('status') != 'pending' or b.get('sentence_ids'):
                 hit(b['id']+' unresolved conditional emitted as decided text')
             if ref.get('raw') != b.get('raw'):
@@ -405,6 +405,11 @@ def check_links(doc, normalized):
     source_records = [preserved.unpack(m) for m in preserved.MARKER.finditer(normalized)]
     source_blocks = Counter(b['raw'] for b in source_records)
     output_blocks = Counter(b['raw'] for b in blocks)
+    for kind in ('tex_execution', 'conditional_formula'):
+        expected = Counter(b['raw'] for b in source_records if b['kind'] == kind)
+        actual = Counter(b['raw'] for b in blocks if b['kind'] == kind and b['status'] == 'pending')
+        if expected - actual:
+            hit(kind + ' lost its pending source')
     for raw, count in source_blocks.items():
         enclosing = sum(b['raw'].count(raw) for b in blocks if b.get('kind') == 'conditional_formula'
                         and raw != b['raw'])

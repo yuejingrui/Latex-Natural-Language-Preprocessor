@@ -63,6 +63,31 @@ sentences.jsonl formulas.json     sentence_todo.json / slot_todo.json
 
 ## 2. 快速开始
 
+宏定义体中的文末标记不会截断后续正文。使用执行观测时，可定位的公式条件会按 TeX 实际取支写入公式表。例如 `\edef\enable{\noexpand\drafttrue}\enable` 启用草稿后，`$\ifdraft x\else y\fi$` 的记录为 `x`。两个原始反例、静态作用域及公式待办的测试命令见 [修复记录](REPAIR-2026-11-23.md#未调用的文末宏与公式选支)。
+
+### 用论文的实际 TeX 构建确定有效正文
+
+原稿使用条件、分章或文末钩子时，在读取**原始主文件**的命令上加 `--tex-engine pdflatex`。项目使用 XeLaTeX 或 LuaLaTeX 时填 `xelatex` 或 `lualatex`。所选引擎及 `pdftotext` 需要能从命令行运行。程序会在两个临时项目副本中执行论文源码，适用于可以在本机执行的项目。
+
+在代码包根目录用 PowerShell 运行仓库附带的三文件样例。
+
+```powershell
+$run = Join-Path $env:TEMP 'nlprep-tex-demo'
+python -X utf8 scripts/normalize.py tests/fixtures/tex_execution/main.tex --tex-engine pdflatex -o "$run/normalized.tex" --stats "$run/normalize-stats.json" --issues "$run/issues_normalize.json"
+python -X utf8 scripts/latex2nl.py "$run/normalized.tex" --canonical -o $run --issues "$run/issues_latex2nl.json"
+python -X utf8 scripts/verify_output.py $run --strict
+$LASTEXITCODE
+Get-Content "$run/sentences.txt" -Encoding utf8
+$trace = Get-Content "$run/execution.json" -Raw -Encoding utf8 | ConvertFrom-Json
+$trace.events | Format-Table
+```
+
+本例的严格退出码为 0，句子依次为 `Draft claim.`、`Included result for MATH1.`、`Final conclusion.`。在 `formulas.json` 中，`MATH1.raw` 为 `x^2`。直接切分也接受该选项，例如 `python -X utf8 scripts/latex2nl.py tests/fixtures/tex_execution/main.tex --tex-engine pdflatex -o "$run-direct"`。
+
+`execution.json` 的 `sites` 给出站点编号、相对文件名、行号和源码偏移，`events` 按执行顺序引用这些编号。`status` 为 `observed` 表示已回放本次跟踪的站点，`partial` 表示部分正文条件保留两支，`pending` 表示此次构建或回放无法确定有效正文。后两种情况在切分后的 `content_todo.json` 中可查原文。整篇切分是否通过以 `verify_output.py --strict` 为准。
+
+不开启该选项时仍走静态切分。如需切换草稿和定稿，请使用论文实际采用的入口文件或源码配置。`--switch`、额外的 `--style` 和 `--no-inputs` 属于静态模式。`--canonical` 读取上一阶段生成的文件。各版本的产物应分别写入独立运行目录。
+
 ### 2.1 不接模型（只做切分）
 
 ```sh

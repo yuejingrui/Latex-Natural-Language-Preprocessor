@@ -451,15 +451,42 @@ def strip_comments(tex: str, line_origins=None) -> str:
     return "\n".join(out)
 
 
+_LITERALS = re.compile(
+    r'\\begin\{(verbatim\*?|Verbatim|lstlisting|minted|comment)\}.*?\\end\{\1\}'
+    r'|\\verb\*?(?![A-Za-z@])([^\s]).*?\2|%[^\n]*|\\.', re.S)
+_DOCUMENT_ENV = re.compile(r'\\(begin|end)\s*\{document\}|\\.')
+
+
+def lexical_view(raw: str) -> str:
+    """Mask comments and verbatim material without changing source offsets."""
+    def mask(m):
+        if len(m[0]) == 2 and m[0][0] == '\\':
+            return m[0]  # Escaped character, including percent.
+        return re.sub(r'[^\n]', ' ', m[0])
+    return _LITERALS.sub(mask, raw)
+
+
+def document_markers(tex):
+    view = lexical_view(tex)
+    definitions = definition_spans(view)
+    for m in _DOCUMENT_ENV.finditer(view):
+        if m[1] and not inside_definition(definitions, m.start()):
+            yield m
+
+
 def split_document(tex: str) -> Tuple[str, str]:
-    """Return ``(preamble, body)``."""
-    m = re.search(r"\\begin\{document\}", tex)
-    if not m:
+    """Keep earlier candidate closers for the source-order conditional/macro pass."""
+    if r'\begin' not in tex:
         return "", tex
-    preamble = tex[: m.start()]
-    end = re.search(r"\\end\{document\}", tex[m.end():])
-    body = tex[m.end(): m.end() + end.start()] if end else tex[m.end():]
-    return preamble, body
+    markers = document_markers(tex)
+    begin = next((m for m in markers if m[1] == 'begin'), None)
+    if not begin:
+        return "", tex
+    stop = len(tex)
+    for m in markers:
+        if m[1] == 'end':
+            stop = m.start()
+    return tex[:begin.start()], tex[begin.end():stop]
 
 
 def use_canonical_names() -> Tuple[str, ...]:
@@ -4488,6 +4515,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                              "are canonical too")
     parser.add_argument("--switch", type=switch_option, action="append", default=[],
                         metavar="ifNAME=true|false", help="initial value of a document switch")
+    import tex_execution
+    parser.add_argument("--tex-engine", choices=tex_execution.ENGINES,
+                        help="observe a clean build of the original TeX project before splitting")
     parser.add_argument("--self-test", action="store_true",
                         help="run built-in checks on synthetic snippets")
     args = parser.parse_args(argv)
@@ -4512,7 +4542,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     import normalize
     sources = {}
-    tex = normalize.read_source(args.tex, sources=sources)
+    if args.tex_engine:
+        if args.canonical or args.style or args.switch:
+            parser.error("--tex-engine requires original source and the project's own styles and switches")
+        tex = tex_execution.observe(args.tex, args.tex_engine,
+                                    os.path.join(args.out, 'execution.json'), sources)
+    else:
+        if not args.canonical or os.path.dirname(os.path.abspath(args.tex)) != os.path.abspath(args.out):
+            tex_execution.clear_report(args.out)
+        tex = normalize.read_source(args.tex, sources=sources)
 
     answers = {}
     if args.merge_sentence_answers:

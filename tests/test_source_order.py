@@ -42,6 +42,35 @@ class SourceOrderTests(unittest.TestCase):
         self.sentences(r'\activate\ifdraft Correct.\else Wrong.\fi', ['Correct.'],
                        r'\newif\ifdraft\def\activate{\enable}\newcommand{\enable}{\drafttrue}')
 
+    def test_document_end_is_read_in_context(self):
+        declaration = r'\newcommand{\finishpaper}{\end{document}}'
+        pre = r'\def\example{\begin{document}Hidden. \end{document}}'
+        for body, expected in [
+            ('First. ' + declaration + ' Final conclusion.', ['First.', 'Final conclusion.']),
+            ('First. ' + declaration + r' \finishpaper After.', ['First.']),
+            (r'First. \iffalse\end{document}\fi Final conclusion.', ['First.', 'Final conclusion.']),
+        ]:
+            with self.subTest(body=body):
+                self.sentences(body, expected, pre)
+        literal = '\\verb|\\end{document}|\\begin{verbatim}\n\\end{document}\n\\end{verbatim}'
+        self.assertEqual(L.split_document(r'\begin{document}' + literal + r' Tail.\end{document}'),
+                         ('', literal + ' Tail.'))
+
+    def test_quoted_setter_uses_call_time_binding_and_scope(self):
+        pre = r'\newif\ifdraft\edef\enable{\noexpand\drafttrue}'
+        for setup, expected in [('', 'y'), (r'\enable', 'x'), (r'{\enable}', 'y'),
+                                (r'{\global\enable}', 'x'), (r'{\xdef\go{\noexpand\enable}}\go', 'x'),
+                                (r'\let\drafttrue\draftfalse\enable', 'y')]:
+            for result in self.outputs(r'Chosen $\ifdraft x\else y\fi$.', pre + setup):
+                with self.subTest(setup=setup):
+                    self.assertEqual([f['raw'] for f in result['formulas']], [expected])
+        # A more complex expanded definition was called, but its side effects
+        # were not computed statically. Retain the formula instead of guessing.
+        pre = r'\newif\ifdraft\edef\enable{\noexpand\drafttrue\relax}\enable'
+        for result in self.outputs(r'Chosen $\ifdraft x\else y\fi$.', pre):
+            self.assertEqual(result['content_blocks'][0]['kind'], 'conditional_formula')
+            self.assertIn(r'\ifdraft x\else y\fi', result['content_blocks'][0]['raw'])
+
     def test_unknown_branch_cannot_settle_later_condition(self):
         for result in self.outputs(r'\ifx\a\b\enable\fi\ifdraft True.\else False.\fi',
                                    r'\newif\ifdraft\def\enable{\drafttrue}'):
