@@ -3,7 +3,7 @@
     {
       "environment": "figure",
       "kind": "float",
-      "offset": 59727,
+      "offset": 59832,
       "previews": [
         "Up to orientation, the list of all connected quiver gauge theory data with $\\operatorname{codim}_{Q,\\mathbf{v}, \\mathbf{w}}(0) \\leq 3$.    The framing dimensions $n,m,p \\geq 0$.  Note that we consider only simple quivers."
       ],

@@ -12,6 +12,6 @@
   },
   "downstream": {
     "slots": 2,
-    "formula_diagnostics": 3
+    "formula_diagnostics": 16
   }
 }

@@ -537,11 +537,11 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
 
 | # | 题目 | 谁出题 | 题目文件 | 谁去问 | 允许的答案 | 默认批量 | 答案文件 | 谁合并 | 本包有吗 |
 |--:|:--|:--|:--|:--|:--|--:|:--|:--|:--|
-| 1 | 句点后面是小写词，这里到底断不断句 | `latex2nl` | `sentence_todo.json` | `ask_boundaries.py` | `split`、`join` | 20 | `sentence_answers.json` | `latex2nl --merge-sentence-answers` | 出题、合并在；提问脚本不在 |
-| 2 | 公式里 `\text{…}` 短语的角色 | `latex2nl` | `slot_todo.json` | `ask_slots.py` | `condition`、`proposition`、`predicate`、`predicate_part`、`guard`、`consequent`、`scope`、`connective`、`restriction`、`default`、`label`、`text`、`operator` | 15 | `slot_answers.json` | `latex2nl --merge-slot-answers` | 同上 |
-| 3 | 并置构造的读法（`D\cdot o`） | `lexicon` | `construction_todo.json` | `ask_lexicon.py` | `multiply`、`apply`、`label`、`index` | 15 | `construction_answers.json` | `lexicon --merge-answers` | 否 |
-| 4 | 没人认识的命令名 | `run_paper.sh`（收集 `lexicon`、`normalize-stats`、`unresolved.log` 里的名字） | `names_todo.json` | `pending_names.py --answer-with-model` | 动作：`allow`、`font`、`unwrap`、`ignore`、`expand`、`unknown`；`allow` 时还要给类（13 类） | 20 | 写回 `names_todo.json` 本身 | `pending_names.py --merge` → `data/name_answers.json` | 否 |
-| 5 | 定义句、假设句里公式的角色 | `roles` | `role_todo.json` | `ask_roles.py --answer` | `constraint`、`proposition`、`unsure` | 一次一个块 | 写回 `role_todo.json` 本身 | `roles --merge-answers` | 否 |
+| 1 | 句点后面是小写词，这里到底断不断句 | `latex2nl` | `sentence_todo.json` | `pipeline/scripts/ask_boundaries.py` | `split`、`join` | 20 | `sentence_answers.json` | `latex2nl --merge-sentence-answers` | 在 |
+| 2 | 公式里 `\text{…}` 短语的角色 | `latex2nl` | `slot_todo.json` | `pipeline/scripts/ask_slots.py` | `condition`、`proposition`、`predicate`、`predicate_part`、`guard`、`consequent`、`scope`、`connective`、`restriction`、`default`、`label`、`text`、`operator` | 15 | `slot_answers.json` | `latex2nl --merge-slot-answers` | 在 |
+| 3 | 并置构造的读法（`D\cdot o`） | `pipeline/scripts/lexicon.py` | `construction_todo.json` | `pipeline/scripts/ask_lexicon.py` | `multiply`、`apply`、`label`、`index` | 15 | `construction_answers.json` | `lexicon --merge-answers` | 在 |
+| 4 | 没人认识的命令名 | `run_pipeline.sh`（收集 `lexicon`、`normalize-stats`、`unresolved.log` 里的名字） | `names_todo.json` | `pipeline/scripts/pending_names.py --answer-with-model` | 动作：`allow`、`font`、`unwrap`、`ignore`、`expand`、`unknown`；`allow` 时还要给类（13 类） | 20 | 写回 `names_todo.json` 本身 | `pending_names.py --merge` → `data/name_answers.json` | 客户端在；收集器在 `run_pipeline.sh` 里 |
+| 5 | 定义句、假设句里公式的角色 | `pipeline/scripts/roles.py` | `role_todo.json` | `pipeline/scripts/ask_roles.py --answer` | `constraint`、`proposition`、`unsure` | 一次一个块 | 写回 `role_todo.json` 本身 | `roles --merge-answers` | 在 |
 | 6 | 这篇论文里哪些写法会绊倒规则 | `ask_triage.py` 自己 | — | `ask_triage.py` | 只是建议 | 一篇一次 | `data/paper_watch.json` | 不合并，不改输出 | 否 |
 
 ### 7.3 题目文件的格式
@@ -587,9 +587,9 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
 |:--|:--|:--|
 | `NL_PREP_BACKEND` | `api-openai` | 三选一：`api-openai`、`api-anthropic`、`local-openai`；也可用各脚本的 `--backend` |
 | `NL_PREP_API_KEY` | （空） | 两种云端协议共用的 key |
-| `NL_PREP_API_BASE` | `https://maas.qianwenaiapi.com/compatible-mode/v1` | OpenAI 兼容协议的地址 |
-| `NL_PREP_ANTHROPIC_BASE` | `https://maas.qianwenaiapi.com/apps/anthropic` | Anthropic 协议的地址 |
-| `NL_PREP_API_MODEL` | `qwen3.7-flash` | 云端模型名 |
+| `NL_PREP_API_BASE` | **（必须自己设）** | OpenAI 兼容协议的地址；没设就报错停下，不发请求 |
+| `NL_PREP_ANTHROPIC_BASE` | **（必须自己设）** | Anthropic 协议的地址；同样必须自己设 |
+| `NL_PREP_API_MODEL` | `qwen3.7-flash` | 模型名；**换成你自己端点上的名字**，否则服务端会拒绝 |
 | `NL_PREP_LOCAL_BASE` | `http://127.0.0.1:11434/v1` | 本地服务（Ollama 等 OpenAI 兼容服务） |
 | `NL_PREP_LOCAL_KEY` | （空） | 本地服务一般不需要 |
 | `NL_PREP_LOCAL_MODEL` | `qwen3:8b` | 本地模型名 |
@@ -669,7 +669,7 @@ Answer as JSON: {"answers": [{"n": 1, "answer": "join"}, ...]}
 **常用开关**：`--dry-run`（只打印题目，不发请求）、`--limit N`（最多问 N 道）、`--batch N`、
 `--show-reply`（打印模型原始回复，调试用）。
 
-### 7.8 上游全链脚本 `run_paper.sh` 的问答顺序
+### 7.8 全链脚本 `pipeline/scripts/run_pipeline.sh` 的问答顺序
 
 ```
 normalize → latex2nl → lexicon                       （带上已有答案）
@@ -686,8 +686,9 @@ roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles
 状态：失败 → 退出码 1；还有任何题目文件 → 3（有待答题）；否则 0
 ```
 
-`--no-ask` 跳过所有提问（只用已有答案），`--no-names` 只跳过名字层。退出码 3 不算失败
-（`DECISIONS.md` D11）：全语料批量运行照常继续，但状态 3 的论文不能当干净数据交给下游。
+`--no-ask` 跳过所有提问（只用已有答案），`--no-names` 只跳过名字层。退出码 3 不算失败：
+批量运行照常继续，但状态 3 的论文不能当干净数据交给下游。想要逐段打印、可 `--limit`／
+`--dry-run` 的版本，用同目录的 `run_pipeline_llm.sh`（见 [pipeline/README.md](pipeline/README.md)）。
 
 ### 7.9 上游全链缺少答案时的处理
 
@@ -703,7 +704,7 @@ roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles
 
 ### 7.10 规模与成本
 
-20 篇抽样加 danmark（`run_paper.sh --no-ask`，2026-11-20）剩下的题：
+20 篇抽样加 danmark（当时的全链脚本 `--no-ask`，2026-11-20 快照）剩下的题：
 
 | 类别 | 合计 | 有这类题的篇数（共 21） |
 |:--|--:|--:|
@@ -743,15 +744,18 @@ python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
 
 ## 8. 测试
 
-| 文件 | 内容 | 实测 |
+| 文件 | 内容 | 实测（2026-11-24） |
 |:--|:--|--:|
-| `tests/probe_split.py` | 句界、缩写、注释行、分段 | 26 绿 |
-| `tests/probe_envs.py` | 五条环境规则与回归 | 13 绿 |
+| `tests/probe_split.py` | 句界、缩写、注释行、分段、字体切换、display 边界 | 31 绿 |
+| `tests/probe_envs.py` | 五条环境规则与回归 | 14 绿 |
 | `tests/probe_brace.py` | 裸花括号五条 + `\ensuremath` 三条 | 9 绿 |
-| `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 通过，2 项缺语料 |
-| `tests/probe_audit.py` | `AUDIT.md` §2 的复现（未闭合环境、`\ifcase`、`\end {env}`…） | 31 通过，8 项缺上游模块 |
-| `tests/probe_review.py` | 复核意见的五类边界：`.)`、列表标签、冒号后 display、引用粘字、图注 | 10 绿 |
-| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、宏作用域、条件验收和 TeX 执行回放 | 87 通过 |
+| `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 绿（带基料夹具时 8） |
+| `tests/probe_audit.py` | 未闭合环境、`\ifcase`、`\end {env}` 等复现 | 34 绿，另有 2 组缺夹具跳过 |
+| `tests/probe_review.py` | 复核意见的五类边界、图片、重音、条目与续句 | 24 绿 |
+| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 87 个用例，13 个需要 TeX/pdftotext 的跳过 |
+| `pipeline/tests/test_pipeline.py` | 管线层：夹具离线跑通、两个入口一致 | 2 个用例 |
+
+合计 **11 个切分套件 + 1 个管线模块**（`tests/run_all.py` 串起前 11 个）。
 
 在代码包根目录用 PowerShell 复验。独立 PDF 对照需能从 PATH 调用 `pdflatex` 和 `pdftotext`。单元测试在终端报告结果，用例使用临时目录。
 
@@ -809,9 +813,10 @@ foreach ($script in 'normalize','latex2nl','verify_output') {
 
 ## 10.5 本包附带的一次运行（example/）
 
-`out/example/2005.01702/` 保存了 `2005.01702` 的历史运行产物和可重放的归一化源码：
-`normalized.tex`、`normalize-stats.json`、`sentences.jsonl`、`formulas.json`、`issues.json`、
-`sentences.md`。可以直接对照本文 §4 的文件说明，也可以拿来试 `verify_output.py` 与 `sentences_md.py`：
+`out/example/2005.01702/` 是用本包脚本对 `2005.01702` 跑出来的完整产物（2026-11-24 重跑）：
+`normalized.tex`、`normalize-stats.json`、`sentences.jsonl`、`formulas.json`、`content_blocks.json`、
+`split_status.json`、`formula_diagnostics.json`、三段账本、`sentences.md`。可以直接对照本文 §4 的
+文件说明，也可以拿来试 `verify_output.py` 与 `sentences_md.py`：
 
 ```sh
 python3 scripts/verify_output.py out/example/2005.01702
@@ -824,10 +829,10 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 
 | 范围 | 结果 |
 |---|---|
-| 包内测试 | 87 项单元测试、95 项探针和 3 个脚本自测通过。另有 10 项因上游模块或语料缺失跳过 |
+| 包内测试 | 118 项探针、87 项单元测试、2 项管线用例和 3 个脚本自测通过。另有 13 项因缺 TeX/pdftotext 跳过 |
 | 46 个原稿的三条切分路径 | 138 次严格验收，129 次通过并核对公式操作数和 PDF 可见文字顺序，9 次保留原文待处理，0 次硬错误 |
 | 另测的 9 个早期反例 | 启用 TeX 后，全部与此前独立 PDF 的正文一致，严格退出码均为 0 |
-| 附带论文 2005.01702 | 从归一化源码重放得到 357 句、621 条数学公式和 158 条引用。14 个基线文件逐字节一致，硬错误为 0，历史删除和未解决项使严格退出码为 3 |
+| 附带论文 2005.01702 | **362 句、795 条公式**（inline 574 / display 57 / 引用 164）、4 个内容块；硬错误 0，未决项（1 个未切分内容 + 3 条 `unresolved.log`）使严格退出码为 3 |
 
 仓库中 22 篇账本和 21 篇句末审计是 11 月 21 日的快照。11 月 23 日的统计范围见 [修复汇总](REPAIR-2026-11-23.md)。
 

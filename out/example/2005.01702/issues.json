@@ -3,18 +3,16 @@
  "counts": {
   "check:C4": 4,
   "check:C13": 8,
-  "unresolved:line": 6,
-  "drop:footnote": 1,
-  "drop:float": 1,
-  "check:pending": 8
+  "formula:diagnostic": 16,
+  "unresolved:line": 3,
+  "check:pending": 6
  },
  "sizes": {
   "check:C4": 4,
   "check:C13": 8,
-  "unresolved:line": 6,
-  "drop:footnote": 595,
-  "drop:float": 3499,
-  "check:pending": 8
+  "formula:diagnostic": 16,
+  "unresolved:line": 3,
+  "check:pending": 6
  },
  "hard": 0,
  "kinds": {
@@ -33,15 +31,10 @@
    "gate": "soft",
    "about": "Content or decisions remain unprocessed; strict mode returns 3."
   },
-  "drop:float": {
-   "route": "code",
-   "gate": "soft",
-   "about": "a float (tabular/minipage/longtable/table/figure) is dropped wholesale (D2). tabular and minipage should keep their content."
-  },
-  "drop:footnote": {
-   "route": "human",
-   "gate": "soft",
-   "about": "\\footnote content is deleted (D1). Strategy undecided: keep as its own unit or drop. Size is the character count removed."
+  "formula:diagnostic": {
+   "route": "downstream",
+   "gate": "none",
+   "about": "Unrecognized formula commands or optional formula interpretation; does not block splitting."
   },
   "unresolved:line": {
    "gate": "soft",
@@ -147,40 +140,22 @@
    "size": 1
   },
   {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "formula uses commands not understood: \\ssslash",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH102: Formula preserved without interpreting internal commands",
    "size": 1,
-   "cls": "formula uses commands not understood"
+   "diagnostic_kind": "unrecognized_commands"
   },
   {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH127: Formula preserved without interpreting internal commands",
    "size": 1,
-   "cls": "a new sentence follows but the display e"
-  },
-  {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
-   "size": 1,
-   "cls": "a new sentence follows but the display e"
-  },
-  {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "formula uses commands not understood: \\ssslash",
-   "size": 1,
-   "cls": "formula uses commands not understood"
+   "diagnostic_kind": "unrecognized_commands"
   },
   {
    "kind": "unresolved:line",
@@ -192,29 +167,148 @@
    "cls": "a new sentence follows but the display e"
   },
   {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH129: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH200: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH207: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH224: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH258: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
    "kind": "unresolved:line",
    "site": "latex2nl._note",
    "route": "ledger",
    "gate": "soft",
-   "where": "text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'",
+   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
    "size": 1,
-   "cls": "text slot(s) with no role hint"
+   "cls": "a new sentence follows but the display e"
   },
   {
-   "kind": "drop:footnote",
-   "site": "normalize._drop_bare",
-   "route": "human",
-   "gate": "soft",
-   "where": "",
-   "size": 595
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH293: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
   },
   {
-   "kind": "drop:float",
-   "site": "normalize._envs",
-   "route": "code",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH316: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH320: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH321: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH322: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH323: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH333: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH393: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "unresolved:line",
+   "site": "latex2nl._note",
+   "route": "ledger",
    "gate": "soft",
-   "where": "figure",
-   "size": 3499
+   "where": "a new sentence follows but the display ends with ','; the mark is dropped",
+   "size": 1,
+   "cls": "a new sentence follows but the display e"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH559: text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'",
+   "size": 1,
+   "diagnostic_kind": "unclassified_text_slot"
   },
   {
    "kind": "check:pending",
@@ -238,22 +332,6 @@
    "route": "check",
    "gate": "soft",
    "where": "content_todo.json (1)",
-   "size": 1
-  },
-  {
-   "kind": "check:pending",
-   "site": "verify_output.pending",
-   "route": "check",
-   "gate": "soft",
-   "where": "ledger drop:float",
-   "size": 1
-  },
-  {
-   "kind": "check:pending",
-   "site": "verify_output.pending",
-   "route": "check",
-   "gate": "soft",
-   "where": "ledger drop:footnote",
    "size": 1
   },
   {
@@ -304,8 +382,6 @@
   "content (1)",
   "content content4",
   "content_todo.json (1)",
-  "ledger drop:float",
-  "ledger drop:footnote",
   "ledger unresolved:line",
   "unresolved (3)",
   "unresolved.log"
@@ -316,7 +392,111 @@
    "kind": "unrecognized_commands",
    "detail": "Formula preserved without interpreting internal commands",
    "commands": [
-    "\\ssslash"
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH127",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH129",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH200",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH207",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH224",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH258",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH293",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH316",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH320",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH321",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH322",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH323",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
+   ]
+  },
+  {
+   "formula": "MATH333",
+   "kind": "unrecognized_commands",
+   "detail": "Formula preserved without interpreting internal commands",
+   "commands": [
+    "\\mkern"
    ]
   },
   {
@@ -324,7 +504,7 @@
    "kind": "unrecognized_commands",
    "detail": "Formula preserved without interpreting internal commands",
    "commands": [
-    "\\ssslash"
+    "\\mkern"
    ]
   },
   {

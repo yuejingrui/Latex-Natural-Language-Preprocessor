@@ -2,7 +2,7 @@
   {
     "body": "We have elected to drop all factors where  $\\operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0$ or $\\operatorname{Hom}(W_i, V_i) = 0$, respectively.",
     "kind": "footnote",
-    "offset": 46104,
+    "offset": 46209,
     "raw": "\\footnote{We have elected to drop all factors where  $\\operatorname{Hom}(V_{s(e)}, V_{t(e)})= 0$ or $\\operatorname{Hom}(W_i, V_i) = 0$, respectively.}",
     "source_stage": "expanded_body",
     "status": "parsed",
@@ -22,7 +22,7 @@
   {
     "body": "Following \\cite{BFN2} we denote $\\lambda^\\ast = - w_0 \\lambda$, where $w_0 \\in W$ is the longest element.",
     "kind": "footnote",
-    "offset": 50825,
+    "offset": 50930,
     "raw": "\\footnote{Following \\cite{BFN2} we denote $\\lambda^\\ast = - w_0 \\lambda$, where $w_0 \\in W$ is the longest element.}",
     "source_stage": "expanded_body",
     "status": "parsed",
@@ -42,7 +42,7 @@
   {
     "body": "Note that the latter condition is very mild: if for some $i\\in I$ we have  $\\mathbf{w}_i \\neq 0$ but $\\mathbf{v}_i = 0$, then there is no corresponding summand $\\operatorname{Hom}(W_i, V_i)$ in (\\ref{groups from quiver data}).  Thus in this case we obtain the same $(\\mathbf G, \\mathbf{N})$ by setting $\\mathbf{w}_i = 0$.",
     "kind": "footnote",
-    "offset": 53496,
+    "offset": 53601,
     "raw": "\\footnote{Note that the latter condition is very mild: if for some $i\\in I$ we have  $\\mathbf{w}_i \\neq 0$ but $\\mathbf{v}_i = 0$, then there is no corresponding summand $\\operatorname{Hom}(W_i, V_i)$ in (\\ref{groups from quiver data}).  Thus in this case we obtain the same $(\\mathbf G, \\mathbf{N})$ by setting $\\mathbf{w}_i = 0$.}",
     "source_stage": "expanded_body",
     "status": "parsed",
@@ -63,7 +63,7 @@
   {
     "environment": "figure",
     "kind": "float",
-    "offset": 59727,
+    "offset": 59832,
     "previews": [
       "Up to orientation, the list of all connected quiver gauge theory data with $\\operatorname{codim}_{Q,\\mathbf{v}, \\mathbf{w}}(0) \\leq 3$.    The framing dimensions $n,m,p \\geq 0$.  Note that we consider only simple quivers."
     ],

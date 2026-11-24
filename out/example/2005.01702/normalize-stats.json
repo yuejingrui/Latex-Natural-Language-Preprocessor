@@ -1,29 +1,17 @@
 {
-  "input": "2005.01702/SympSing.tex",
-  "input_chars": 79909,
-  "kept_macros": {
-    "acom": "\\todo[inline,color=green!20]{ Alex: #1 }",
-    "hooklongleftarrow": "\\longleftarrow\\joinrel\\defparamok",
-    "nc": "\\newcommand",
-    "renc": "\\renewcommand",
-    "sslash": "/\\mkern-6mu/",
-    "ssslash": "/\\mkern-6mu/\\mkern-6mu/"
-  },
-  "labels_unrendered": {},
-  "output_chars": 80308,
-  "outside_math_vocabulary": {},
-  "outside_vocabulary": {
-    "ssslash": 1
-  },
+  "kept_macros": {},
+  "input": "/home/roger/gted/newarticle/2005.01702/SympSing.tex",
+  "input_chars": 68913,
+  "output_chars": 80416,
   "stats": {
-    "alias:longrightarrow->rightarrow": 16,
+    "alias:longrightarrow->rightarrow": 15,
     "content_preserved:figure": 1,
     "content_preserved:footnote": 3,
-    "display_bracket": 26,
+    "display_bracket": 24,
     "env_diagram:tikzcd": 19,
     "env_display:align*": 1,
-    "env_display:equation": 18,
-    "env_display:equation*": 12,
+    "env_display:equation": 17,
+    "env_display:equation*": 11,
     "env_grid:array": 1,
     "env_list:enumerate": 2,
     "env_statement:Corollary": 2,
@@ -33,16 +21,15 @@
     "env_statement:Theorem": 6,
     "env_statement:proof": 11,
     "env_unwrapped:abstract": 1,
-    "macro_kept_unknown:acom": 1,
-    "macro_kept_unknown:hooklongleftarrow": 1,
-    "macro_kept_unknown:nc": 1,
-    "macro_kept_unknown:renc": 1,
-    "macro_kept_unknown:sslash": 1,
-    "macro_kept_unknown:ssslash": 1,
     "size_stripped": 3,
-    "thin_removed": 17,
+    "thin_removed": 15,
     "unwrap:emph": 1
   },
   "unknown_envs": {},
-  "vocabulary_scope_version": 2
+  "outside_vocabulary": {
+    "mkern": 2
+  },
+  "outside_math_vocabulary": {},
+  "vocabulary_scope_version": 2,
+  "labels_unrendered": {}
 }

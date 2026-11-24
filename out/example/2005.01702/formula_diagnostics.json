@@ -7,7 +7,111 @@
       "kind": "unrecognized_commands",
       "detail": "Formula preserved without interpreting internal commands",
       "commands": [
-        "\\ssslash"
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH127",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH129",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH200",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH207",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH224",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH258",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH293",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH316",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH320",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH321",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH322",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH323",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
+      ]
+    },
+    {
+      "formula": "MATH333",
+      "kind": "unrecognized_commands",
+      "detail": "Formula preserved without interpreting internal commands",
+      "commands": [
+        "\\mkern"
       ]
     },
     {
@@ -15,7 +119,7 @@
       "kind": "unrecognized_commands",
       "detail": "Formula preserved without interpreting internal commands",
       "commands": [
-        "\\ssslash"
+        "\\mkern"
       ]
     },
     {

@@ -1,13 +1,20 @@
 {
  "_about": "Every place the pipeline let something through, one entry per site, with the destination fixed in data/issue_kinds.json.",
  "counts": {
-  "unresolved:line": 6
+  "formula:diagnostic": 16,
+  "unresolved:line": 3
  },
  "sizes": {
-  "unresolved:line": 6
+  "formula:diagnostic": 16,
+  "unresolved:line": 3
  },
  "hard": 0,
  "kinds": {
+  "formula:diagnostic": {
+   "route": "downstream",
+   "gate": "none",
+   "about": "Unrecognized formula commands or optional formula interpretation; does not block splitting."
+  },
   "unresolved:line": {
    "gate": "soft",
    "route": "ledger",
@@ -16,13 +23,22 @@
  },
  "entries": [
   {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "formula uses commands not understood: \\ssslash",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH102: Formula preserved without interpreting internal commands",
    "size": 1,
-   "cls": "formula uses commands not understood"
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH127: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
   },
   {
    "kind": "unresolved:line",
@@ -34,6 +50,51 @@
    "cls": "a new sentence follows but the display e"
   },
   {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH129: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH200: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH207: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH224: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH258: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
    "kind": "unresolved:line",
    "site": "latex2nl._note",
    "route": "ledger",
@@ -43,13 +104,76 @@
    "cls": "a new sentence follows but the display e"
   },
   {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "formula uses commands not understood: \\ssslash",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH293: Formula preserved without interpreting internal commands",
    "size": 1,
-   "cls": "formula uses commands not understood"
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH316: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH320: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH321: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH322: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH323: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH333: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
+  },
+  {
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH393: Formula preserved without interpreting internal commands",
+   "size": 1,
+   "diagnostic_kind": "unrecognized_commands"
   },
   {
    "kind": "unresolved:line",
@@ -61,13 +185,13 @@
    "cls": "a new sentence follows but the display e"
   },
   {
-   "kind": "unresolved:line",
-   "site": "latex2nl._note",
-   "route": "ledger",
-   "gate": "soft",
-   "where": "text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'",
+   "kind": "formula:diagnostic",
+   "site": "latex2nl._formula_diagnostic",
+   "route": "downstream",
+   "gate": "none",
+   "where": "MATH559: text slot(s) with no role hint: MATH559.t1='if some', MATH559.t2='if all'",
    "size": 1,
-   "cls": "text slot(s) with no role hint"
+   "diagnostic_kind": "unclassified_text_slot"
   }
  ]
 }

@@ -3149,11 +3149,11 @@
   },
   {
     "id": "MATH102",
-    "raw": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\cong \\mathcal{M}_C(\\widetilde{\\mathbf G}, \\mathbf{N})\\ssslash_\\varkappa \\mathbf F^\\vee",
-    "expanded": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\cong \\mathcal{M}_C(\\widetilde{\\mathbf G}, \\mathbf{N})\\ssslash_\\varkappa \\mathbf F^\\vee",
+    "raw": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\cong \\mathcal{M}_C(\\widetilde{\\mathbf G}, \\mathbf{N})/\\mkern-6mu/\\mkern-6mu/_\\varkappa \\mathbf F^\\vee",
+    "expanded": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\cong \\mathcal{M}_C(\\widetilde{\\mathbf G}, \\mathbf{N})/\\mkern-6mu/\\mkern-6mu/_\\varkappa \\mathbf F^\\vee",
     "kind": "display",
     "role": "opaque",
-    "env": "display",
+    "env": null,
     "label": null,
     "affix": null,
     "trailing_punct": "",
@@ -3164,13 +3164,13 @@
       "opaque_formula"
     ],
     "unit": "rem: hamiltonian reduction",
-    "context_before": "\n \nAs explained in REF51, this construction can be naturally identified with a Hamiltonian reduction:\n\n",
-    "context_after": "\n\nHere $\\mathbf F^\\vee = \\operatorname{S",
+    "context_before": "\n \nAs explained in REF51, this construction can be naturally identified with a Hamiltonian reduction:\n",
+    "context_after": "\nHere $\\mathbf F^\\vee = \\operatorname{Sp",
     "ref_target": null,
     "ref_kind": null,
     "opaque": true,
     "unrecognized_commands": [
-      "\\ssslash"
+      "\\mkern"
     ]
   },
   {
@@ -3829,11 +3829,11 @@
   },
   {
     "id": "MATH127",
-    "raw": "\\varpi: \\mathcal{M}_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t \\sslash W,",
-    "expanded": "\\varpi: \\mathcal{M}_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t \\sslash W",
+    "raw": "\\varpi: \\mathcal{M}_C(\\mathbf G, \\mathbf{N}) \\longrightarrow  \\mathfrak t /\\mkern-6mu/ W,",
+    "expanded": "\\varpi: \\mathcal{M}_C(\\mathbf G, \\mathbf{N}) \\longrightarrow  \\mathfrak t /\\mkern-6mu/ W",
     "kind": "display",
-    "role": "term",
-    "env": "display",
+    "role": "opaque",
+    "env": "equation*",
     "label": null,
     "affix": null,
     "trailing_punct": ",",
@@ -3841,13 +3841,18 @@
     "text_slots": [],
     "top_relation": null,
     "flags": [
+      "opaque_formula",
       "mark_dropped"
     ],
     "unit": "prose#30",
-    "context_before": "There is an inclusion of rings MATH126 by REF56, which induces a morphism",
-    "context_after": "Composing with $\\pi^\\varkappa$ we obtai",
+    "context_before": "There is an inclusion of rings  MATH126 by REF56, which induces a morphism\n",
+    "context_after": "\nComposing with $\\pi^\\varkappa$ we obtai",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH128",
@@ -3871,10 +3876,10 @@
   },
   {
     "id": "MATH129",
-    "raw": "\\varpi^\\varkappa: \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t \\sslash W",
-    "expanded": "\\varpi^\\varkappa: \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t \\sslash W",
+    "raw": "\\varpi^\\varkappa: \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
+    "expanded": "\\varpi^\\varkappa: \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -3882,12 +3887,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "prose#30",
-    "context_before": "y REF56, which induces a morphism MATH127 Composing with MATH128 we obtain a map",
+    "context_before": " is an inclusion of rings  MATH126 by REF56, which induces a morphism\n MATH127\u0000\nComposing with  MATH128 we obtain a map ",
     "context_after": ". The maps $\\varpi, \\varpi^\\varkappa$ ar",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH130",
@@ -5545,10 +5556,10 @@
   },
   {
     "id": "MATH200",
-    "raw": "\\mathfrak t \\rightarrow \\mathfrak t \\sslash W_t",
-    "expanded": "\\mathfrak t \\rightarrow \\mathfrak t \\sslash W_t",
+    "raw": "\\mathfrak t \\rightarrow \\mathfrak t /\\mkern-6mu/ W_t",
+    "expanded": "\\mathfrak t \\rightarrow \\mathfrak t /\\mkern-6mu/ W_t",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -5556,12 +5567,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "prose#36",
-    "context_before": "tion of MATH198 at the maximal ideal corresponding to the image of MATH199 under",
+    "context_before": "6\u0000\nHere  MATH197 denotes the localization of  MATH198 at the maximal ideal corresponding to the image of  MATH199 under ",
     "context_after": ". Similarly, we'll write $\\mathbb{C}[\\ma",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH201",
@@ -5685,10 +5702,10 @@
   },
   {
     "id": "MATH207",
-    "raw": "\\mathfrak t \\rightarrow \\mathfrak t \\sslash W",
-    "expanded": "\\mathfrak t \\rightarrow \\mathfrak t \\sslash W",
+    "raw": "\\mathfrak t \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
+    "expanded": "\\mathfrak t \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -5696,12 +5713,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "prose#36",
-    "context_before": "TH203, and MATH204 for the localization of MATH205 at the image of MATH206 under",
+    "context_before": " for localization of  MATH202 at  MATH203, and  MATH204 for the localization of  MATH205 at the image of  MATH206 under ",
     "context_after": ". The group $W_t$ acts on $\\mathbb{C}[\\m",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH208",
@@ -6119,27 +6142,29 @@
   },
   {
     "id": "MATH224",
-    "raw": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\times_{\\mathfrak t \\sslash W} \\operatorname{Spec} \\mathbb{C}[\\mathfrak t]^W_t \\cong \\operatorname{Proj} ( \\bigoplus_{n \\geq 0} H_\\ast^{\\mathbf G_\\mathcal{O}}( \\mathcal{R}_{\\widetilde{\\mathbf G}, \\mathbf{N}} ( n \\varkappa)) \\otimes_{\\mathbb{C}[\\mathfrak t]^W} \\mathbb{C}[\\mathfrak t]^W_t )",
-    "expanded": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\times_{\\mathfrak t \\sslash W} \\operatorname{Spec} \\mathbb{C}[\\mathfrak t]^W_t \\cong \\operatorname{Proj} ( \\bigoplus_{n \\geq 0} H_\\ast^{\\mathbf G_\\mathcal{O}}( \\mathcal{R}_{\\widetilde{\\mathbf G}, \\mathbf{N}} ( n \\varkappa)) \\otimes_{\\mathbb{C}[\\mathfrak t]^W} \\mathbb{C}[\\mathfrak t]^W_t )",
+    "raw": "\\label{eq: base change}\n\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\times_{\\mathfrak t /\\mkern-6mu/ W} \\operatorname{Spec} \\mathbb{C}[\\mathfrak t]^W_t \\ \\cong \\ \\operatorname{Proj} \\Big( \\bigoplus_{n \\geq 0} H_\\ast^{\\mathbf G_\\mathcal{O}}\\big( \\mathcal{R}_{\\widetilde{\\mathbf G}, \\mathbf{N}} ( n \\varkappa)\\big) \\otimes_{\\mathbb{C}[\\mathfrak t]^W} \\mathbb{C}[\\mathfrak t]^W_t \\Big)",
+    "expanded": "\\label{eq: base change}\n\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\times_{\\mathfrak t /\\mkern-6mu/ W} \\operatorname{Spec} \\mathbb{C}[\\mathfrak t]^W_t \\ \\cong \\ \\operatorname{Proj} \\Big( \\bigoplus_{n \\geq 0} H_\\ast^{\\mathbf G_\\mathcal{O}}\\big( \\mathcal{R}_{\\widetilde{\\mathbf G}, \\mathbf{N}} ( n \\varkappa)\\big) \\otimes_{\\mathbb{C}[\\mathfrak t]^W} \\mathbb{C}[\\mathfrak t]^W_t \\Big)",
     "kind": "display",
-    "role": "proposition",
-    "env": "display",
+    "role": "opaque",
+    "env": "equation",
     "label": null,
     "affix": null,
     "trailing_punct": "",
     "side_conditions": [],
     "text_slots": [],
-    "top_relation": {
-      "symbol": "≅",
-      "lhs": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N}) \\times_{\\mathfrak t \\sslash W} \\operatorname{Spec} \\mathbb{C}[\\mathfrak t]^W_t",
-      "rhs": "\\operatorname{Proj} ( \\bigoplus_{n \\geq 0} H_\\ast^{\\mathbf G_\\mathcal{O}}( \\mathcal{R}_{\\widetilde{\\mathbf G}, \\mathbf{N}} ( n \\varkappa)) \\otimes_{\\mathbb{C}[\\mathfrak t]^W} \\mathbb{C}[\\mathfrak t]^W_t )"
-    },
-    "flags": [],
+    "top_relation": null,
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "prose#38",
-    "context_before": "se change to any trivially graded MATH223-algebra, see REF69, and in particular:",
-    "context_after": "We denote this scheme by $\\mathcal{M}_C",
+    "context_before": ". Thus  MATH222 is compatible with base change to any trivially graded  MATH223--algebra, see REF69, and in particular:\n",
+    "context_after": "\nWe denote this scheme by $\\mathcal{M}_C",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH225",
@@ -7105,10 +7130,10 @@
   },
   {
     "id": "MATH258",
-    "raw": "\\mathfrak t \\sslash W_t \\rightarrow \\mathfrak t \\sslash W",
-    "expanded": "\\mathfrak t \\sslash W_t \\rightarrow \\mathfrak t \\sslash W",
+    "raw": "\\mathfrak t /\\mkern-6mu/ W_t \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
+    "expanded": "\\mathfrak t /\\mkern-6mu/ W_t \\rightarrow \\mathfrak t /\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -7116,12 +7141,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "eq: localization isomorphism with flavour 2",
-    "context_before": "row above is \\'etale and surjective. To this end we observe that the natural map",
-    "context_after": "is \\'etale at $t$, and so the map of lo",
+    "context_before": " to prove that the bottom horizontal arrow above is \\'etale and surjective. To this end we observe that the natural map ",
+    "context_after": " is \\'etale at $t$, and so the map of lo",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH259",
@@ -8265,27 +8296,29 @@
   },
   {
     "id": "MATH293",
-    "raw": "U = (\\varpi^{\\varkappa})^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(2)})\\sslash W)",
-    "expanded": "U = (\\varpi^{\\varkappa})^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(2)})\\sslash W)",
+    "raw": "U = (\\varpi^{\\varkappa})^{-1}\\big((\\mathfrak t \\setminus \\mathfrak t^{(2)})/\\mkern-6mu/ W\\big)",
+    "expanded": "U = (\\varpi^{\\varkappa})^{-1}\\big((\\mathfrak t \\setminus \\mathfrak t^{(2)})/\\mkern-6mu/ W\\big)",
     "kind": "inline",
-    "role": "proposition",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
     "trailing_punct": "",
     "side_conditions": [],
     "text_slots": [],
-    "top_relation": {
-      "symbol": "=",
-      "lhs": "U",
-      "rhs": "(\\varpi^{\\varkappa})^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(2)})\\sslash W)"
-    },
-    "flags": [],
+    "top_relation": null,
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": "Consider the open subscheme",
+    "context_before": "\nConsider the open subscheme ",
     "context_after": ". Under our assumptions, Corollary \\ref{",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH294",
@@ -8757,10 +8790,10 @@
   },
   {
     "id": "MATH316",
-    "raw": "\\varpi^\\varkappa|_V: V\\rightarrow \\mathfrak t\\sslash W",
-    "expanded": "\\varpi^\\varkappa|_V: V\\rightarrow \\mathfrak t\\sslash W",
+    "raw": "\\varpi^\\varkappa|_V: V\\rightarrow \\mathfrak t/\\mkern-6mu/ W",
+    "expanded": "\\varpi^\\varkappa|_V: V\\rightarrow \\mathfrak t/\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -8768,12 +8801,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": " implies that MATH315 is normal. To prove the claim, consider the restricted map",
+    "context_before": " MATH314. Assuming this claim, REF103 implies that  MATH315 is normal.\n\nTo prove the claim, consider the restricted map ",
     "context_after": ". It is flat, since $V\\subset \\mathcal{M",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH317",
@@ -8845,10 +8884,10 @@
   },
   {
     "id": "MATH320",
-    "raw": "\\mathfrak t\\sslash W",
-    "expanded": "\\mathfrak t\\sslash W",
+    "raw": "\\mathfrak t/\\mkern-6mu/ W",
+    "expanded": "\\mathfrak t/\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -8856,19 +8895,25 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": " MATH318 is flat by Lemma REF104. Thus MATH319 is a flat quasi-coherent sheaf on",
-    "context_after": ". Note that $\\mathfrak t\\sslash W$ is no",
+    "context_before": "nce  MATH317 is open and the morphism  MATH318 is flat by Lemma REF104. Thus  MATH319 is a flat quasi-coherent sheaf on ",
+    "context_after": ". Note that $\\mathfrak t/\\mkern-6mu/ W$ ",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH321",
-    "raw": "\\mathfrak t\\sslash W",
-    "expanded": "\\mathfrak t\\sslash W",
+    "raw": "\\mathfrak t/\\mkern-6mu/ W",
+    "expanded": "\\mathfrak t/\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -8876,19 +8921,25 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": " Lemma REF104. Thus MATH319 is a flat quasi-coherent sheaf on MATH320. Note that",
-    "context_after": "is normal, and $\\mathfrak t^{(2)}\\sslas",
+    "context_before": " and the morphism  MATH318 is flat by Lemma REF104. Thus  MATH319 is a flat quasi-coherent sheaf on  MATH320. Note that ",
+    "context_after": " is normal, and $\\mathfrak t^{(2)}/\\mker",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH322",
-    "raw": "\\mathfrak t^{(2)}\\sslash W",
-    "expanded": "\\mathfrak t^{(2)}\\sslash W",
+    "raw": "\\mathfrak t^{(2)}/\\mkern-6mu/ W",
+    "expanded": "\\mathfrak t^{(2)}/\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -8896,19 +8947,25 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": "H319 is a flat quasi-coherent sheaf on MATH320. Note that MATH321 is normal, and",
-    "context_after": "has codimension 2. By a version of the",
+    "context_before": "18 is flat by Lemma REF104. Thus  MATH319 is a flat quasi-coherent sheaf on  MATH320. Note that  MATH321 is normal, and ",
+    "context_after": " has codimension 2. By a version of the ",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH323",
-    "raw": "j: (\\mathfrak t\\setminus \\mathfrak t^{(2)})\\sslash W \\hookrightarrow \\mathfrak t \\sslash W",
-    "expanded": "j: (\\mathfrak t\\setminus \\mathfrak t^{(2)})\\sslash W \\hookrightarrow \\mathfrak t \\sslash W",
+    "raw": "j: (\\mathfrak t\\setminus \\mathfrak t^{(2)})/\\mkern-6mu/ W \\hookrightarrow \\mathfrak t /\\mkern-6mu/ W",
+    "expanded": "j: (\\mathfrak t\\setminus \\mathfrak t^{(2)})/\\mkern-6mu/ W \\hookrightarrow \\mathfrak t /\\mkern-6mu/ W",
     "kind": "inline",
-    "role": "term",
+    "role": "opaque",
     "env": null,
     "label": null,
     "affix": null,
@@ -8916,12 +8973,18 @@
     "side_conditions": [],
     "text_slots": [],
     "top_relation": null,
-    "flags": [],
+    "flags": [
+      "opaque_formula"
+    ],
     "unit": "proof#54",
-    "context_before": " version of the algebraic Hartogs's theorem, it follows that under the inclusion",
+    "context_before": "l, and  MATH322 has codimension 2. By a version of the algebraic Hartogs's theorem, it follows that under the inclusion ",
     "context_after": ", the natural map $\\mathcal{F} \\stackrel",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH324",
@@ -9237,29 +9300,29 @@
   },
   {
     "id": "MATH333",
-    "raw": "U = (\\varpi^\\varkappa)^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(4)})\\sslash W)\\subset \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N})",
-    "expanded": "U = (\\varpi^\\varkappa)^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(4)})\\sslash W)\\subset \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N})",
+    "raw": "U = (\\varpi^\\varkappa)^{-1}\\big((\\mathfrak t \\setminus \\mathfrak t^{(4)})/\\mkern-6mu/ W\\big)\\subset \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N})",
+    "expanded": "U = (\\varpi^\\varkappa)^{-1}\\big((\\mathfrak t \\setminus \\mathfrak t^{(4)})/\\mkern-6mu/ W\\big)\\subset \\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N})",
     "kind": "display",
-    "role": "proposition",
-    "env": "display",
+    "role": "opaque",
+    "env": null,
     "label": null,
     "affix": null,
     "trailing_punct": "",
     "side_conditions": [],
     "text_slots": [],
-    "top_relation": {
-      "symbol": "⊂",
-      "lhs": "U = (\\varpi^\\varkappa)^{-1}((\\mathfrak t \\setminus \\mathfrak t^{(4)})\\sslash W)",
-      "rhs": "\\mathcal{M}^\\varkappa_C(\\mathbf G, \\mathbf{N})"
-    },
+    "top_relation": null,
     "flags": [
-      "relation_chain"
+      "opaque_formula"
     ],
     "unit": "proof#57",
-    "context_before": "locus. Moreover, Corollary REF106 and Proposition REF107 imply that the preimage",
-    "context_after": "is smooth and symplectic. If $\\mathfra",
+    "context_before": "s normal, and symplectic on its smooth locus. Moreover, Corollary REF106 and Proposition REF107 imply that the preimage\n",
+    "context_after": "\nis smooth and symplectic. If $\\mathfrak",
     "ref_target": null,
-    "ref_kind": null
+    "ref_kind": null,
+    "opaque": true,
+    "unrecognized_commands": [
+      "\\mkern"
+    ]
   },
   {
     "id": "MATH334",
@@ -10634,8 +10697,8 @@
   },
   {
     "id": "MATH393",
-    "raw": "T^\\ast \\mathbf{N} \\ssslash \\mathbf G",
-    "expanded": "T^\\ast \\mathbf{N} \\ssslash \\mathbf G",
+    "raw": "T^\\ast \\mathbf{N} /\\mkern-6mu/\\mkern-6mu/ \\mathbf G",
+    "expanded": "T^\\ast \\mathbf{N} /\\mkern-6mu/\\mkern-6mu/ \\mathbf G",
     "kind": "inline",
     "role": "opaque",
     "env": null,
@@ -10655,7 +10718,7 @@
     "ref_kind": null,
     "opaque": true,
     "unrecognized_commands": [
-      "\\ssslash"
+      "\\mkern"
     ]
   },
   {

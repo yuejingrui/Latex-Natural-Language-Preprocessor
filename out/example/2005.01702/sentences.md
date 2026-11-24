@@ -6,7 +6,7 @@
 |:--|:--|
 | 句子 | 362 |
 | 公式 | 795（inline 574、ref 164、display 57） |
-| 角色 | term 564、proposition 201、constraint 19、modifier 7、opaque 2、sequence 2 |
+| 角色 | term 554、proposition 198、constraint 19、opaque 15、modifier 7、sequence 2 |
 | 环境 | prose 176、proof 117、remark 27、theorem 13、lemma 8、proposition 8、corollary 6、footnote 4、caption 3 |
 
 读法：`### sN` 后是句子编号与所属单元；引用块是原句（公式处保留 `MATHn`）；其下的表给出该句用到的公式；再下面一行是**公式已内联**的可读版本。
@@ -799,7 +799,7 @@
 | REF51 | ref | term | \cite[§ 3(ix)]{BFN1} |
 | MATH102 | display | opaque | \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\… |
 
-内联：As explained in `\cite[§ 3(ix)]{BFN1}`, this construction can be naturally identified with a Hamiltonian reduction: `\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\mathbf G}, \mathbf{N})\ssslash_\varkappa \mathbf F^\vee`
+内联：As explained in `\cite[§ 3(ix)]{BFN1}`, this construction can be naturally identified with a Hamiltonian reduction: `\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \cong \mathcal{M}_C(\widetilde{\mathbf G}, \mathbf{N})/\mkern-6mu/\mkern-6mu/_\varkappa \mathbf F^\vee`
 
 ### s77 · rem: hamiltonian reduction · remark · 21 词
 
@@ -959,9 +959,9 @@
 |:--|:--|:--|:--|
 | MATH126 | inline | term | \mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathb… |
 | REF56 | ref | term | \cite[§ 3(vi)]{BFN1} |
-| MATH127 | display | term | \varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W |
+| MATH127 | display | opaque | \varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \longrightarrow \mathfrak t /\mker… |
 
-内联：There is an inclusion of rings `\mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathbf G, \mathbf{N}})` by `\cite[§ 3(vi)]{BFN1}`, which induces a morphism `\varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W`
+内联：There is an inclusion of rings `\mathbb{C}[\mathfrak t]^W \hookrightarrow H_\ast^\mathbf G( \mathcal{R}_{\mathbf G, \mathbf{N}})` by `\cite[§ 3(vi)]{BFN1}`, which induces a morphism `\varpi: \mathcal{M}_C(\mathbf G, \mathbf{N}) \longrightarrow  \mathfrak t /\mkern-6mu/ W`
 
 ### s92 · prose#30 · prose · 9 词
 
@@ -970,9 +970,9 @@
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH128 | inline | term | \pi^\varkappa |
-| MATH129 | inline | term | \varpi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \rightarrow \m… |
+| MATH129 | inline | opaque | \varpi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \rightarrow \m… |
 
-内联：Composing with `\pi^\varkappa` we obtain a map `\varpi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t \sslash W`.
+内联：Composing with `\pi^\varkappa` we obtain a map `\varpi^\varkappa: \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \rightarrow \mathfrak t /\mkern-6mu/ W`.
 
 ### s93 · prose#30 · prose · 22 词
 
@@ -1302,9 +1302,9 @@
 | MATH197 | inline | term | \mathbb{C}[\mathfrak t]^{W_t}_t |
 | MATH198 | inline | term | \mathbb{C}[\mathfrak t]^{W_t} |
 | MATH199 | inline | term | t |
-| MATH200 | inline | term | \mathfrak t \rightarrow \mathfrak t \sslash W_t |
+| MATH200 | inline | opaque | \mathfrak t \rightarrow \mathfrak t /\mkern-6mu/ W_t |
 
-内联：Here `\mathbb{C}[\mathfrak t]^{W_t}_t` denotes the localization of `\mathbb{C}[\mathfrak t]^{W_t}` at the maximal ideal corresponding to the image of `t` under `\mathfrak t \rightarrow \mathfrak t \sslash W_t`.
+内联：Here `\mathbb{C}[\mathfrak t]^{W_t}_t` denotes the localization of `\mathbb{C}[\mathfrak t]^{W_t}` at the maximal ideal corresponding to the image of `t` under `\mathfrak t \rightarrow \mathfrak t /\mkern-6mu/ W_t`.
 
 ### s121 · prose#36 · prose · 29 词
 
@@ -1318,9 +1318,9 @@
 | MATH204 | inline | term | \mathbb{C}[\mathfrak t]^W_t |
 | MATH205 | inline | term | \mathbb{C}[\mathfrak t]^W |
 | MATH206 | inline | term | t |
-| MATH207 | inline | term | \mathfrak t \rightarrow \mathfrak t \sslash W |
+| MATH207 | inline | opaque | \mathfrak t \rightarrow \mathfrak t /\mkern-6mu/ W |
 
-内联：Similarly, we'll write `\mathbb{C}[\mathfrak t]_t` for localization of `\mathbb{C}[\mathfrak t]` at `t`, and `\mathbb{C}[\mathfrak t]^W_t` for the localization of `\mathbb{C}[\mathfrak t]^W` at the image of `t` under `\mathfrak t \rightarrow \mathfrak t \sslash W`.
+内联：Similarly, we'll write `\mathbb{C}[\mathfrak t]_t` for localization of `\mathbb{C}[\mathfrak t]` at `t`, and `\mathbb{C}[\mathfrak t]^W_t` for the localization of `\mathbb{C}[\mathfrak t]^W` at the image of `t` under `\mathfrak t \rightarrow \mathfrak t /\mkern-6mu/ W`.
 
 ### s122 · prose#36 · prose · 18 词
 
@@ -1417,9 +1417,10 @@
 | MATH222 | inline | term | \operatorname{Proj} |
 | MATH223 | inline | term | \mathbb{C}[\mathfrak t]^W |
 | REF69 | ref | term | \cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-projec… |
-| MATH224 | display | proposition | \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t \sslash W} \… |
+| MATH224 | display | opaque | \label{eq: base change} \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{… |
 
-内联：Thus `\operatorname{Proj}` is compatible with base change to any trivially graded `\mathbb{C}[\mathfrak t]^W`-algebra, see `\cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-project}`, and in particular: `\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t \sslash W} \operatorname{Spec} \mathbb{C}[\mathfrak t]^W_t \cong \operatorname{Proj} ( \bigoplus_{n \geq 0} H_\ast^{\mathbf G_\mathcal{O}}( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa)) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^W_t )`
+内联：Thus `\operatorname{Proj}` is compatible with base change to any trivially graded `\mathbb{C}[\mathfrak t]^W`-algebra, see `\cite[\href{https://stacks.math.columbia.edu/tag/01N2}{Tag 01N2}]{stacks-project}`, and in particular: `\label{eq: base change}
+\mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N}) \times_{\mathfrak t /\mkern-6mu/ W} \operatorname{Spec} \mathbb{C}[\mathfrak t]^W_t \ \cong \ \operatorname{Proj} \Big( \bigoplus_{n \geq 0} H_\ast^{\mathbf G_\mathcal{O}}\big( \mathcal{R}_{\widetilde{\mathbf G}, \mathbf{N}} ( n \varkappa)\big) \otimes_{\mathbb{C}[\mathfrak t]^W} \mathbb{C}[\mathfrak t]^W_t \Big)`
 
 ### s131 · prose#38 · prose · 7 词
 
@@ -1665,11 +1666,11 @@
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH258 | inline | term | \mathfrak t \sslash W_t \rightarrow \mathfrak t \sslash W |
+| MATH258 | inline | opaque | \mathfrak t /\mkern-6mu/ W_t \rightarrow \mathfrak t /\mkern-6mu/ W |
 | MATH259 | inline | term | t |
 | MATH260 | inline | term | \mathbb{C}[\mathfrak t]^{W}_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t |
 
-内联：To this end we observe that the natural map `\mathfrak t \sslash W_t \rightarrow \mathfrak t \sslash W` is étale at `t`, and so the map of local rings `\mathbb{C}[\mathfrak t]^{W}_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t` is étale.
+内联：To this end we observe that the natural map `\mathfrak t /\mkern-6mu/ W_t \rightarrow \mathfrak t /\mkern-6mu/ W` is étale at `t`, and so the map of local rings `\mathbb{C}[\mathfrak t]^{W}_t \hookrightarrow \mathbb{C}[\mathfrak t]^{W_t}_t` is étale.
 
 ### s154 · eq: localization isomorphism with flavour 2 · proof · 10 词
 
@@ -1974,9 +1975,9 @@
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH293 | inline | proposition | U = (\varpi^{\varkappa})^{-1}((\mathfrak t \setminus \mathfrak t^{(2)})\sslash … |
+| MATH293 | inline | opaque | U = (\varpi^{\varkappa})^{-1}\big((\mathfrak t \setminus \mathfrak t^{(2)})/\mk… |
 
-内联：Consider the open subscheme `U = (\varpi^{\varkappa})^{-1}((\mathfrak t \setminus \mathfrak t^{(2)})\sslash W)`.
+内联：Consider the open subscheme `U = (\varpi^{\varkappa})^{-1}\big((\mathfrak t \setminus \mathfrak t^{(2)})/\mkern-6mu/ W\big)`.
 
 ### s184 · proof#54 · proof · 22 词
 
@@ -2119,9 +2120,9 @@
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH316 | inline | term | \varpi^\varkappa\|_V: V\rightarrow \mathfrak t\sslash W |
+| MATH316 | inline | opaque | \varpi^\varkappa\|_V: V\rightarrow \mathfrak t/\mkern-6mu/ W |
 
-内联：To prove the claim, consider the restricted map `\varpi^\varkappa|_V: V\rightarrow \mathfrak t\sslash W`.
+内联：To prove the claim, consider the restricted map `\varpi^\varkappa|_V: V\rightarrow \mathfrak t/\mkern-6mu/ W`.
 
 ### s197 · proof#54 · proof · 18 词
 
@@ -2142,9 +2143,9 @@
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
 | MATH319 | inline | proposition | \mathcal{F} = (\varpi^\varkappa\|_V)_\ast \mathcal{O}_V |
-| MATH320 | inline | term | \mathfrak t\sslash W |
+| MATH320 | inline | opaque | \mathfrak t/\mkern-6mu/ W |
 
-内联：Thus `\mathcal{F} = (\varpi^\varkappa|_V)_\ast \mathcal{O}_V` is a flat quasi-coherent sheaf on `\mathfrak t\sslash W`.
+内联：Thus `\mathcal{F} = (\varpi^\varkappa|_V)_\ast \mathcal{O}_V` is a flat quasi-coherent sheaf on `\mathfrak t/\mkern-6mu/ W`.
 
 ### s199 · proof#54 · proof · 12 词
 
@@ -2152,10 +2153,10 @@
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH321 | inline | term | \mathfrak t\sslash W |
-| MATH322 | inline | term | \mathfrak t^{(2)}\sslash W |
+| MATH321 | inline | opaque | \mathfrak t/\mkern-6mu/ W |
+| MATH322 | inline | opaque | \mathfrak t^{(2)}/\mkern-6mu/ W |
 
-内联：Note that `\mathfrak t\sslash W` is normal, and `\mathfrak t^{(2)}\sslash W` has codimension 2.
+内联：Note that `\mathfrak t/\mkern-6mu/ W` is normal, and `\mathfrak t^{(2)}/\mkern-6mu/ W` has codimension 2.
 
 ### s200 · proof#54 · proof · 26 词
 
@@ -2163,10 +2164,10 @@
 
 | 公式 | 类型 | 角色 | 展开 |
 |:--|:--|:--|:--|
-| MATH323 | inline | term | j: (\mathfrak t\setminus \mathfrak t^{(2)})\sslash W \hookrightarrow \mathfrak … |
+| MATH323 | inline | opaque | j: (\mathfrak t\setminus \mathfrak t^{(2)})/\mkern-6mu/ W \hookrightarrow \math… |
 | MATH324 | inline | term | \mathcal{F} \stackrel{\sim}{\rightarrow} j_\ast j^\ast \mathcal{F} |
 
-内联：By a version of the algebraic Hartogs's theorem, it follows that under the inclusion `j: (\mathfrak t\setminus \mathfrak t^{(2)})\sslash W \hookrightarrow \mathfrak t \sslash W`, the natural map `\mathcal{F} \stackrel{\sim}{\rightarrow} j_\ast j^\ast \mathcal{F}` is an isomorphism.
+内联：By a version of the algebraic Hartogs's theorem, it follows that under the inclusion `j: (\mathfrak t\setminus \mathfrak t^{(2)})/\mkern-6mu/ W \hookrightarrow \mathfrak t /\mkern-6mu/ W`, the natural map `\mathcal{F} \stackrel{\sim}{\rightarrow} j_\ast j^\ast \mathcal{F}` is an isomorphism.
 
 ### s201 · proof#54 · proof · 8 词
 
@@ -2242,9 +2243,9 @@
 |:--|:--|:--|:--|
 | REF106 | ref | term | \ref{cor: etale smooth} |
 | REF107 | ref | term | \ref{Prop: Poisson maps} |
-| MATH333 | display | proposition | U = (\varpi^\varkappa)^{-1}((\mathfrak t \setminus \mathfrak t^{(4)})\sslash W)… |
+| MATH333 | display | opaque | U = (\varpi^\varkappa)^{-1}\big((\mathfrak t \setminus \mathfrak t^{(4)})/\mker… |
 
-内联：Moreover, Corollary `\ref{cor: etale smooth}` and Proposition `\ref{Prop: Poisson maps}` imply that the preimage `U = (\varpi^\varkappa)^{-1}((\mathfrak t \setminus \mathfrak t^{(4)})\sslash W)\subset \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})` is smooth and symplectic.
+内联：Moreover, Corollary `\ref{cor: etale smooth}` and Proposition `\ref{Prop: Poisson maps}` imply that the preimage `U = (\varpi^\varkappa)^{-1}\big((\mathfrak t \setminus \mathfrak t^{(4)})/\mkern-6mu/ W\big)\subset \mathcal{M}^\varkappa_C(\mathbf G, \mathbf{N})` is smooth and symplectic.
 
 ### s209 · proof#57 · proof · 10 词
 
@@ -2524,9 +2525,9 @@
 |:--|:--|:--|:--|
 | MATH392 | inline | term | \mathcal{M}_H(Q, \mathbf{v}, \mathbf{w}) |
 | REF113 | ref | term | \cite{Nak3} |
-| MATH393 | inline | opaque | T^\ast \mathbf{N} \ssslash \mathbf G |
+| MATH393 | inline | opaque | T^\ast \mathbf{N} /\mkern-6mu/\mkern-6mu/ \mathbf G |
 
-内联：The corresponding Higgs branch `\mathcal{M}_H(Q, \mathbf{v}, \mathbf{w})` is a Nakajima quiver variety, as first defined in `\cite{Nak3}`: it is the Hamiltonian reduction `T^\ast \mathbf{N} \ssslash \mathbf G`.
+内联：The corresponding Higgs branch `\mathcal{M}_H(Q, \mathbf{v}, \mathbf{w})` is a Nakajima quiver variety, as first defined in `\cite{Nak3}`: it is the Hamiltonian reduction `T^\ast \mathbf{N} /\mkern-6mu/\mkern-6mu/ \mathbf G`.
 
 ### s233 · remark#62 · remark · 13 词
 
