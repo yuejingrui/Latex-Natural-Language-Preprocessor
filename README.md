@@ -8,7 +8,12 @@
 - **公式表**：每个公式一条记录，带原文、展开后的文本、类型、初判的角色和上下文。
 
 它是 nlprep 管线的前两段。下游的词表（`lexicon`）、公式角色（`roles`）、句法解析（DepCCG/SPRING）
-都以这一层的输出为输入。完整管线见仓库的 `nlprep/README.md`。
+都以这一层的输出为输入。
+
+**本仓库还带有下一层**：[pipeline/README.md](pipeline/README.md) 把句子流接下去——并置构造的读法、
+公式在句中的角色、四类问答题，以及两个入口脚本（`run_pipeline.sh` / `run_pipeline_llm.sh`）。
+不接这一层也能单独用切分；接上就能从 `.tex` 一路跑到"每条公式都有角色标签"。
+句法解析（DepCCG/SPRING）仍是外部模型，不随包发布。
 
 这一层**不做**三件事：不恢复排版；不理解数学（不判断公式的数学含义）；**切分本身不调用模型**——
 判不准的地方写成题目文件，由 §7 的问答流程交给模型或人回答，答案再合并回来。
@@ -472,7 +477,13 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
 ```
 
 
-## 6. 仓库里的其余脚本（不在本包）
+## 6. 下游脚本（`pipeline/`）
+
+`pipeline/scripts/` 现在随包发布：`lexicon.py`、`roles.py`、`human.py`、`verify_formulas.py`、
+四个 `ask_*.py` 和模型客户端 `pending_names.py`，外加两个入口 `run_pipeline.sh` /
+`run_pipeline_llm.sh`。详见 [pipeline/README.md](pipeline/README.md)。
+
+下表是**不在本包**的那部分，保留作索引：
 
 | 组 | 脚本 | 作用 |
 |:--|:--|:--|
@@ -708,14 +719,17 @@ roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles
 
 ### 7.11 在本包里接模型
 
-本包只带了切分层"出题"和"合并"的一半。要在本包里提问，从仓库补三个文件：
+`pipeline/scripts/` 里已经带着 `pending_names.py` 和四个 `ask_*.py`，不用另外补文件。先用
+`python3 pipeline/scripts/pending_names.py --check-config` 核对配置（key 打码显示），再用
+`--dry-run` 看题、不花钱：
 
 ```sh
-cp /home/roger/gted/nlprep/scripts/{pending_names,ask_boundaries,ask_slots}.py scripts/
+python3 pipeline/scripts/ask_boundaries.py OUT/sentence_todo.json --dry-run
+python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
 ```
 
-`pending_names.py` 依赖的 `latex2nl.py`、`normalize.py` 本包里都有。实测补上后，两个提问脚本的
-`--dry-run` 在本包里都能正常列出题目（danmark：句界 5 道、短语 2 道）。
+本包**不含任何厂商端点**：`NL_PREP_API_BASE`（OpenAI 兼容）或 `NL_PREP_ANTHROPIC_BASE` 必须自己设，
+没配就会明确报错停下。
 
 ### 7.12 模型答得准不准，怎么知道
 
@@ -834,8 +848,9 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 
 | 能做 | 不能做 |
 |:--|:--|
-| `normalize.py` + `latex2nl.py`（切分主链，含合并答案） | 提问（缺三个脚本，§7.11 补上即可） |
-| `verify_output.py`、`split_audit.py` | `lexicon.py`/`roles.py`、全链 `run_paper.sh`、`run_all.py` 全套与全语料重建 |
+| 切分：`normalize.py` + `latex2nl.py`（含合并答案） | 句法解析（DepCCG/SPRING 是外部模型） |
+| 检查：`verify_output.py`、`split_audit.py` | 语料批量（`run_corpus` 那类）与语料重建 |
+| 下游：`pipeline/` 里的词表、角色、四类问答、`run_pipeline.sh` | 名字层的 `--export`/`--report` 需要语料目录 |
 
 **注意 1：数据文件必须齐。** 最初的桌面包只带了 6 个，缺下面三个；现在已补齐（2026-11-20），
 重打包时别漏：

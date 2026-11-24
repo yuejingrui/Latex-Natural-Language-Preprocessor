@@ -71,7 +71,7 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 import latex2nl as L  # noqa: E402
 import normalize as N  # noqa: E402
 
-GTED = os.path.dirname(os.path.dirname(HERE))
+PKG_ROOT = os.path.dirname(os.path.dirname(HERE))
 #: written back by --merge; starts as a copy of the package's table
 ANSWERS_PATH = os.path.join(os.path.dirname(HERE), "data", "name_answers.json")
 if not os.path.exists(ANSWERS_PATH):
@@ -944,7 +944,11 @@ def do_report(a) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--corpus", default=os.path.join(GTED, "newarticle"))
+    #: the corpus is not part of this package: the corpus-wide modes (--export,
+    #: --report) need a directory passed in, and the per-paper modes never use it
+    ap.add_argument("--corpus", default=os.environ.get("NL_PREP_CORPUS", ""),
+                    help="a corpus directory (manifest.tsv + one folder per "
+                         "paper) for --export/--report; the package ships none")
     ap.add_argument("--step", type=int, default=14)
     ap.add_argument("--export", metavar="FILE")
     ap.add_argument("--limit", type=int, default=0)

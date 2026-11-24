@@ -215,7 +215,8 @@ fi
 
 
 step "fidelity gate"
-$PY pipeline/scripts/verify_formulas.py "$(dirname "$OUT")" >/dev/null 2>&1
+# this run's directory, not its parent: the parent holds every other run too
+$PY pipeline/scripts/verify_formulas.py "$OUT" >/dev/null 2>&1
 VF=$?
 echo "  verify_formulas rc=$VF"
 

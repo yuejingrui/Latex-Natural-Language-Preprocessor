@@ -38,7 +38,7 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
         _sys.path.insert(0, _p)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)              # nlprep/
+ROOT = os.path.dirname(HERE)              # pipeline/
 DATA = os.path.join(ROOT, "data")                 # pipeline/data: answer tables
 SHARED = os.path.join(_PKG_ROOT, "data")          # the package's rule tables
 
@@ -573,8 +573,9 @@ PAPER_ID = ""
 def _paper_answered(paper):
     if not paper:
         return set()
-    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        "data", "name_answers.json")
+    # the per-paper name answers live with the other rule tables, in the
+    # package's data/, not in pipeline/data/ (which holds this layer's answers)
+    path = os.path.join(SHARED, "name_answers.json")
     try:
         with open(path, encoding="utf-8") as fh:
             doc = json.load(fh)

@@ -14,7 +14,7 @@ HTTP call that ``pending_names.py`` already uses for names.
     # ask, then let latex2nl apply the answers
     python3 ask_boundaries.py OUT/sentence_todo.json
     python3 latex2nl.py OUT/normalized.tex -o OUT --canonical \\
-            --merge-sentence-answers nlprep/data/sentence_answers.json
+            --merge-sentence-answers data/sentence_answers.json
 
 The answer file is the shape ``load_boundary_answers`` reads: one item per
 ``sig`` with ``answer`` in {join, split}, plus ``source`` and ``model`` so a
@@ -225,7 +225,7 @@ def main(argv=None):
     ap.add_argument("-o", "--out",
                     default=os.path.join(DATA, "sentence_answers.json"),
                     help="where the answers are written (default: "
-                         "nlprep/data/sentence_answers.json)")
+                         "pipeline/data/sentence_answers.json)")
     ap.add_argument("--backend", default=os.environ.get("NL_PREP_BACKEND",
                                                         "api-openai"))
     ap.add_argument("--batch", type=int, default=20)

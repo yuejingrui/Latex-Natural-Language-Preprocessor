@@ -633,7 +633,9 @@ def reanchor(judgements_path: str, run_dir: str, report_path: str = "",
     A paper the run has no table for is *not* an answer that went stale: there
     is nothing to compare it with.  Those items are kept and counted as
     unverified, and the run refuses to write unless --allow-missing-papers says
-    the missing papers are intended.  Keying the old behaviour on "the id moved"
+    the missing papers are intended.  The same holds for an item that carries no
+    sentence text: the published table has none, and an answer without an anchor
+    cannot be re-anchored, only kept or thrown away.  Keying the old behaviour on "the id moved"
     deleted every answer of a paper outside the run directory.
     """
     doc = json.load(open(judgements_path, encoding="utf-8"))
@@ -651,6 +653,15 @@ def reanchor(judgements_path: str, run_dir: str, report_path: str = "",
             kept.append(it)
             unverified.append((it, "no formulas.json/sentences.jsonl for this "
                                    "paper in %s" % run_dir))
+            continue
+        if not (it.get("sentence") or "").strip():
+            # The published table has no sentence text (it would quote the
+            # papers), so an answer written before the field was removed cannot
+            # be located by re-anchoring.  Keep it and say it is unverified --
+            # dropping it would silently delete an answer that is still usable
+            # by fid for the paper it names.
+            kept.append(it)
+            unverified.append((it, "no sentence text to anchor on"))
             continue
         cands = data["sentences"].get(skeleton(it.get("sentence") or ""), [])
         exact = []

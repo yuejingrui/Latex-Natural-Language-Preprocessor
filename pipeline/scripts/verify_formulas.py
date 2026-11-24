@@ -48,7 +48,6 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
     if _p not in _sys.path:
         _sys.path.insert(0, _p)
 
-GTED = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
 NUM_RE = re.compile(r"\d+(?:\.\d+)?")
