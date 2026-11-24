@@ -1,0 +1,2497 @@
+{
+  "instructions": "Fill 'answer' for every item with one of the allowed readings, or leave it null. Use 'note' to record the evidence (a line number, a definition, a sentence). Then run: python3 lexicon.py --merge-answers <this file> <formulas.json>",
+  "allowed_readings": [
+    "apply",
+    "multiply",
+    "label",
+    "index"
+  ],
+  "meta": {
+    "paper": null,
+    "open": 0
+  },
+  "items": [
+    {
+      "key": "v (…",
+      "question": "Is 'v(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 12,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH55",
+          "formula": "v(x)=e_a-e_b\\in W"
+        },
+        {
+          "id": "MATH56",
+          "formula": "v(x)\\ne0"
+        },
+        {
+          "id": "MATH57",
+          "formula": "v(\\bar x)=-v(x)"
+        }
+      ],
+      "answer": "apply",
+      "note": "defined by $v(x)=e_a-e_b\\in W$, l.212"
+    },
+    {
+      "key": "\\mathcal P (…",
+      "question": "Is '\\\\mathcal P(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 7,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH88",
+          "formula": "\\mathcal P(F)"
+        },
+        {
+          "id": "MATH98",
+          "formula": "c_i=\\#\\left\\{(F,P): F\\in X_i,\\ P\\in\\mathcal P(F),\\ S(P)\\cap\\bigl(H_i\\setminus\\{0\\}\\bigr)\\ne\\varnothing \\right\\}"
+        },
+        {
+          "id": "MATH103",
+          "formula": "P\\in\\mathcal P(F)"
+        }
+      ],
+      "answer": "apply",
+      "note": "$\\mathcal P(F)$ = monotone paths in $F$, l.280"
+    },
+    {
+      "key": "f_· (…",
+      "question": "Is 'f_·(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 7,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH188",
+          "formula": "f_i(F)=\\sum_{P=(x_0,\\ldots,x_i)\\in\\mathcal P(F)} \\alpha_i\\bigl(v(x_0),\\ldots,v(x_i)\\bigr)"
+        },
+        {
+          "id": "MATH193",
+          "formula": "c_i=\\sum_{F\\in X_i}\\bigl(f_i(F)+f_i(\\bar F)\\bigr)"
+        },
+        {
+          "id": "MATH245",
+          "formula": "\\sum_{G<TXT1>F}f_{j-1}(G) \\equiv \\#\\{P\\in\\mathcal P(F): S(P)\\cap(H_j\\setminus\\{0\\})\\ne\\varnothing\\} \\pmod2"
+        }
+      ],
+      "answer": "apply",
+      "note": "defined by $f_i(F)=\\sum_{P\\in\\mathcal P(F)}f_{i-1}$, l.458"
+    },
+    {
+      "key": "S (…",
+      "question": "Is 'S(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 6,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH93",
+          "formula": "S(P)=\\operatorname{conv}\\{v(x_0),\\ldots,v(x_i)\\}\\subseteq W"
+        },
+        {
+          "id": "MATH98",
+          "formula": "c_i=\\#\\left\\{(F,P): F\\in X_i,\\ P\\in\\mathcal P(F),\\ S(P)\\cap\\bigl(H_i\\setminus\\{0\\}\\bigr)\\ne\\varnothing \\right\\}"
+        },
+        {
+          "id": "MATH144",
+          "formula": "0\\in S(P)\\quad\\Longrightarrow\\quad \\dim S(P)\\le j-1"
+        }
+      ],
+      "answer": "apply",
+      "note": "defined by $S(P)=\\operatorname{conv}\\{v(x_0),\\ldots\\}$, l.286"
+    },
+    {
+      "key": "q (…",
+      "question": "Is 'q(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 5,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH45",
+          "formula": "q(x)=\\bigl(p(\\pi x),p(\\overline{\\pi x})\\bigr)"
+        },
+        {
+          "id": "MATH46",
+          "formula": "q(x)"
+        },
+        {
+          "id": "MATH47",
+          "formula": "q(x)=(a,b)"
+        }
+      ],
+      "answer": "apply",
+      "note": "defined by $q(x)=(p(\\pi x),p(\\overline{\\pi x}))$, l.192"
+    },
+    {
+      "key": "M · t",
+      "question": "'M' and 't' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 3,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH209",
+          "formula": "\\mathcal J=\\{t\\in\\mathbb R^{i+2}:t\\ge0,\\ Mt=b\\}"
+        },
+        {
+          "id": "MATH212",
+          "formula": "Mt=b"
+        },
+        {
+          "id": "MATH233",
+          "formula": "Mt=b"
+        }
+      ],
+      "answer": "multiply",
+      "note": "M is a matrix, t and c are column vectors, l.510 and l.546"
+    },
+    {
+      "key": "t_· · u_·",
+      "question": "'t_·' and 'u_·' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 3,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH171",
+          "formula": "u=\\sum_{s=0}^i t_su_s"
+        },
+        {
+          "id": "MATH214",
+          "formula": "\\sum_st_su_s=0"
+        },
+        {
+          "id": "MATH215",
+          "formula": "\\ell_{i+1}(\\sum_st_su_s)=1"
+        }
+      ],
+      "answer": "multiply",
+      "note": "scalar $t_s$ times vector $u_s$, l.434"
+    },
+    {
+      "key": "\\# \\{…",
+      "question": "Is '\\\\#(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 2,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH98",
+          "formula": "c_i=\\#\\left\\{(F,P): F\\in X_i,\\ P\\in\\mathcal P(F),\\ S(P)\\cap\\bigl(H_i\\setminus\\{0\\}\\bigr)\\ne\\varnothing \\right\\}"
+        },
+        {
+          "id": "MATH245",
+          "formula": "\\sum_{G<TXT1>F}f_{j-1}(G) \\equiv \\#\\{P\\in\\mathcal P(F): S(P)\\cap(H_j\\setminus\\{0\\})\\ne\\varnothing\\} \\pmod2"
+        }
+      ],
+      "answer": "apply",
+      "note": "cardinality of a set, l.296 and l.576"
+    },
+    {
+      "key": "o (…",
+      "question": "Is 'o(...)' a function applied to its argument (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 2,
+      "default_if_unanswered": "apply",
+      "examples": [
+        {
+          "id": "MATH23",
+          "formula": "(3/8+o(1))n"
+        },
+        {
+          "id": "MATH25",
+          "formula": "\\left(\\frac{\\pi}{2}+o(1)\\right)\\sqrt n"
+        }
+      ],
+      "answer": "apply",
+      "note": "little-o, $o(1)$ l.121, $o(n)$ l.125"
+    },
+    {
+      "key": "M · c",
+      "question": "'M' and 'c' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH229",
+          "formula": "Mc=0"
+        }
+      ],
+      "answer": "multiply",
+      "note": "M is a matrix, t and c are column vectors, l.510 and l.546"
+    },
+    {
+      "key": "\\bar x · \\bar y",
+      "question": "'\\\\bar x' and '\\\\bar y' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH9",
+          "formula": "\\bar x\\bar y"
+        }
+      ],
+      "answer": "label",
+      "note": "an edge is named by its two endpoints, l.64"
+    },
+    {
+      "key": "\\lambda_· · u_·",
+      "question": "'\\\\lambda_·' and 'u_·' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH130",
+          "formula": "\\sum_h\\lambda_hu_h=0"
+        }
+      ],
+      "answer": "multiply",
+      "note": "scalar coefficients times vectors, l.352"
+    },
+    {
+      "key": "c_· · u_·",
+      "question": "'c_·' and 'u_·' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH230",
+          "formula": "\\sum_sc_su_s=0"
+        }
+      ],
+      "answer": "multiply",
+      "note": "scalar times vector, l.547"
+    },
+    {
+      "key": "t_· · \\ell_·",
+      "question": "'t_·' and '\\\\ell_·' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH175",
+          "formula": "\\sum_st_s\\ell_h(u_s)=0"
+        }
+      ],
+      "answer": "multiply",
+      "note": "scalar $t_s$ times vector $u_s$, l.434"
+    },
+    {
+      "key": "x · y",
+      "question": "'x' and 'y' stand side by side with no operator. Does the paper read that as one applied to the other (apply), a product (multiply), or one name for a single object (label)?",
+      "count": 1,
+      "default_if_unanswered": "multiply",
+      "examples": [
+        {
+          "id": "MATH8",
+          "formula": "xy"
+        }
+      ],
+      "answer": "label",
+      "note": "an edge is named by its two endpoints, l.64"
+    },
+    {
+      "key": "Z_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\tilde Z_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "C_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · 1  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · 2  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · \\xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "d · t",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "D_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathcal E_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · j  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathfrak o (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathfrak s · \\mathfrak o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "B_· · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · \\sigma",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\eta_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · i",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathcal Q (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · 1  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · 2  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\ell_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "F_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\theta_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · v",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "S_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · \\beta  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · p  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "A_· · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "B_· · P",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · 3  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · \\xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · p  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · q  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mu_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "G_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\Delta (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\zeta (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "V_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\hat C (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · 2  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "P (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "U_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "W_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\lambda · T_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "L (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\ell_· · \\ell_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · \\ell  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · \\ell  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "A_· · B_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "O (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathcal G (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · 5  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · \\ell  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · 1  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "r_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "x (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "B_· · b_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "H_· · H_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "P · \\tau",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "Q (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\epsilon \\langle…",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\lambda (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\lambda · S_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathcal G' (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\tau · v",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\xi · \\epsilon",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · Z_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · v",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "o · r",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "s · \\xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "y (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "B_· · Q",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "G'_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "I · C",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "K (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "K […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "P · \\xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "P' (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "Q · \\sigma",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\kappa · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\lambda · D",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · Z_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\tau · \\tilde Z_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\xi (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\xi · \\sigma",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "d · \\rho",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "e · r",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "f · o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · \\beta  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · q  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · \\beta  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · P",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "v · e",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "x · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "A_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "B_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "C · 1",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "C · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "D (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "D_· · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "I · V",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "M · o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "S_· · H_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "S_· · S_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "T_· · C_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "T_· · \\mathcal E_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "U · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "U_· · V_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "U_· · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "V_· · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\Omega_· · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha · j  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\alpha_· · \\beta_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · 1  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · 2  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · 3  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · \\beta  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta · j  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\beta_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\ell · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\ell · j  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\ell · p  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\epsilon · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\kappa · \\sigma",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\lambda_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\mathrm{PIC} · 1  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\omega_· · b",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · S_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · h",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · s",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\sigma · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\tau · \\sigma",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\tau · \\xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\xi […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\xi · \\mathcal F",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "\\zeta' (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · \\Xi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · a  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · n",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "b · t",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "e · a",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "e · o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "e · v",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "h · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · n",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "i · p  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "j · p  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · \\beta  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · j  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "k · q  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "l · s",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · 0",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · \\mathcal G",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · \\tau",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · n  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · p",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "n · r_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "o · b",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "o · o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "o · v",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · 12  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · \\alpha  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "p_· · \\lambda",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · 12  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · i  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "q · q  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "s · o",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "t (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "t · a",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "u_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "v · \\tau",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "w · e",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2610.02325v1"
+    },
+    {
+      "key": "h_· · h_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · x_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "E_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · S",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "e (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · d_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathrm H · \\mathbb F_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · p",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Sigma · \\nu",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathrm{AF} (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Delta · e_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\eta · \\theta_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Delta · h_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "x_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "M · d_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · M",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "F_· · \\pi_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Sigma · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\eta […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\eta · \\alpha_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · Y",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "e_· · \\Delta",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C · \\hat f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C · f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "p […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C · \\eta",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathrm H · \\mathbb F_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C · \\tilde f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "M · h_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\theta_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · t",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "i · d_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "q · f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "A · F",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "F (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Sigma · S",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\hat g_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\hat h_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· \\{…",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb R · P",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · Z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · B_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "B · P",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "B · P_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "C · \\nu",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "H_· · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "H_· · Y",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "H_· · Z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "H_· · f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "H_· · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "P · d_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "P_· · B",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\Sigma · \\hat h",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\beta · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· · Y",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· · Z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· · f",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathbb F_· · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\mathcal D (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "\\pi_· · C",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "e_· · g",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · P",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · c_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "h_· · g_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on arXiv-2412.10879v2"
+    },
+    {
+      "key": "k · d_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "I_· · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathcal O_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · Q_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "I_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbb P (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "Q · G_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbf r · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathcal I_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· · \\mathcal C_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbf t (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "R · \\pi_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "e_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "I_· · X  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\widetilde \\mathfrak M_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\psi (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· · E_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\epsilon_· · d",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\widetilde \\psi (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "A (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · Q_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\widetilde \\mathfrak M_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "p_· · \\mathbb E_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "z (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\mathfrak E_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathrm{Res}_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "c_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "d_· · k  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\mathfrak{Qmap}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· \\langle…",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "W (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\bar I_· · X",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "z · I_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · Q  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "Q · G_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathrm{Pic} (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "h_· · 1",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "p_· · \\mathcal C_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "p_· · \\varphi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r · a_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\mathfrak E_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "Q · G  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· · E",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\lambda · t_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "a_· · z",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r · b_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "R · \\widetilde \\pi_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\# · I_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\# · N  [superscript]",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\ell (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\gamma_· · \\psi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbb Q […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathcal O (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathfrak Z_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\widetilde \\pi_· · \\widetilde u",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "c_· · i_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "i_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "k · \\mathfrak D_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "q · \\check \\mathrm{ev}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r · a",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "v_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "z · I",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "F […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "M · \\mathfrak{\\widetildeM}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· […",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "T_· · C",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\ell · d_·  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\iota · \\alpha_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\lambda · v_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbb M_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbb P_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbf r · \\check \\mathrm{ev}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbf r · \\widetilde \\psi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathbf r · q",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathfrak M_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\mathrm{ord} (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\omega_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\psi_· · \\mathrm{ev}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "\\widetilde \\psi_· · \\mathrm{ev}_·",
+      "answer": "label",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "a_· · q",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "a_· · x",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "d · \\epsilon_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "i_· (…",
+      "answer": "apply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "k · d_·",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "m · \\theta",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r · N  [subscript]",
+      "answer": "index",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "r · \\widetilde \\psi",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "s · s  [superscript]",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "z · \\mathbf r",
+      "answer": "multiply",
+      "source": "llm",
+      "note": "judged on quasimap"
+    },
+    {
+      "key": "xy",
+      "answer": "label",
+      "source": "llm",
+      "note": "the edge named by its two endpoints, l.64"
+    },
+    {
+      "key": "Cf",
+      "answer": "label",
+      "source": "llm",
+      "note": "one object, the cofiber of f"
+    },
+    {
+      "key": "ra",
+      "answer": "label",
+      "source": "llm",
+      "note": "'ra blowups' is a name, not r times a"
+    }
+  ]
+}
