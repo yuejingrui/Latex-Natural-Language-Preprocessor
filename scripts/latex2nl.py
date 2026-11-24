@@ -58,6 +58,8 @@ import os
 import re
 import sys
 import tempfile
+import hashlib
+import rule_reviews
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -1838,6 +1840,7 @@ TRAILING_PUNCT_RE = re.compile(r"([.,;:?])((?:\s*" + TRAILER + r")*)\s*$")
 # These substitutions depend on the active math style or a document counter.
 # Keeping their source protects operands even when the name table knows them.
 COUNTER_TOKEN = r'\\the(?:equation|eqnarray|section|subsection|subsubsection|figure|table|chapter|part|page|appendix|footnote|enumi|enumii|enumiii|enumiv|theorem|lemma|definition|proposition|corollary|remark|example)(?![A-Za-z@])'
+DRAWING = re.compile(r"\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})")
 CONTEXTUAL_MATH = re.compile(r'\\mathchoice(?![A-Za-z@])|' + COUNTER_TOKEN)
 
 
@@ -1871,7 +1874,7 @@ def split_side_condition(core: str) -> Tuple[str, Optional[str]]:
     if not m:
         return core, None
     tail = m.group(2)
-    if not SIDE_MARK_RE.search(tail):
+    if not SIDE_MARK_RE.search(tail) or TEXT_CMD_RE.search(tail):
         return core, None
     return m.group(1).strip(), tail
 
@@ -1885,8 +1888,7 @@ TEXT_CMD_RE = re.compile(
     r"|textsc|mbox)\s*\{")
 
 #: what a phrase inside \\text{...} does in its formula.  The choice needs only
-#: the formula around it, so it is judged once per phrase and kept in
-#: data/slot_roles.json, not guessed by a growing table in this file.
+#: the formula and its sentence. Paper-local answers refer to a single slot.
 SLOT_ANSWERS = (
     "condition",        # the condition in {x | condition}
     "proposition",      # a whole statement, e.g. between two \iff
@@ -1915,7 +1917,7 @@ SLOT_INSTRUCTIONS = (
     "if-then, 'scope' for a quantifier, 'connective' for and/or, 'restriction' "
     "for 'where', 'default' for 'otherwise', 'label' for a name used inside a "
     "subscript, 'text' for running words that carry no structure. 'sig' is the "
-    "normalised phrase, so the same answer is reused in other papers."
+    "normalised phrase. Answer each occurrence by its own id and anchor."
 )
 
 
@@ -1946,7 +1948,8 @@ def lexicon_functions() -> set:
     global _LEXICON_FUNCTIONS
     if _LEXICON_FUNCTIONS is None:
         try:
-            data = json.load(open(LEXICON_PATH, encoding="utf-8"))
+            with open(LEXICON_PATH, encoding="utf-8") as stream:
+                data = json.load(stream)
             _LEXICON_FUNCTIONS = {
                 n.lower() for n in
                 ((data.get("commands") or {}).get("function") or [])}
@@ -1982,6 +1985,17 @@ def is_operator_name(raw: str, roles: Optional[Dict[str, str]] = None,
     return slot_key(raw) in lexicon_functions()
 
 
+def text_groups(body):
+    """Yield complete outer text commands with their argument and source bounds."""
+    cursor = 0
+    while match := TEXT_CMD_RE.search(body, cursor):
+        end = find_group_end(body, match.end() - 1)
+        if end is None:
+            break
+        yield match.start(), end, body[match.end():end - 1]
+        cursor = end
+
+
 def extract_text_slots(body: str, promoted: Optional[List[str]] = None,
                        roles: Optional[Dict[str, str]] = None,
                        declared: Optional[set] = None
@@ -1998,18 +2012,17 @@ def extract_text_slots(body: str, promoted: Optional[List[str]] = None,
     slots: List[dict] = []
     out: List[str] = []
     cursor = 0
-    while True:
-        m = TEXT_CMD_RE.search(body, cursor)
-        if not m:
-            out.append(body[cursor:])
-            break
-        end = find_group_end(body, m.end() - 1)
-        if end is None:
-            out.append(body[cursor:])
-            break
-        out.append(body[cursor: m.start()])
-        raw = body[m.end(): end - 1]
-        if is_operator_name(raw, roles, declared):
+    for start, end, raw in text_groups(body):
+        out.append(body[cursor:start])
+        # A standalone word labelling a symbol's subscript has its own role,
+        # including when that word also names an operator elsewhere.
+        label = (re.search(r"[A-Za-z0-9]_\{\s*$", body[:start])
+                 and re.match(r"\s*\}", body[end:])
+                 and re.fullmatch(r"[A-Za-z]+", raw.strip())
+                 and not re.search(r"\\[A-Za-z]+_\{\s*$", body[:start])
+                 and not (not body.startswith(r"\text{", start)
+                          and is_operator_name(raw, roles, declared)))
+        if not label and is_operator_name(raw, roles, declared):
             out.append("\\operatorname{%s}" % raw)
             if promoted is not None:
                 promoted.append(raw)
@@ -2019,12 +2032,15 @@ def extract_text_slots(body: str, promoted: Optional[List[str]] = None,
             "index": len(slots) + 1,
             "raw": raw,
             "key": slot_key(raw),
-            "role": classify_text_slot(raw, roles),
+            "role": "label" if label else classify_text_slot(raw, roles),
+            "rule": "symbol_subscript_label" if label else "slot_table",
+            "offset": start,
             "before": "".join(out)[-30:],
             "after": body[end: end + 30],
         })
         out.append("<TXT%d>" % len(slots))
         cursor = end
+    out.append(body[cursor:])
     return "".join(out), slots
 
 
@@ -2592,7 +2608,8 @@ class LatexToNL:
                  sentence_answers: Optional[Dict[str, str]] = None,
                  style_paths: Optional[Sequence[str]] = None,
                  base_dir: str = ".",
-                 slot_roles: Optional[Dict[str, str]] = None, switches=None) -> None:
+                 slot_roles: Optional[Dict[str, str]] = None, switches=None,
+                 slot_answers=None, paper="") -> None:
         self.proposition_form = proposition_form
         self.max_words = max_words
         self.merge_display = merge_display
@@ -2614,7 +2631,9 @@ class LatexToNL:
             load_slot_roles() if slot_roles is None else slot_roles)
         #: phrases still without a role; for the answer file
         self.slots_pending: List[dict] = []
-        self._slot_seen: Dict[str, dict] = {}
+        self.slot_questions: List[dict] = []
+        self.slot_answers = slot_answers or {}
+        self.paper = paper
         #: environments unwrapped because they were not known
         self.unwrapped_envs: Dict[str, int] = {}
         #: theorem-like environments: the built-in ones plus \newtheorem
@@ -2670,6 +2689,8 @@ class LatexToNL:
 
     # -- entry point ----------------------------------------------------
     def convert(self, tex: str) -> Dict[str, object]:
+        if not self.paper:
+            self.paper = hashlib.sha256(tex.encode("utf-8")).hexdigest()
         tex = strip_comments(tex)
         self.macros.parse(tex)
         # the switches a paper declares live in its preamble, which is stripped
@@ -2743,6 +2764,14 @@ class LatexToNL:
                        "and carry no orphan anchor: %s"
                        % (len(unmarked), ", ".join(unmarked[:5])))
         self._resolve_boundary_sids()
+        by_fid = {fid: sent for sent in self.sentences for fid in sent.formulas}
+        raw_by_id = {rec.id: rec.raw for rec in self.formulas if rec.kind != "ref"}
+        for item in self.slot_questions:
+            sent = by_fid.get(item["formula"])
+            if sent:
+                item["sid"] = sent.sid
+                item["sentence"] = re.sub(r"MATH\d+", lambda m: "$" + raw_by_id[m[0]] + "$"
+                                          if m[0] in raw_by_id else m[0], sent.text)
 
         names: Dict[str, int] = {}
         for name in self.operator_names:
@@ -2761,6 +2790,7 @@ class LatexToNL:
             "styles": [os.path.basename(p) for p in self.styles],
             "unwrapped_envs": dict(self.unwrapped_envs),
             "slots_pending": list(self.slots_pending),
+            "slot_questions": self.slot_questions,
         }
 
     def _extract_preserved(self, body: str) -> str:
@@ -3494,24 +3524,36 @@ class LatexToNL:
         joined = re.sub(r" +([,;.!?:])", r"\1", joined)
         return joined, records
 
-    def _record_slot(self, fid: str, slot: dict) -> None:
-        """One phrase that needs a role, deduplicated by the phrase itself."""
-        key = slot.get("key") or slot_key(slot["raw"])
-        item = self._slot_seen.get(key)
-        if item is None:
-            item = {
-                "sig": key,
-                "raw": re.sub(r"\s+", " ", slot["raw"]).strip(),
-                "context": re.sub(r"\s+", " ", slot.get("before", "")
-                                  + "<TXT>" + slot.get("after", ""))[-80:],
-                "formula": fid,
-                "count": 1,
-                "answer": None,
-            }
-            self._slot_seen[key] = item
-            self.slots_pending.append(item)
-        else:
-            item["count"] += 1
+    def _slot_record(self, fid, slot, formula, source_id, before, after):
+        ident = "%s.t%d" % (fid, slot["index"])
+        fields = [self.paper, ident, formula, slot["offset"], before, after]
+        anchor = hashlib.sha256(json.dumps(fields, ensure_ascii=False).encode("utf-8")).hexdigest()
+        item = {"id": ident, "anchor": anchor, "paper": self.paper, "sig": slot["key"],
+                "formula": fid, "source_formula": source_id, "latex": formula, "offset": slot["offset"], "raw": slot["raw"],
+                "count": 1, "answer": None}
+        row = self.slot_answers.get(anchor, {})
+        answer = row.get("answer")
+        if row.get("id") != ident or answer not in SLOT_ANSWERS:
+            answer = None
+        role = slot["role"]
+        record = {"id": ident, "anchor": anchor, "raw": slot["raw"],
+                  "before": slot["before"].strip(), "after": slot["after"].strip()}
+        if role != "unclassified":
+            record["rule"] = slot["rule"]
+            if answer and rule_reviews.from_model(row.get("source")):
+                record["model_review"] = rule_reviews.compare(slot["rule"], role, answer,
+                                                              row["source"], row.get("model"))
+        elif answer:
+            role = answer
+            record["source"] = row.get("source") or "manual"
+            if row.get("model"):
+                record["model"] = row["model"]
+        slot["role"] = record["role"] = role
+        if not answer:
+            self.slot_questions.append(item)
+            if role == "unclassified":
+                self.slots_pending.append(item)
+        return record
 
     #: commands that print nothing, so the character after them is the one the
     #: reader sees.  Without this the lookahead stopped at the backslash of a
@@ -3597,7 +3639,7 @@ class LatexToNL:
                       after: str) -> List[FormulaRecord]:
         """Turn one math span into one or several table records."""
         unknown = unknown_commands(body)
-        drawing = bool(re.search(r'\\(?:xymatrix\b|begin\{(?:diagram|tikzcd|tikzpicture|xy)\})', body))
+        drawing = bool(DRAWING.search(body))
         if (unknown or CONTEXTUAL_MATH.search(body)) and not drawing:
             # No whitelist completion required. One formula, intact arguments,
             # no qquad/side-condition/slot rewriting or inferred mathematical role.
@@ -3613,6 +3655,7 @@ class LatexToNL:
                     'Formula preserved without interpreting internal commands', commands=unknown)
             return [rec]
         parts: List[str] = [body]
+        original_parts = parts
         side: List[str] = []
         terminal = ""
 
@@ -3623,22 +3666,29 @@ class LatexToNL:
                 last = raw_parts[-1]
                 core_last, punct_last = strip_trailing_punct(last)
                 if core_last.startswith("(") and core_last.endswith(")") \
-                        and len(core_last) > 2:
+                        and len(core_last) > 2 and not TEXT_CMD_RE.search(core_last):
                     side.append(core_last)
                     terminal = punct_last
                     raw_parts = raw_parts[:-1]
                 cleaned: List[str] = []
+                origins = []
                 for k, piece in enumerate(raw_parts):
                     core, punct = strip_trailing_punct(piece)
                     if k == len(raw_parts) - 1 and not terminal:
                         terminal = punct
                     if core:
                         cleaned.append(core)
+                        origins.append(piece)
                 if cleaned:
-                    parts = cleaned
+                    parts, original_parts = cleaned, origins
 
         records: List[FormulaRecord] = []
+        source_id = "MATH%d" % (self._math_count + 1)
+        next_offset = 0
         for idx, part in enumerate(parts):
+            original_part = original_parts[idx]
+            part_offset = body.index(original_part, next_offset)
+            next_offset = part_offset + len(original_part)
             # ``\(..\)`` inside a formula is nested math, which TeX does not
             # allow: the author meant the content, and the delimiters arrive
             # from a macro that wrapped its argument in inline math (a
@@ -3655,28 +3705,25 @@ class LatexToNL:
             # never appear in canonical text, and the drawing's body was being
             # read as a formula (its ``$..$`` inside a ``\makebox`` even became a
             # separate record), with ``\ar`` and friends counted as words.
-            diagram = bool(re.search(
-                r"\\(?:xymatrix\b|begin\{(?:tikzcd|tikzpicture|xy)\})"
-                r"|\\begin\{diagram\}", core))
+            diagram = bool(DRAWING.search(core))
             if diagram:
                 core = "\\operatorname{diagram}"
             core, extra_side = split_side_condition(core)
             if extra_side:
                 side.append(extra_side)
             pid = self._next_math_id()
+            original_core = core
             core, raw_slots = extract_text_slots(
                 core, self.operator_names, self.slot_roles,
                 self.declared_operators)
-            text_slots = [{
-                "id": "%s.t%d" % (pid, s["index"]),
-                "raw": s["raw"],
-                "role": s["role"],
-                "before": s["before"].strip(),
-                "after": s["after"].strip(),
-            } for s in raw_slots]
-            for s in raw_slots:
-                if s["role"] == "unclassified":
-                    self._record_slot(pid, s)
+            # Mark the complete math span even for split displays and cleaned delimiters.
+            if raw_slots:
+                offsets = {clean[0]: raw[0] for clean, raw in
+                           zip(text_groups(original_core), text_groups(original_part))}
+                for slot in raw_slots:
+                    slot["offset"] = part_offset + offsets[slot["offset"]]
+            text_slots = [self._slot_record(pid, slot, body, source_id, before, after)
+                          for slot in raw_slots]
             role, flags, top = classify_role(core, span.kind, before, after,
                                              raw_slots)
             if diagram:
@@ -4145,9 +4192,8 @@ def _self_test() -> int:
           len(pend) == 1 and pend[0]["sig"] == "whatever it takes"
           and pend[0]["count"] == 1, str(pend))
     r = run("A $\\text{odd phrase}$ then $\\text{odd phrase}$.")
-    check("the same phrase is listed once with a count",
-          len(r["slots_pending"]) == 1
-          and r["slots_pending"][0]["count"] == 2, str(r["slots_pending"]))
+    check("each occurrence of the same phrase has its own question",
+          [i["id"] for i in r["slots_pending"]] == ["MATH1.t1", "MATH2.t1"], str(r["slots_pending"]))
     r = run("A $\\text{odd phrase}$.", slot_roles={"odd phrase": "predicate"})
     check("a supplied answer is used",
           r["formulas"][0]["text_slots"][0]["role"] == "predicate"
@@ -4605,7 +4651,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         help="phrases inside \\text{...} that still need a "
                              "role (default: <out>/slot_todo.json)")
     parser.add_argument("--merge-slot-answers", metavar="PATH",
-                        help="answered slot list; folded into data/slot_roles.json")
+                        help="apply answers by paper, slot ID and occurrence anchor")
     parser.add_argument("--slot-table", metavar="PATH", default=SLOT_TABLE_PATH,
                         help="phrase -> role table (default: data/slot_roles.json)")
     parser.add_argument("--style", action="append", metavar="PATH",
@@ -4631,16 +4677,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if args.self_test:
         return _self_test()
+    slot_answers = {}
     if args.merge_slot_answers:
-        used, rejected = merge_slot_answers(args.merge_slot_answers,
-                                            args.slot_table)
-        for sig, answer in rejected:
-            print("rejected slot answer %r: %r is not one of %s"
-                  % (sig, answer, list(SLOT_ANSWERS)))
-        print("slot answers folded into %s: %d"
-              % (os.path.basename(args.slot_table), used))
+        with open(args.merge_slot_answers, encoding="utf-8") as fh:
+            doc = json.load(fh)
+        rows = doc.get("items", []) if isinstance(doc, dict) else doc
+        slot_answers = {row["anchor"]: row for row in rows if row.get("id") and row.get("anchor")}
         if not args.tex:
-            return 0
+            if slot_answers or os.path.abspath(args.slot_table) == os.path.abspath(SLOT_TABLE_PATH):
+                parser.error("use an input paper to apply occurrence answers; legacy import requires an explicit private --slot-table")
+            used, rejected = merge_slot_answers(args.merge_slot_answers, args.slot_table)
+            return 1 if rejected else 0
+        if rows and not slot_answers:
+            print("Legacy phrase-only answers lack locations; regenerating slot questions.")
     if not args.tex:
         parser.error("no input file given (or use --self-test)")
 
@@ -4672,7 +4721,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         style_paths=args.style,
         switches=dict(args.switch),
         base_dir=os.path.dirname(os.path.abspath(args.tex)),
-        slot_roles=load_slot_roles(args.slot_table),
+        slot_roles=load_slot_roles(args.slot_table), slot_answers=slot_answers,
+        paper=args.paper_id or "",
     )
     conv.sources = sources
     conv.canonical = bool(args.canonical)
@@ -4706,7 +4756,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         # I2, against what is on disk: the file must hold every break in memory,
         # or "no questions" would be indistinguishable from a lost write
         with open(todo_path, encoding="utf-8") as fh:
-            disk = {i["sig"] for i in json.load(fh)["items"]}
+            disk = {i["id"] for i in json.load(fh)["items"]}
         assert disk == {b["sig"] for b in result["sentence_boundaries"]}, (
             len(disk), len(result["sentence_boundaries"]))
         assert {b["sig"] for b in pending} <= disk
@@ -4714,11 +4764,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     elif os.path.exists(todo_path):
         os.remove(todo_path)
     slot_path = args.slot_todo or os.path.join(args.out, "slot_todo.json")
+    review_path = os.path.join(args.out, "slot_questions.json")
+    if result["slot_questions"]:
+        write_slot_todo(result["slot_questions"], review_path)
+    elif os.path.exists(review_path):
+        os.remove(review_path)
     if result["slots_pending"]:
         write_slot_todo(result["slots_pending"], slot_path)
         with open(slot_path, encoding="utf-8") as fh:
-            disk = {i["sig"] for i in json.load(fh)["items"]}
-        assert disk == {i["sig"] for i in result["slots_pending"]}, (
+            disk = {i["id"] for i in json.load(fh)["items"]}
+        assert disk == {i["id"] for i in result["slots_pending"]}, (
             len(disk), len(result["slots_pending"]))
         print("text slots to judge: %d phrases (%d uses) -> %s"
               % (len(result["slots_pending"]),

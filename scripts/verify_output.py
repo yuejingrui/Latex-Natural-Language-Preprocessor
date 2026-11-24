@@ -324,11 +324,37 @@ def check_c12(doc) -> List[dict]:
 
 
 def check_c13(doc, normalized: str) -> List[dict]:
-    from latex2nl import find_group_end
+    from conditionals import TOKEN, bounds, opener
+    from latex2nl import definition_spans, inside_definition, find_group_end, lexical_view
     labels = set()
-    for m in re.finditer(r'\\label\s*\{', normalized):
-        end = find_group_end(normalized, m.end()-1)
-        if end: labels.add(normalized[m.end():end-1])
+    sources = [normalized]
+    sources.extend(b["raw"] for b in doc.get("content_blocks", [])
+                   if b.get("kind") in ("float", "footnote") and b.get("raw")
+                   and b.get("source_stage") == "expanded_body")
+    for source in sources:
+        view = lexical_view(source)
+        definitions = definition_spans(view)
+        skip = 0
+        for token in TOKEN.finditer(view):
+            if token.start() < skip or inside_definition(definitions, token.start()):
+                continue
+            name = token[0][1:]
+            if name == "newif":
+                switch = re.match(r"\s*\\if[A-Za-z@]+", view[token.end():])
+                if switch:
+                    skip = token.end() + switch.end()
+            elif opener(name):
+                # Active branches have already been selected by normalization.
+                # A literal residual test provides no evidence for either branch.
+                _, _, end = bounds(view, token.end())
+                skip = end or len(view)
+            elif name == "label":
+                arg = re.match(r"\s*\{", view[token.end():])
+                if arg:
+                    start = token.end() + arg.end() - 1
+                    end = find_group_end(view, start)
+                    if end:
+                        labels.add(view[start + 1:end - 1])
     hits = []
     for f in doc["formulas"]:
         if f.get('kind') != 'ref' or f.get('ref_kind') in ('cite', 'content'):
@@ -356,28 +382,48 @@ def check_c14(doc) -> List[dict]:
     return hits
 
 
-RELATION_TOKEN = re.compile(r"\\([A-Za-z@]+|.)|([<=>])", re.S)
-
-
-def relation_error(rec):
-    """Compare the ordered relation signs before and after extracting slots and conditions."""
-    if rec.get("kind") not in ("inline", "display") or "diagram" in (rec.get("flags") or []):
+def formula_error(rec):
+    """Account for every character between the raw formula and its stored body."""
+    if rec.get("kind") not in ("inline", "display"):
         return None
     import latex2nl as L
     core, _ = L.strip_trailing_punct(rec.get("raw") or "")
-    if not rec.get("opaque"):
-        core, _ = L.split_side_condition(core)
     expanded = rec.get("expanded") or ""
     slots = [dict(s, index=i) for i, s in enumerate(rec.get("text_slots") or [], 1)]
-    slot_text = {s["index"]: s.get("raw", "") for s in slots}
-    visible = L.SLOT_RE.sub(lambda m: slot_text.get(int(m[1]), m[0]), expanded)
+    if "diagram" in (rec.get("flags") or []):
+        if not L.DRAWING.search(core) or expanded != r"\operatorname{diagram}" or slots:
+            return "invalid diagram substitution"
+        return None
+    if rec.get("opaque"):
+        if expanded != core or slots or rec.get("side_conditions"):
+            return "opaque formula was rewritten"
+        return None
+    core, side = L.split_side_condition(core)
+    if side and side not in (rec.get("side_conditions") or []):
+        return "missing side condition"
 
-    def symbols(body):
-        return [m[2] or L.REL_COMMANDS[m[1]] for m in RELATION_TOKEN.finditer(body)
-                if m[2] or m[1] in L.REL_COMMANDS]
-
-    if symbols(core) != symbols(visible):
-        return "relation signs differ between raw and expanded"
+    # A text command can be lifted into the next slot or promoted to a named
+    # operator. In either representation its complete argument must survive.
+    raw_pos = expanded_pos = slot_pos = 0
+    for start, end, text in L.text_groups(core):
+        prefix = core[raw_pos:start]
+        if not expanded.startswith(prefix, expanded_pos):
+            return "formula body differs before text command"
+        expanded_pos += len(prefix)
+        marker = "<TXT%d>" % (slot_pos + 1)
+        if expanded.startswith(marker, expanded_pos):
+            if slot_pos >= len(slots) or slots[slot_pos].get("raw") != text:
+                return "text slot differs from source"
+            slot_pos += 1
+            expanded_pos += len(marker)
+        else:
+            operator = r"\operatorname{" + text + "}"
+            if not expanded.startswith(operator, expanded_pos):
+                return "text command was rewritten"
+            expanded_pos += len(operator)
+        raw_pos = end
+    if core[raw_pos:] != expanded[expanded_pos:] or slot_pos != len(slots):
+        return "expanded formula differs from raw"
     if rec.get("top_relation") is not None:
         _, _, top = L.classify_role(expanded, rec["kind"], "", "", slots)
         if top != rec["top_relation"]:
@@ -406,7 +452,7 @@ def check_links(doc, normalized):
         for fid in set(text_ids) | set(sentence['formulas']):
             if fid not in by_id: hit(sentence['sid']+' missing '+fid)
     for f in forms:
-        problem = relation_error(f)
+        problem = formula_error(f)
         if problem:
             hit(f['id']+' '+problem)
         if f['id'] not in used: hit('unreachable '+f['id'])
@@ -487,6 +533,9 @@ def pending_items(out, doc):
         with open(os.path.join(out,name),encoding='utf-8') as fh: data=json.load(fh)
         items = data.get('items') if isinstance(data,dict) else data
         if not isinstance(items,list): raise ValueError('invalid todo: '+name)
+        if name == 'human_todo.json':
+            # These referrals are regenerated from the current ledger after this check.
+            items = [it for it in items if it.get('source') != 'issues.json']
         if name == 'slot_todo.json':
             continue  # Downstream role interpretation, not a sentence boundary.
         # Filling an answer is not the same as rebuilding and checking output.

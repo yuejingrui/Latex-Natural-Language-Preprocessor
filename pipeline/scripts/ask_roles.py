@@ -5,7 +5,7 @@
     # 1. what is open, with a window for each item
     python3 ask_roles.py --export /tmp/roles_todo.json out/*/formulas.json
     # 2. let the model answer (one request per block)
-    python3 ask_roles.py --answer /tmp/roles_todo.json --batch 1
+    python3 ask_roles.py --answer /tmp/roles_todo.json --limit 1
     # 3. how well did it do against answers a person gave
     python3 ask_roles.py --compare /tmp/roles_todo.json \
         --judgements data/judgements_roles.json
@@ -40,6 +40,7 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 
 import pending_names as P     # the model client lives there
 import roles as R
+from paper_metadata import run_paper_id
 
 
 def load_pairs(paths):
@@ -63,11 +64,12 @@ def do_export(a) -> int:
             formulas = formulas.get("formulas") or []
         sentences = [json.loads(l) for l in open(spath, encoding="utf-8")
                      if l.strip()]
-        got = R.build_todo(formulas, sentences)
-        for it in got:
-            it["paper"] = os.path.basename(os.path.dirname(fpath))
+        paper = run_paper_id(os.path.dirname(fpath))
+        if not paper:
+            raise ValueError("cannot export roles without paper metadata: " + fpath)
+        got = R.build_todo(formulas, sentences, paper=paper)
         items.extend(got)
-        papers.append((os.path.basename(os.path.dirname(fpath)), len(got)))
+        papers.append((paper, len(got)))
     blocks = collections.defaultdict(list)
     for it in items:
         blocks[(it["paper"], it.get("block"))].append(it["fid"])
@@ -91,21 +93,31 @@ def make_prompt(items):
     for k, it in enumerate(items, 1):
         lines.append("%d. fid %s   formula: %s" % (k, it["fid"],
                                                   (it.get("formula") or "")[:140]))
-        for w in it.get("window") or [it.get("sentence") or ""]:
-            lines.append("   context: " + " ".join(str(w).split())[:300])
-    return ("Decide for each numbered item whether its formula is a *constraint* "
-            "(a condition on something the sentence chooses or assumes) or a "
-            "*proposition* (an assertion the sentence makes), or *unsure*. "
-            "Answer with JSON only:\n"
-            '{"answers": [{"fid": "MATH12", "answer": '
-            '"constraint|proposition|unsure", "introducer": "..."}]}\n\n'
+        marker = "<<" + it["fid"] + ">>"
+        for window in it.get("window") or [it.get("sentence") or ""]:
+            context = " ".join(str(window).split())
+            start = context.find(marker)
+            if start >= 0:
+                # Put the formula back where the reader sees it. Keep the
+                # target even when the original sentence is longer than the window.
+                lhs = context[max(0, start - 170):start]
+                rhs = context[start + len(marker):start + len(marker) + 170]
+                context = lhs + "<<" + (it.get("formula") or "")[:160] + ">>" + rhs
+                lines.append("   target sentence: " + context)
+            else:
+                lines.append("   context: " + context[:300])
+    return ("Classify the marked expression in each target sentence using the system rules. "
+            "Report the words that introduce it, followed by the decision. If the "
+            "window is insufficient, use unsure. Return JSON only:\n"
+            '{"answers": [{"fid": "<id from item>", "introducer": "...", '
+            '"answer": "constraint|proposition|unsure"}]}\n\n'
             + "\n".join(lines))
 
 
 def do_answer(a) -> int:
     cfg = P.backend_config(a.backend)
     doc = json.load(open(a.answer, encoding="utf-8"))
-    todo = [it for it in doc["items"] if not it.get("answer")]
+    todo = [it for it in doc["items"] if not it.get("answer") and int(it.get("asked") or 0) < 2]
     if a.limit:
         todo = todo[:a.limit]
     by_block = collections.OrderedDict()
@@ -117,7 +129,7 @@ def do_answer(a) -> int:
     for key, items in by_block.items():
         asked += 1
         try:
-            text = P.call_model(cfg, make_prompt(items), timeout=240)
+            text = P.call_model(cfg, make_prompt(items), timeout=240, system=R.INSTRUCTIONS)
         except Exception as exc:                        # noqa: BLE001
             print("  block %s failed: %r" % (key[0], exc))
             continue
@@ -217,7 +229,7 @@ def main(argv=None) -> int:
     ap.add_argument("--judgements", default=os.path.join(
         os.path.dirname(HERE), "data", "judgements_roles.json"))
     ap.add_argument("--backend", default="")
-    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--limit", type=P.positive_count, default=0)
     ap.add_argument("formulas", nargs="*")
     a = ap.parse_args(argv)
     if a.export:

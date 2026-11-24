@@ -50,6 +50,8 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 
 sys.path.insert(0, HERE)
 
+from verify_output import formula_error
+
 NUM_RE = re.compile(r"\d+(?:\.\d+)?")
 CMD_RE = re.compile(r"\\([A-Za-z@]+)")
 CSYM_RE = re.compile(r"\\([{}%&#_$|])")
@@ -69,7 +71,8 @@ def rewritten_names(paper: str = "") -> set:
     names = set()
     for attr in ("BARE_ONE", "BARE_DROP", "UNWRAP_ONE", "PLUMBING", "DEF_CMDS"):
         names |= set(getattr(N.Normalizer, attr))
-    answers = json.load(open(N.ANSWERS_PATH, encoding="utf-8"))
+    with open(N.ANSWERS_PATH, encoding="utf-8") as fh:
+        answers = json.load(fh)
     for name, rec in (answers.get("names") or {}).items():
         if (rec or {}).get("action") in REWRITING_ACTIONS:
             names.add(name)
@@ -87,19 +90,22 @@ def rewritten_names(paper: str = "") -> set:
     return names
 
 
+from paper_metadata import run_paper_id
+
+
 def tables(paths):
-    """(paper, formulas.json) for a run directory, a paper directory, or files."""
+    """Find formula tables under run directories or in the files supplied."""
     for path in paths:
         path = os.path.abspath(path)
         if os.path.isfile(path):
-            yield os.path.basename(os.path.dirname(path)), path
+            yield path
         elif os.path.isfile(os.path.join(path, "formulas.json")):
-            yield os.path.basename(path), os.path.join(path, "formulas.json")
+            yield os.path.join(path, "formulas.json")
         elif os.path.isdir(path):
             for d in sorted(os.listdir(path)):
                 fp = os.path.join(path, d, "formulas.json")
                 if os.path.isfile(fp):
-                    yield d, fp
+                    yield fp
 
 
 def kept_text(rec: dict) -> str:
@@ -120,15 +126,20 @@ def main(argv=None):
         return 2
     args = [a for a in argv if not a.startswith("--")]
 
+    formula_errors = 0
     lost_num = lost_cmd = lost_csym = dangling = 0
     content_refs = 0
     orphan_marked = orphan_unmarked = dups = records = papers = 0
     examples = []
-    for paper, fpath in tables(args):
+    for fpath in tables(args):
         papers += 1
-        doc = json.load(open(fpath, encoding="utf-8"))
+        with open(fpath, encoding="utf-8") as fh:
+            doc = json.load(fh)
         recs = doc["formulas"] if isinstance(doc, dict) else doc
+        if not isinstance(recs, list):
+            raise ValueError("formulas must be a list")
         records += len(recs)
+        paper = run_paper_id(os.path.dirname(fpath))
         known = rewritten_names(paper)
         table = {}
         for rec in recs:
@@ -138,13 +149,17 @@ def main(argv=None):
         for rec in recs:
             raw = rec.get("raw") or ""
             exp = rec.get("expanded") or ""
-            if "diagram" in (rec.get("flags") or []) or \
-                    exp.strip() == "\\operatorname{diagram}":
-                continue
             if rec.get("ref_kind") == "content":
                 # a preserved note/float: raw is the original block and the
                 # text lives in content_blocks.json, not in expanded
                 content_refs += 1
+                continue
+            problem = formula_error(rec)
+            if problem:
+                formula_errors += 1
+                if len(examples) < 18:
+                    examples.append((paper, rec["id"], problem, raw[:70], exp[:70]))
+            if "diagram" in (rec.get("flags") or []):
                 continue
             kept = kept_text(rec)
             have = collections.Counter(NUM_RE.findall(kept))
@@ -180,14 +195,14 @@ def main(argv=None):
                         examples.append((paper, rec["id"], sym + " (symbol)",
                                          raw[:70], kept[:70]))
         used = set()
-        for line in open(os.path.join(os.path.dirname(fpath),
-                                      "sentences.jsonl"), encoding="utf-8"):
-            if not line.strip():
-                continue
-            for s in SITE_RE.findall(json.loads(line)["text"]):
-                used.add(s)
-                if s not in table:
-                    dangling += 1
+        with open(os.path.join(os.path.dirname(fpath), "sentences.jsonl"), encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                for s in SITE_RE.findall(json.loads(line)["text"]):
+                    used.add(s)
+                    if s not in table:
+                        dangling += 1
         for fid in set(table) - used:
             if table[fid].get("orphan"):
                 orphan_marked += 1
@@ -207,12 +222,14 @@ def main(argv=None):
         print("   %s %s  lost %s\n      raw: %s\n      exp: %s"
               % (pid, fid, what, raw, exp))
 
-    failed = (lost_num or lost_cmd or lost_csym or dangling or orphan_unmarked
+    if formula_errors:
+        print("inconsistent formula bodies: %d" % formula_errors)
+    failed = (formula_errors or lost_num or lost_cmd or lost_csym or dangling or orphan_unmarked
               or dups)
     if failed:
         print("FAILED: content was lost, or a record has no anchor")
         return 1
-    if not papers or not records:
+    if not papers:
         print("checked nothing: no formulas.json under %s"
               % ", ".join(args))
         return 2

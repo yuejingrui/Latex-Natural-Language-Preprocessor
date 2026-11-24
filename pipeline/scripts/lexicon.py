@@ -19,6 +19,7 @@ Usage
 
 import argparse
 import collections
+import hashlib
 import json
 import os
 import re
@@ -135,7 +136,7 @@ def _factor(kind, sig, pos, **extra):
 #: Reading their interior invents factors: ``\begin{grid}{bmatrix}0 & 1 \\ 0 & 0``
 #: produced the construction ``x · 0`` out of a row separator, and every cell
 #: contributed a symbol.  One atom, no interior.
-GRID_ENVS = ("grid", "diagram", "cases", "dcases", "rcases", "array",
+GRID_ENVS = ("grid", "diagram", "cases", "dcases", "rcases", "array", "subarray",
              "matrix", "pmatrix",
              "bmatrix", "vmatrix", "Vmatrix", "smallmatrix", "ytableau",
              "ytableaushort", "pNiceArray", "bNiceArray", "NiceArray",
@@ -146,7 +147,8 @@ GRID_ENVS = ("grid", "diagram", "cases", "dcases", "rcases", "array",
 class FormulaScan:
     """Scan one formula: factors, juxtaposition sites, declarations."""
 
-    def __init__(self, lex, body):
+    def __init__(self, lex, body, slot_operators=None):
+        self.slot_operators = slot_operators or {}
         self.lex = lex
         self.body = body
         self.toks = [(m.group(), m.start()) for m in TOKEN_RE.finditer(body)
@@ -164,7 +166,7 @@ class FormulaScan:
 
     def _kind(self, tok):
         if tok.startswith("<TXT"):
-            return "text"
+            return "slot_operator" if tok in self.slot_operators else "text"
         if tok.startswith("\\"):
             name = tok[1:]
             if name[:1].isalpha():
@@ -229,13 +231,17 @@ class FormulaScan:
     def _skip_optional(self):
         if self._peek() != "[":
             return
-        depth = 0
+        depth = braces = 0
         while self.i < len(self.toks):
             tok = self.toks[self.i][0]
             self.i += 1
-            if tok == "[":
+            if tok == "{":
+                braces += 1
+            elif tok == "}":
+                braces = max(0, braces - 1)
+            elif not braces and tok == "[":
                 depth += 1
-            elif tok == "]":
+            elif not braces and tok == "]":
                 depth -= 1
                 if depth == 0:
                     return
@@ -325,6 +331,17 @@ class FormulaScan:
         kind = self._kind(tok)
         name = tok[1:].rstrip("*") if tok.startswith("\\") else tok
 
+        if name in ("includegraphics", "includesvg", "includestandalone") and tok.startswith("\\"):
+            self.i += 1
+            if self._peek() == "*":
+                self.i += 1
+            while self._peek() == "[":
+                self._skip_optional()
+            if self._peek() == "{":
+                self._raw_arg()
+            items.append({"t": "barrier"})
+            return
+
         if kind == "size_any":
             nxt = self._peek(1)
             nk = self._kind(nxt) if nxt is not None else "other"
@@ -394,29 +411,29 @@ class FormulaScan:
             env = self._raw_arg_name(1)
             self.i += 1                       # \begin
             self._raw_arg()                   # {grid}
-            if self._peek() == "{":
-                self._raw_arg()               # the kind: bmatrix, cases, ...
-            depth = 1
-            while self.i < len(self.toks) and depth:
-                tok = self.toks[self.i][0]
-                k = self._kind(tok)
-                if k == "env_begin":
+            if env in ("grid", "diagram") and self._peek() == "{":
+                env = self._raw_arg()
+            if self._peek() == "[" and (env == "array" or "Nice" in env or env.endswith("*")):
+                self._skip_optional()
+            if env in ("array", "subarray", "NiceTabular") or env.endswith("NiceArray"):
+                if self._peek() == "{":
+                    self._raw_arg()
+            # Scan each cell independently, including groups and nested grids.
+            cell = []
+            while self.i < len(self.toks):
+                tok = self._peek()
+                if self._kind(tok) == "env_end":
                     self.i += 1
-                    if self._peek() == "{":
-                        self._raw_arg()
-                    depth += 1
-                    continue
-                if k == "env_end":
-                    self.i += 1
-                    if self._peek() == "{":
-                        self._raw_arg()
-                    depth -= 1
-                    continue
+                    self._raw_arg()
+                    break
                 if tok in ("&", "\\\\"):
                     self.i += 1
-                    items.append({"t": "barrier"})
-                    continue
-                self._step(items, ctx)
+                    if tok == "\\\\":
+                        self._skip_optional()
+                    cell = []
+                else:
+                    self._step(cell, ctx)
+            items.append({"t": "barrier"})
             return
         if kind == "env_begin":
             self.i += 1
@@ -465,9 +482,9 @@ class FormulaScan:
             self.i += 1
             self._push(items, {"t": "prefix", "k": kind, "sig": tok}, ctx)
             return
-        if kind == "named_operator":
+        if kind in ("named_operator", "slot_operator"):
             self.i += 1
-            word = self._raw_arg()
+            word = self._raw_arg() if kind == "named_operator" else self.slot_operators[tok]
             self.operators[word] += 1
             self._push(items, {"t": "prefix", "k": "function",
                                "sig": "\\operatorname{%s}" % word}, ctx)
@@ -588,7 +605,58 @@ def _paper_answered(paper):
     return out
 
 
-def build_paper_lexicon(formulas, lex, previous=None, paper=""):
+import rule_reviews
+
+
+PAPER_EVIDENCE = {"arrow_decl", "tuple_arg", "product_decl", "function_value"}  # tuple_arg occurs in older caches
+PRODUCT_DECL = re.compile(
+    r"^(?:(?:Throughout|In this paper)\s*,?\s+)?(?P<id>MATH\d+)\s+"
+    r"(?:denotes|is defined as)\s+(?:the|an?)\s+(?:(?:ordinary|usual)\s+)?"
+    r"product\s+of\b", re.I)
+
+
+# Only use prose whose grammatical subject/object is this exact formula.
+PRODUCT_USE = re.compile(
+    r"\bthe (?:pointwise )?product\s+(MATH\d+)\s+is\b|"
+    r"\b(?:write|use)\s+(MATH\d+)\s+for (?:its|the|their) (?:pointwise )?product\b|"
+    r"\b(MATH\d+)\s+denotes scalar multiplication\b|"
+    r"\b(MATH\d+)\s+(?:means|denotes|represents|is)\s+(?:their|the|its)\s+"
+    r"(?:(?:ordinary|scalar|pointwise)\s+)?product\b", re.I)
+
+FUNCTION_VALUE = re.compile(
+    r"\bevaluat(?:e|ing) the function at [^,.;]+,\s*(?:obtaining|giving|yielding)\s+(MATH\d+)\b|"
+    r"\b(MATH\d+)\s+is (?:its|the function(?:'s|’s)) value at\b", re.I)
+
+
+
+def asserted_reading(text):
+    """Only an unqualified statement can supply a binding prose rule."""
+    return not re.search(r"\?|\b(?:not|never|whether|if|unless|suppose|assuming|"
+                         r"might|may|could|sometimes|only when)\b", text, re.I)
+
+
+def product_sites(sentences):
+    sites, definitions, other_definitions = set(), set(), set()
+    for sent in sentences:
+        text = sent.get("text", "")
+        ids = set(sent.get("formulas", ()))
+        declaration = PRODUCT_DECL.match(text)
+        asserted = asserted_reading(text)
+        if asserted and declaration and declaration["id"] in ids:
+            sites.add(declaration["id"])
+            definitions.add(declaration["id"])
+        else:
+            for match in re.finditer(r"\b(MATH\d+)\s+(?:denotes|is defined as|represents)\b", text, re.I):
+                if match[1] in ids:
+                    other_definitions.add(match[1])
+        if not asserted:
+            continue
+        for match in PRODUCT_USE.finditer(text):
+            sites.update(fid for fid in match.groups() if fid in ids)
+    return sites, definitions, other_definitions
+
+
+def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
     """Scan every formula and assemble the paper layer."""
     symbols = {}
     constructions = {}
@@ -598,6 +666,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
     declared = {}                       # sig -> formula id
 
     bodies = []
+    slot_operators = {}
     side_bodies = 0
     raw_only = 0
     for f in formulas:
@@ -614,18 +683,31 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
             # harmless; say so instead
             raw_only += 1
         bodies.append((f["id"], body))
+        slot_operators[f["id"]] = {"<TXT%d>" % n: slot["raw"].strip()
+                                   for n, slot in enumerate(f.get("text_slots", []), 1)
+                                   if slot.get("role") == "operator"}
         for n, side in enumerate(f.get("side_conditions") or [], 1):
             bodies.append(("%s.side%d" % (f["id"], n), side))
             side_bodies += 1
 
+    products, definitions, other_definitions = product_sites(sentences)
+    body_by_id = dict(bodies)
+    order = {fid: i for i, (fid, _) in enumerate(bodies)}
+    contexts = {fid: sent.get("text", "") for sent in sentences for fid in sent.get("formulas", [])}
+    local_apply = {fid for text in set(contexts.values()) if asserted_reading(text)
+                   for match in FUNCTION_VALUE.finditer(text)
+                   for fid in match.groups() if fid}
+    entries = collections.defaultdict(list)
+    declarations = collections.defaultdict(list)
     for fid, body in bodies:
-        scan = FormulaScan(lex, body)
+        scan = FormulaScan(lex, body, slot_operators.get(fid))
         decided.update(scan.decided)
         operators.update(scan.operators)
         for cmd in scan.unknown:
             unknown[cmd].append(fid)
         for sig in scan.declared_functions():
             declared.setdefault(sig, fid)
+            declarations[sig].append(fid)
         for item in scan.idents:
             if item.get("absorbed"):
                 continue
@@ -637,59 +719,70 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
                 decided["%s %s" % (site["L"]["k"], site["R"]["k"])] += 1
                 continue
             key = construction_key(site)
-            entry = constructions.setdefault(key, {
-                "form": "%s %s" % (site["L"]["k"], site["R"]["k"]),
-                "left": site["L"]["sig"],
-                "right": site["R"]["sig"],
-                "context": site["ctx"],
-                "count": 0,
-                "sites": [],
-                "example": scan.snippet(site["L"]["pos"]),
-                "reading": None,
-                "source": None,
-                "default": "index" if site["ctx"] == "subscript"
-                           and site["R"]["k"] == "ident" else default,
-                "_tuple": None,
+            left, right = site["L"], site["R"]
+            entries[key].append({
+                "form": left["k"] + " " + right["k"], "left": left["sig"], "right": right["sig"],
+                "context": site["ctx"], "count": 1, "sites": [fid], "offset": left["pos"],
+                "example": scan.snippet(left["pos"]), "reading": None, "source": None,
+                "whole": len(scan.top) == 2 and left is scan.top[0] and right is scan.top[1],
+                "default": "index" if site["ctx"] == "subscript" and right["k"] == "ident" else default,
             })
-            entry["count"] += 1
-            if fid not in entry["sites"]:
-                entry["sites"].append(fid)
-            if site["R"]["k"] == "paren" and site["R"].get("delim") == "(" \
-                    and site["R"].get("arity", 0) >= 2 and not entry["_tuple"]:
-                entry["_tuple"] = fid
 
     # a formula that is one run of letters ("xy", "Cf", "ra") is the same
     # question asked of a single token: one name, or a product of letters?
     for fid, body in bodies:
         word = body.strip()
-        if not BARE_WORD_RE.match(word) or word in constructions:
+        if not BARE_WORD_RE.match(word):
             continue
-        entry = constructions.setdefault(word, {
-            "form": "bare word",
-            "left": word,
-            "right": "",
-            "context": "bare",
-            "count": 0,
-            "sites": [],
-            "example": word,
-            "reading": None,
-            "source": None,
-            "default": "label",
-            "_tuple": None,
-        })
-        entry["count"] += 1
-        if fid not in entry["sites"]:
-            entry["sites"].append(fid)
+        entries[word].append({"form": "bare word", "left": word, "right": "", "context": "bare",
+                              "count": 1, "sites": [fid], "offset": body.index(word), "example": word,
+                              "whole": len(word) == 2, "reading": None, "source": None, "default": "label"})
 
-    # what the paper itself settles
-    for key, entry in constructions.items():
-        tuple_at = entry.pop("_tuple")
-        if entry["left"] in declared:
-            entry["reading"] = "apply"
-            entry["source"] = "arrow_decl:" + declared[entry["left"]]
-        elif tuple_at:
-            entry["reading"] = "apply"
-            entry["source"] = "tuple_arg:" + tuple_at
+    scalar_declarations = collections.defaultdict(list)
+    for sent in sentences:
+        for match in re.finditer(r"\b(MATH\d+(?:\s+and\s+MATH\d+)?)\s+(?:be|is|are)\s+(?:a\s+)?scalars?\b",
+                                 sent.get("text", ""), re.I):
+            for declared_id in re.findall(r"MATH\d+", match[1]):
+                for sig in body_by_id.get(declared_id, "").split(","):
+                    if re.fullmatch(r"[A-Za-z]", sig.strip()):
+                        scalar_declarations[sig.strip()].append(order[declared_id])
+
+    for shape, occurrences in entries.items():
+        occurrences.sort(key=lambda e: (order[e["sites"][0]], e["offset"]))
+        definition = None
+        latest_product = -1
+        for entry in occurrences:
+            fid = entry["sites"][0]
+            parent = fid.split(".")[0]
+            body = body_by_id[fid]
+            sentence = contexts.get(parent, "")
+            whole = entry.pop("whole")
+            if fid in other_definitions:
+                definition = None
+            if whole and fid in products:
+                latest_product = order[fid]
+                entry.update(reading="multiply", source="product_decl:" + fid)
+                if fid in definitions:
+                    definition = fid
+            elif whole and fid in local_apply and entry["right"] == "(":
+                entry.update(reading="apply", source="function_value:" + fid)
+                definition = None
+            elif definition and (body.strip() == body_by_id[definition].strip()
+                                 or re.fullmatch(r"[A-Za-z]{2}", body_by_id[definition].strip())):
+                entry.update(reading="multiply", source="product_decl:" + definition)
+            elif entry["right"] == "(":
+                # A declaration must precede the use. Local rebinding or an
+                # explicit product elsewhere prevents a paper-wide inference.
+                earlier = [d for d in declarations.get(entry["left"], []) if order[d] < order[fid]]
+                overrides = [idx for idx in scalar_declarations[entry["left"]] if idx <= order[fid]]
+                if earlier and order[earlier[-1]] > max([latest_product] + overrides):
+                    entry.update(reading="apply", source="arrow_decl:" + earlier[-1])
+            location = "%s@%d" % (fid, entry["offset"])
+            entry.update(shape=shape, location=location)
+            entry["anchor"] = hashlib.sha256(json.dumps(
+                [paper, shape, location, body, sentence], ensure_ascii=False).encode()).hexdigest()
+            key = shape if len(occurrences) == 1 else shape + " @ " + location
+            constructions[key] = entry
 
     # answers given earlier (by hand or by an LLM) are kept, unless the paper
     # itself now settles the construction: a declaration overwrites a stale
@@ -697,19 +790,28 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
     overridden = []
     for key, old in ((previous or {}).get("constructions") or {}).items():
         new = constructions.get(key)
-        if new is None or not old.get("reading"):
+        if new is None or not old.get("reading") or old.get("from_library"):
+            continue
+        if old.get("count", 1) != 1 or (old.get("anchor") and new["anchor"] != old["anchor"]):
+            continue
+        if not old.get("anchor") and rule_reviews.from_model(old.get("source")):
             continue
         source = old.get("source") or "manual"
-        if source.split(":")[0] in ("arrow_decl", "tuple_arg"):
+        if source.split(":")[0] in PAPER_EVIDENCE:
+            review = old.get("model_review")
+            if review and new.get("reading") and new.get("source"):
+                new["model_review"] = rule_reviews.compare(new["source"], new["reading"],
+                                                         review["model_answer"], review["model"])
             continue
         if old["reading"] not in lex.readings:
             raise ValueError("%r: reading %r is not one of %s"
                              % (key, old["reading"], lex.readings))
         owner = (new.get("source") or "").split(":")[0]
-        if owner in ("arrow_decl", "tuple_arg") and \
-                old["reading"] != new["reading"]:
-            overridden.append((key, old["reading"], new["source"],
-                               new["reading"]))
+        if owner in PAPER_EVIDENCE:
+            if rule_reviews.from_model(source):
+                new["model_review"] = rule_reviews.compare(new["source"], new["reading"], old["reading"], source)
+            if old["reading"] != new["reading"]:
+                overridden.append((key, old["reading"], new["source"], new["reading"]))
             continue
         new["reading"], new["source"] = old["reading"], source
         if old.get("note"):
@@ -728,6 +830,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
         for key, was, why, now in overridden[:5]:
             print("    %-24s %r -> %r (%s)" % (key, was, now, why))
     result = {
+        "paper": paper,
         "readings": lex.readings,
         "summary": {
             "formulas": len(bodies) - side_bodies,
@@ -737,7 +840,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper=""):
             "constructions": len(constructions),
             "settled_by_paper": sum(1 for c in constructions.values()
                                     if (c["source"] or "").split(":")[0]
-                                    in ("arrow_decl", "tuple_arg")),
+                                    in PAPER_EVIDENCE),
             "settled": sum(1 for c in constructions.values() if c["reading"]),
             "open": sum(1 for c in constructions.values() if not c["reading"]),
         },
@@ -771,7 +874,7 @@ def _status_of(entry) -> str:
     """Where a construction's reading comes from, in the words of the note."""
     owner = (entry.get("source") or "").split(":")[0]
     if entry.get("reading"):
-        if owner in ("arrow_decl", "tuple_arg"):
+        if owner in PAPER_EVIDENCE:
             return "settled_by_paper"
         return "settled_by_answer"
     return "open" if entry.get("default") else "missing"
@@ -788,7 +891,7 @@ def _assign_status(result) -> dict:
         owner = (entry.get("source") or "").split(":")[0]
         if entry.get("reading"):
             entry["status"] = ("settled_by_paper"
-                               if owner in ("arrow_decl", "tuple_arg")
+                               if owner in PAPER_EVIDENCE
                                else "settled_by_answer")
         else:
             # "defaulted" read like a decision; D11 asks for the state to be
@@ -801,13 +904,41 @@ def _assign_status(result) -> dict:
     return result
 
 
+def check_word_readings(result):
+    constructions = result["constructions"]
+    by_position = {(e.get("shape", k), e.get("location")): e for k,e in constructions.items()}
+    for bare in constructions.values():
+        word = bare["left"]
+        if bare["form"] != "bare word" or len(word) != 2:
+            continue
+        pair = by_position.get((word[0] + " · " + word[1], bare["location"]))
+        if not pair:
+            continue
+        readings = (bare["reading"], pair["reading"])
+        if all(readings) and readings[0] != readings[1]:
+            decisive = [e for e in (bare, pair) if (e.get("source") or "").split(":")[0] in PAPER_EVIDENCE]
+            if len(decisive) == 1:
+                rule = decisive[0]
+                other = pair if rule is bare else bare
+                if rule_reviews.from_model(other.get("source")):
+                    other["model_review"] = rule_reviews.compare(rule["source"], rule["reading"],
+                                                                other["reading"], other["source"])
+                other.update(reading=rule["reading"], source=rule["source"])
+                continue
+            for entry in (bare, pair):
+                entry["conflict"] = {"word": word, "bare": readings[0], "pair": readings[1]}
+                entry.update(reading=None, source=None)
+    _resummarise(result)
+    _assign_status(result)
+
+
 def _resummarise(result):
     c = result["constructions"]
     result["summary"]["constructions"] = len(c)
     result["summary"]["settled"] = sum(1 for v in c.values() if v["reading"])
     result["summary"]["settled_by_paper"] = sum(
         1 for v in c.values()
-        if (v.get("source") or "").split(":")[0] in ("arrow_decl", "tuple_arg"))
+        if (v.get("source") or "").split(":")[0] in PAPER_EVIDENCE)
     result["summary"]["open"] = sum(1 for v in c.values() if not v["reading"])
     result["constructions"] = _ordered(c)
 
@@ -835,20 +966,36 @@ def _question(entry):
     return tail
 
 
-def export_pending(result, formulas, path):
+def export_pending(result, formulas, path, sentences=(), review_rules=False):
     """Write the unanswered constructions as a minimal, answerable list."""
     by_id = {f["id"]: f for f in formulas}
+    contexts = {fid: sent.get("text", "") for sent in sentences for fid in sent.get("formulas", [])}
+    def source_sentence(text, target):
+        def restore(match):
+            fid = match[0]
+            formula = by_id.get(fid, {})
+            raw = formula.get("raw") or formula.get("expanded")
+            return ("<<" + raw + ">>" if fid == target else "$" + raw + "$") if raw else fid
+        return re.sub(r"MATH\d+", restore, text)
     items = []
     for key, entry in result["constructions"].items():
-        if entry["reading"]:
+        if entry["reading"] and not (review_rules and not entry.get("model_review") and
+                                     (entry.get("source") or "").split(":")[0] in PAPER_EVIDENCE):
             continue
         examples = []
         for sid in entry["sites"][:3]:
-            body = (by_id.get(sid, {}).get("expanded") or "").replace("\n", " ")
-            examples.append({"id": sid, "formula": re.sub(r"\s+", " ", body)[:200]})
+            fid, _, side = sid.partition(".side")
+            rec = by_id.get(fid, {})
+            body = rec["side_conditions"][int(side)-1] if side else rec.get("expanded", "")
+            example = {"id": sid, "formula": body, "offset": entry["offset"]}
+            context = contexts.get(sid.split(".")[0])
+            if context:
+                example["sentence"] = source_sentence(context, fid)
+            examples.append(example)
         items.append({
-            "key": key,
+            "key": key, "anchor": entry["anchor"], "location": entry["location"],
             "question": _question(entry),
+            **({"conflict": entry["conflict"]} if entry.get("conflict") else {}),
             "count": entry["count"],
             "default_if_unanswered": entry["default"],
             "examples": examples,
@@ -862,7 +1009,8 @@ def export_pending(result, formulas, path):
             "definition, a sentence). Then run: "
             "python3 lexicon.py --merge-answers <this file> <formulas.json>"),
         "allowed_readings": result["readings"],
-        "meta": {"paper": result["summary"].get("paper"), "open": len(items)},
+        "meta": {"paper": result.get("paper"), "source_file": result.get("source_file"),
+                 "open": len(items)},
         "items": items,
     }
     with open(path, "w", encoding="utf-8") as fh:
@@ -871,7 +1019,17 @@ def export_pending(result, formulas, path):
     return payload
 
 
-def merge_answers(result, answers_path, only_unset=False):
+def scope_matches(scope, current):
+    return all(not scope.get(key) or scope[key] == current.get(key)
+               for key in ("paper", "source_file"))
+
+
+def answer_digest(path):
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+def merge_answers(result, answers_path, only_unset=False, library=False, fallback_scope=None):
     """Apply answers in place; return (applied, skipped, rejected).
 
     ``only_unset`` fills gaps without touching entries that already have a
@@ -892,8 +1050,20 @@ def merge_answers(result, answers_path, only_unset=False):
     #: ever changes, every committed answer lands here, and "skipped" would
     #: look like "already answered"
     unknown_key = []
+    scope = dict(fallback_scope or {})
+    if isinstance(data, dict):
+        scope.update({k: v for k, v in (data.get("meta") or {}).items() if v})
     for item in items:
         key, answer = item.get("key"), item.get("answer")
+        paper = item.get("paper") or scope.get("paper")
+        source_file = item.get("source_file") or scope.get("source_file")
+        if library and not paper:
+            # The original bundled table attributed most items in this exact form.
+            credit = re.fullmatch(r"judged on ([\w.-]+)", item.get("note") or "")
+            paper = credit[1] if credit else None
+        if (not scope_matches({"paper": paper, "source_file": source_file}, result) or (library and not paper)):
+            skipped += 1
+            continue
         entry = result["constructions"].get(key)
         if entry is None:
             if answer:
@@ -906,15 +1076,28 @@ def merge_answers(result, answers_path, only_unset=False):
         if answer not in allowed:
             rejected.append((key, answer))
             continue
+        source = item.get("source") or item.get("by") or "manual"
+        if (item.get("anchor") and item["anchor"] != entry["anchor"]) or (
+                rule_reviews.from_model(source) and not item.get("anchor")):
+            skipped += 1
+            continue
         owner = (entry.get("source") or "").split(":")[0]
-        if owner in ("arrow_decl", "tuple_arg"):
+        if owner in PAPER_EVIDENCE:
+            if rule_reviews.from_model(source):
+                entry["model_review"] = rule_reviews.compare(entry["source"], entry["reading"],
+                                                          answer, source, item.get("model"))
             skipped += 1
             continue
         if only_unset and entry.get("reading"):
             skipped += 1
             continue
         entry["reading"] = answer
-        entry["source"] = item.get("source") or "manual"
+        entry["source"] = source
+        if library:
+            entry["from_library"] = True
+        else:
+            entry.pop("from_library", None)
+        entry.pop("provisional_reading", None)
         applied_keys.append(item.get("key") or key)
         if item.get("note"):
             entry["note"] = item["note"]
@@ -990,15 +1173,15 @@ def _self_test():
             "\\ell_1,\\ldots,\\ell_d:W\\to\\mathbb R", "\\ell_{i+1}(u)=0",
             "\\alpha_i(u_0,\\ldots,u_i)=1", "u\\mapsto(a,b)")
     c = r["constructions"]
-    check("\\pi x is application", c["\\pi \u00b7 x"]["reading"] == "apply"
-          and c["\\pi \u00b7 x"]["source"] == "arrow_decl:F1", str(c["\\pi \u00b7 x"]))
-    check("both \\pi x sites grouped", c["\\pi \u00b7 x"]["count"] == 2)
+    pi_sites = [e for e in c.values() if e["shape"] == "\\pi · x"]
+    check("two separate open pi x occurrences", len(pi_sites) == 2
+          and all(e["reading"] is None and e["count"] == 1 for e in pi_sites))
     check("\\ell family declared",
           c["\\ell_\u00b7 (\u2026"]["source"] == "arrow_decl:F3",
           str(c["\\ell_\u00b7 (\u2026"]))
-    check("tuple argument", c["\\alpha_\u00b7 (\u2026"]["source"] == "tuple_arg:F5",
+    check("tuple without a declared function stays open", c["\\alpha_\u00b7 (\u2026"]["reading"] is None,
           str(c["\\alpha_\u00b7 (\u2026"]))
-    check("p and q stay open", c["p (\u2026"]["reading"] is None
+    check("p and q stay open", all(e["reading"] is None for e in c.values() if e["shape"] == "p (…")
           and c["q (\u2026"]["reading"] is None)
     check("mapsto is not a declaration", "u" not in
           [s for s, v in r["symbols"].items() if v.get("declared")])
@@ -1121,12 +1304,42 @@ def main(argv=None):
     if os.path.exists(out):
         with open(out, encoding="utf-8") as fh:
             previous = json.load(fh)
-    result = build_paper_lexicon(formulas, lex, previous, paper=PAPER_ID)
+    source_file = None
+    stats_path = os.path.join(os.path.dirname(args.formulas), "normalize-stats.json")
+    if os.path.isfile(stats_path):
+        with open(stats_path, encoding="utf-8") as fh:
+            source = json.load(fh).get("input")
+        if source:
+            source_file = os.path.normcase(os.path.abspath(source))
+    local_scope = (previous or {}).get("local_answer_scope", {})
+    current_scope = {"paper": PAPER_ID, "source_file": source_file}
+    if previous is not None and (previous.get("paper") != PAPER_ID or
+                                 not scope_matches(previous, current_scope)):
+        if "paper" not in previous and not PAPER_ID.startswith("sha256-"):
+            # Old caches mixed local edits with guesses imported from unrelated
+            # papers. Retire the identifiable library entries, retaining local edits.
+            library_path = os.path.join(DATA, "judgements.json")
+            if os.path.isfile(library_path):
+                with open(library_path, encoding="utf-8") as fh:
+                    legacy = {(row["key"], row.get("answer"), row.get("note"))
+                              for row in json.load(fh)["items"]}
+                for key, entry in previous.get("constructions", {}).items():
+                    if (key, entry.get("reading"), entry.get("note")) in legacy:
+                        entry["from_library"] = True
+        else:
+            previous = None
+    sentences = []
+    sentence_path = os.path.join(os.path.dirname(args.formulas), "sentences.jsonl")
+    if os.path.isfile(sentence_path):
+        with open(sentence_path, encoding="utf-8") as fh:
+            sentences = [json.loads(line) for line in fh if line.strip()]
+    result = build_paper_lexicon(formulas, lex, previous, paper=PAPER_ID, sentences=sentences)
 
-    # committed judgements fill whatever the output file does not already
-    # answer, so wiping out/ does not throw the readings away.  They are keyed
-    # by construction ("x · y"), which is not paper-specific: another paper can
-    # reuse the same key with a different reading, hence --no-judgements.
+    result["source_file"] = source_file
+    if local_scope:
+        result["local_answer_scope"] = local_scope
+
+    # Shared readings only apply within their paper of origin.
     if args.no_judgements:
         judgements = ""
     else:
@@ -1135,18 +1348,22 @@ def main(argv=None):
             os.path.join(HERE, "judgements.json"))
     if judgements and os.path.exists(judgements):
         applied, _skipped, rejected, _unknown = merge_answers(
-            result, judgements,
-                                                   only_unset=True)
+            result, judgements, only_unset=True, library=True)
         if applied:
             print("from judgements.json  : %d" % applied)
         for key, answer in rejected:
             print("rejected %r in judgements.json: %r is not one of %s"
                   % (key, answer, lex.readings))
 
-    merged = None
     if args.merge_answers:
+        # Bind a legacy untagged answer file to the first original that used it.
+        digest = answer_digest(args.merge_answers)
+        if digest != local_scope.get("sha256"):
+            local_scope = {**current_scope, "sha256": digest}
         applied, skipped, rejected, unknown_key = merge_answers(
-            result, args.merge_answers)
+            result, args.merge_answers, fallback_scope=local_scope)
+        if applied:
+            result["local_answer_scope"] = local_scope
         for key, answer in rejected:
             print("rejected %r: %r is not one of %s"
                   % (key, answer, lex.readings))
@@ -1154,6 +1371,7 @@ def main(argv=None):
               "unknown construction %d)"
               % (applied, skipped, len(rejected), len(unknown_key)))
 
+    check_word_readings(result)
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
@@ -1164,8 +1382,10 @@ def main(argv=None):
     todo = os.path.join(os.path.dirname(out) or ".", "construction_todo.json")
     open_keys = {k for k, e in result["constructions"].items()
                  if not e["reading"]}
+    questions = os.path.join(os.path.dirname(out) or ".", "construction_questions.json")
+    export_pending(result, formulas, questions, sentences, review_rules=True)
     if open_keys:
-        export_pending(result, formulas, todo)
+        export_pending(result, formulas, todo, sentences)
         with open(todo, encoding="utf-8") as fh:
             written = {i["key"] for i in json.load(fh)["items"]}
         # D11's I2, against what is on disk: a construction with no reading and
@@ -1180,7 +1400,7 @@ def main(argv=None):
         print("unknown commands      : %d -> name layer (pending_names.py)"
               % len(result["unknown_commands"]))
     if args.export_pending:
-        payload = export_pending(result, formulas, args.export_pending)
+        payload = export_pending(result, formulas, args.export_pending, sentences)
         print("pending questions     : %d -> %s"
               % (len(payload["items"]), args.export_pending))
 

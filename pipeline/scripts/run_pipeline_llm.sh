@@ -1,5 +1,5 @@
 #!/bin/sh
-# run_pipeline_llm.sh PAPER.tex OUTDIR [--dry-run] [--limit N] [--no-ask]
+# run_pipeline_llm.sh PAPER.tex OUTDIR [--dry-run] [--limit N] [--no-ask] [--tex-engine ENGINE] [--model-config FILE]
 #
 # One paper through the whole chain *including* the model questions:
 #
@@ -9,7 +9,7 @@
 #
 #   --dry-run   print the questions and write no answer; makes no request
 #   --limit N   ask at most N questions per class (a cheap trial run)
-#   --no-ask    split only, no request (the offline chain)
+#   --no-ask    run all offline stages, including formula roles
 #
 # Every stage resumes: an answer file already in OUTDIR is reused and its
 # questions are not asked again.  Delete the file to ask that class again.
@@ -24,17 +24,22 @@
 # name questions open (see the summary line names_todo.json).
 set -u
 
-USAGE='usage: run_pipeline_llm.sh PAPER.tex OUTDIR [--dry-run] [--limit N] [--no-ask]'
+USAGE='usage: run_pipeline_llm.sh PAPER.tex OUTDIR [--dry-run] [--limit N] [--no-ask] [--tex-engine ENGINE] [--model-config FILE]'
+ENGINE=""
 PAPER=""
 OUT=""
 DRY=0
-LIMIT=0
+LIMIT=""
 ASK=1
 while [ $# -gt 0 ]; do
     case "$1" in
+        --model-config) shift; [ -n "${1:-}" ] || exit 2; NL_PREP_MODEL_CONFIG=$1 ;;
+        --tex-engine) shift; [ -n "${1:-}" ] || exit 2; ENGINE=$1 ;;
+        --tex-engine=?*) ENGINE=${1#*=} ;;
         --dry-run) DRY=1 ;;
         --no-ask)  ASK=0 ;;
-        --limit)   shift; LIMIT=${1:-0} ;;
+        --limit)   shift; [ -n "${1:-}" ] || { echo "--limit requires a positive integer" >&2; exit 2; }; LIMIT=$1 ;;
+        --limit=) echo "--limit requires a positive integer" >&2; exit 2 ;;
         --limit=*) LIMIT=${1#--limit=} ;;
         -h|--help) echo "$USAGE"; exit 0 ;;
         -*)        echo "run_pipeline_llm: unknown option $1" >&2; exit 2 ;;
@@ -45,18 +50,21 @@ while [ $# -gt 0 ]; do
     shift
 done
 if [ -z "$PAPER" ] || [ -z "$OUT" ]; then echo "$USAGE" >&2; exit 2; fi
-case "$LIMIT" in ''|*[!0-9]*) LIMIT=0 ;; esac
 
-HERE=$(cd "$(dirname "$0")" && pwd)
-ROOT=$(cd "$HERE/../.." && pwd)
-cd "$ROOT" || exit 2
-PY=${PYTHON:-python3}
-NAME=$(basename "$PAPER" .tex)
-mkdir -p "$OUT" || exit 2
+
+. "$(dirname "$0")/pipeline_common.sh" || exit 2
+prepare_pipeline || exit 2
+if [ -n "$LIMIT" ]; then
+    LIMIT=$("$PY" -c 'import argparse
+from pipeline.scripts.pending_names import positive_count
+parser = argparse.ArgumentParser()
+parser.add_argument("--limit", type=positive_count, required=True)
+print(parser.parse_args().limit)' --limit="$LIMIT") || exit 2
+fi
 
 step() { printf '\n=== %s\n' "$*"; }
 open_questions() {   # how many items in a question file are still unanswered
-    $PY - "$1" <<'PY' 2>/dev/null || echo "?"
+    "$PY" - "$1" <<'PY' 2>/dev/null || echo "?"
 import json, sys
 try:
     with open(sys.argv[1], encoding="utf-8") as fh:
@@ -67,31 +75,20 @@ print(sum(1 for i in items if not i.get("answer")))
 PY
 }
 LIMIT_ARG=""
-[ "$LIMIT" -gt 0 ] && LIMIT_ARG="--limit $LIMIT"
+[ -n "$LIMIT" ] && LIMIT_ARG="--limit $LIMIT"
 DRY_ARG=""
 [ "$DRY" -eq 1 ] && DRY_ARG="--dry-run"
 
 # ---- 0. the backend, before anything is asked -----------------------------
 if [ "$ASK" -eq 1 ] && [ "$DRY" -eq 0 ]; then
     step "model backend"
-    if ! $PY pipeline/scripts/pending_names.py --check-config >"$OUT/backend.txt" 2>&1; then
-        echo "  cannot read the backend configuration; see $OUT/backend.txt" >&2
-        exit 2
-    fi
-    if ! grep -q 'NL_PREP_API_KEY=sk-' "$OUT/backend.txt"; then
-        echo "  no API key: set NL_PREP_API_KEY or write it to ~/.config/nlprep/env" >&2
-        echo "  (--dry-run prints the questions and needs no key)" >&2
-        exit 2
-    fi
-    sed -E 's/(NL_PREP_API_KEY=sk-..)[^ ]*/\1***/' "$OUT/backend.txt" | sed -n '1,3p' | sed 's/^/  /'
+    check_model_config || exit 2
 fi
 
 # ---- 1. split, then the word tables --------------------------------------
 pipeline() {
     step "normalize"
-    $PY scripts/normalize.py "$PAPER" -o "$OUT/normalized.tex" \
-        --stats "$OUT/normalize-stats.json" --paper-id "$NAME" \
-        --issues "$OUT/issues_normalize.json" || return 1
+    normalize_paper || return 1
 
     step "latex2nl --canonical"
     set -- --canonical --paper-id "$NAME" --issues "$OUT/issues_latex2nl.json"
@@ -99,18 +96,16 @@ pipeline() {
         set -- "$@" --merge-sentence-answers "$OUT/sentence_answers.json"
     fi
     if [ -f "$OUT/slot_answers.json" ]; then
-        [ -f "$OUT/slot_roles.json" ] || cp data/slot_roles.json "$OUT/slot_roles.json"
-        set -- "$@" --merge-slot-answers "$OUT/slot_answers.json" \
-                     --slot-table "$OUT/slot_roles.json"
+        set -- "$@" --merge-slot-answers "$OUT/slot_answers.json"
     fi
-    $PY scripts/latex2nl.py "$OUT/normalized.tex" -o "$OUT" "$@" || return 1
+    "$PY" scripts/latex2nl.py "$OUT/normalized.tex" -o "$OUT" "$@" || return 1
 
     step "lexicon"
     set -- "$OUT/formulas.json" -o "$OUT/paper_lexicon.json" --paper-id "$NAME"
     if [ -f "$OUT/construction_answers.json" ]; then
         set -- "$@" --merge-answers "$OUT/construction_answers.json"
     fi
-    $PY pipeline/scripts/lexicon.py "$@" || return 1
+    "$PY" pipeline/scripts/lexicon.py "$@" || return 1
     return 0
 }
 
@@ -119,18 +114,18 @@ pipeline || exit 1
 # ---- 2. the three splitter questions -------------------------------------
 if [ "$ASK" -eq 1 ]; then
     step "ask: construction readings"
-    if [ -f "$OUT/construction_todo.json" ]; then
-        echo "  open: $(open_questions "$OUT/construction_todo.json")"
-        $PY pipeline/scripts/ask_lexicon.py "$OUT/construction_todo.json" \
+    if [ -f "$OUT/construction_questions.json" ]; then
+        echo "  open: $(open_questions "$OUT/construction_questions.json")"
+        "$PY" pipeline/scripts/ask_lexicon.py "$OUT/construction_questions.json" \
             $DRY_ARG $LIMIT_ARG || true
     else
         echo "  (no construction_todo.json: skipped)"
     fi
 
     step "ask: text-slot roles"
-    if [ -f "$OUT/slot_todo.json" ]; then
-        echo "  open: $(open_questions "$OUT/slot_todo.json")"
-        $PY pipeline/scripts/ask_slots.py "$OUT/slot_todo.json" \
+    if [ -f "$OUT/slot_questions.json" ]; then
+        echo "  open: $(open_questions "$OUT/slot_questions.json")"
+        "$PY" pipeline/scripts/ask_slots.py "$OUT/slot_questions.json" \
             $DRY_ARG $LIMIT_ARG || true
     else
         echo "  (no slot_todo.json: skipped)"
@@ -139,7 +134,7 @@ if [ "$ASK" -eq 1 ]; then
     step "ask: doubtful sentence boundaries"
     if [ -f "$OUT/sentence_todo.json" ]; then
         echo "  open: $(open_questions "$OUT/sentence_todo.json")"
-        $PY pipeline/scripts/ask_boundaries.py "$OUT/sentence_todo.json" \
+        "$PY" pipeline/scripts/ask_boundaries.py "$OUT/sentence_todo.json" \
             -o "$OUT/sentence_answers.json" $DRY_ARG $LIMIT_ARG || true
     else
         echo "  (no sentence_todo.json: skipped)"
@@ -153,42 +148,51 @@ if [ "$ASK" -eq 1 ]; then
 fi
 
 # ---- 3. formula roles ------------------------------------------------------
+step "formula roles"
+"$PY" pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
+    -o "$OUT/roles.json" --todo "$OUT/role_todo.json" --paper-id "$NAME" || exit 1
 if [ "$ASK" -eq 1 ]; then
-    step "formula roles"
-    $PY pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
-        -o "$OUT/roles.json" --todo "$OUT/role_todo.json" --paper-id "$NAME" || exit 1
     if [ "$DRY" -eq 0 ]; then
-        if [ -f "$OUT/role_todo.json" ] && [ "$(open_questions "$OUT/role_todo.json")" != "0" ]; then
-            echo "  open: $(open_questions "$OUT/role_todo.json")"
-            $PY pipeline/scripts/ask_roles.py --answer "$OUT/role_todo.json" \
+        if [ -f "$OUT/role_questions.json" ] && [ "$(open_questions "$OUT/role_questions.json")" != "0" ]; then
+            echo "  open: $(open_questions "$OUT/role_questions.json")"
+            "$PY" pipeline/scripts/ask_roles.py --answer "$OUT/role_questions.json" \
                 $LIMIT_ARG || true
-            $PY pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
+            "$PY" pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
                 -o "$OUT/roles.json" --todo "$OUT/role_todo.json" --paper-id "$NAME" \
-                --merge-answers "$OUT/role_todo.json" || true
+                --merge-answers "$OUT/role_questions.json" || exit 1
         else
             echo "  (nothing to ask)"
         fi
     else
-        $PY pipeline/scripts/ask_roles.py --export "$OUT/roles_preview.json" \
-            "$OUT/formulas.json" >/dev/null 2>&1 || true
-        echo "  (dry run: the questions are in $OUT/roles_preview.json)"
+        if [ -f "$OUT/role_questions.json" ]; then
+            cp "$OUT/role_questions.json" "$OUT/roles_preview.json" || exit 1
+            echo "  (dry run: the questions are in $OUT/roles_preview.json)"
+        else
+            rm -f "$OUT/roles_preview.json"
+        fi
     fi
 fi
 
 # ---- 4. the two gates ------------------------------------------------------
+"$PY" scripts/rule_reviews.py "$OUT" || exit 1
+"$PY" pipeline/scripts/human.py --from-names "$OUT/names_todo.json" "$OUT/human_todo.json" || exit 1
+"$PY" pipeline/scripts/human.py --from-roles "$OUT/role_todo.json" "$OUT/human_todo.json" || exit 1
+
 step "fidelity gate: the formula table itself"
-$PY pipeline/scripts/verify_formulas.py "$OUT"
+"$PY" pipeline/scripts/verify_formulas.py "$OUT"
 VF=$?
 echo "  verify_formulas rc=$VF"
 
 step "output checks"
-$PY scripts/verify_output.py "$OUT" --strict >"$OUT/output_checks.txt" 2>&1
+"$PY" scripts/verify_output.py "$OUT" --strict >"$OUT/output_checks.txt" 2>&1
 VO=$?
 echo "  verify_output --strict rc=$VO   (0 clean / 1 hard / 2 broken / 3 pending)"
 tail -3 "$OUT/output_checks.txt" | sed 's/^/  /'
 
+"$PY" pipeline/scripts/human.py --from-issues "$OUT/issues.json" "$OUT/human_todo.json" || exit 1
+
 step "sentences that end without a terminal mark, by cause"
-if $PY scripts/split_audit.py --run "$OUT" -o "$OUT/split-audit.md" >/dev/null 2>&1; then
+if "$PY" scripts/split_audit.py --run "$OUT" -o "$OUT/split-audit.md" >/dev/null 2>&1; then
     sed -n '/^## 汇总/,/^## /p' "$OUT/split-audit.md" \
         | grep -E '^\| (论文|句子|无句末标点|标点|容器|标题|句末|裸花括号|疑似|原文缺|其它)' \
         | sed 's/^/  /'
@@ -198,7 +202,7 @@ fi
 
 # ---- 5. what came out -----------------------------------------------------
 step "summary"
-$PY - "$OUT" <<'PY'
+"$PY" - "$OUT" <<'PY'
 import json, os, sys
 out = sys.argv[1]
 
@@ -231,7 +235,7 @@ for name in ("construction_todo.json", "slot_todo.json", "sentence_todo.json",
 issues = load("issues.json") or {}
 pending = issues.get("pending") or []
 print("  ledger         : status=%s hard=%s" % (issues.get("status"), issues.get("hard")))
-print("  pending        : %s" % (", ".join(pending) if pending else "nothing"))
+print("  splitter pending: %s" % (", ".join(pending) if pending else "nothing"))
 PY
 
 VO_BAD=0
@@ -243,7 +247,7 @@ if [ "$VF" -ne 0 ] || [ "$VO_BAD" -ne 0 ]; then
     echo "  status         : FAILED"
     exit 1
 fi
-if [ "$VO" -eq 3 ]; then
+if [ "$VO" -eq 3 ] || pipeline_has_pending; then
     echo "  status         : questions pending"
     exit 3
 fi

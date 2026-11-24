@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 """Ask a model for the role of each pending phrase inside a formula.
 
-``latex2nl`` writes ``slot_todo.json`` with one item per phrase that has no role in
-``data/slot_roles.json``.  This sends those phrases to the model the other askers
-use and writes the answer file ``--merge-slot-answers`` reads.
+Each occurrence has a slot ID and a paper-specific anchor. Send marked slots of
+one formula together with the source sentence. Save each reply locally.
 
-    python3 ask_slots.py OUT/slot_todo.json --dry-run
-    python3 ask_slots.py OUT/slot_todo.json
+    python3 ask_slots.py OUT/slot_questions.json --dry-run
+    python3 ask_slots.py OUT/slot_questions.json
     python3 latex2nl.py OUT/normalized.tex -o OUT --canonical \\
             --merge-slot-answers OUT/slot_answers.json
 """
 from __future__ import annotations
 
+import collections
 import argparse
 import json
 import os
@@ -36,6 +36,9 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 
 sys.path.insert(0, HERE)
 
+import pending_names as P
+
+
 SYS_PROMPT = """You name the role a phrase plays inside a formula.
 
 Each item is a phrase that was lifted out of a formula into a text slot.  The
@@ -47,10 +50,47 @@ Judge only from the phrase and its context.
 
 Reply with one JSON object and nothing else:
 
-{"answers": [{"n": 1, "answer": "predicate"}]}
+{"answers": [{"n": 1, "answer": "<allowed role>"}]}
 """
 
+OCCURRENCE_SYSTEM = """Classify each marked text occurrence in the complete LaTeX formula
+using its grammatical or mathematical function at this position and the source sentence.
+The markers identify positions and are not part of the formula.
+Answer with JSON only: {"answers":[{"id":"<exact slot id>","answer":"<allowed role>"}]}."""
 
+
+def identity(item):
+    return item.get("anchor") or item.get("sig")
+
+
+def occurrence_prompt(items, allowed, meaning):
+    first = items[0]
+    marked = first["latex"]
+    for it in sorted(items, key=lambda row: row["offset"], reverse=True):
+        pos = it["offset"]
+        marked = marked[:pos] + "[[" + it["id"] + "]]" + marked[pos:]
+    roles = "\n".join(f"- {role}: {meaning.get(role, '')}" for role in allowed)
+    return (f"Allowed roles:\n{roles}\nFormula: {marked}\n"
+            f"Source sentence: {first.get('sentence', '')}\n"
+            + "\n".join(f"{it['id']} = {it['raw']!r}" for it in items))
+
+
+def occurrence_answers(reply, items, allowed):
+    try:
+        doc = P._json_from(reply or "")
+    except ValueError:
+        return {}
+    rows = doc.get("answers") if isinstance(doc, dict) else None
+    if not isinstance(rows, list):
+        return {}
+    ids = {it["id"] for it in items}
+    found = {}
+    for row in rows:
+        if isinstance(row, dict) and isinstance(row.get("id"), str) and row["id"] in ids:
+            ident = row["id"]
+            answer = row.get("answer")
+            found[ident] = answer if ident not in found and answer in allowed else None
+    return {n: found[it["id"]] for n, it in enumerate(items, 1) if found.get(it["id"])}
 
 
 def load_answers(path):
@@ -63,7 +103,7 @@ def load_answers(path):
     items = data.get("items") if isinstance(data, dict) else data
     out = {}
     for it in items or []:
-        ident = it.get("sig")
+        ident = identity(it)
         if ident and it.get("answer"):
             out[ident] = it
     return out
@@ -73,7 +113,7 @@ def merge_items(old, new):
     """Old answers plus new ones; a new answer replaces the old for the same id."""
     by = dict(old)
     for it in new:
-        ident = it.get("sig")
+        ident = identity(it)
         if ident:
             by[ident] = it
     return list(by.values())
@@ -109,7 +149,6 @@ def parse_answers(reply, count, allowed):
     """{index: answer}; anything outside the allowed set is ignored."""
     text = (reply or "").replace("**", "").replace("`", "")
     try:
-        import pending_names as P
         doc = P._json_from(text)
     except Exception:
         doc = None
@@ -179,12 +218,11 @@ def self_test():
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("todo", nargs="?", help="OUT/slot_todo.json")
+    ap.add_argument("todo", nargs="?", help="OUT/slot_questions.json")
     ap.add_argument("-o", "--out", help="answer file (default: next to the todo)")
-    ap.add_argument("--backend", default=os.environ.get("NL_PREP_BACKEND",
-                                                        "api-openai"))
-    ap.add_argument("--batch", type=int, default=15)
-    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--backend", default="")
+    ap.add_argument("--batch", type=P.positive_count, default=15)
+    ap.add_argument("--limit", type=P.positive_count, default=0)
     ap.add_argument("--restart", action="store_true",
                     help="ignore an existing answer file and ask everything again")
     ap.add_argument("--dry-run", action="store_true")
@@ -203,50 +241,62 @@ def main(argv=None):
     out = args.out or os.path.join(os.path.dirname(args.todo) or ".",
                                    "slot_answers.json")
     existing = {} if args.restart else load_answers(out)
+    papers = {it["paper"] for it in pending if it.get("anchor")}
+    existing = {key: row for key, row in existing.items() if row.get("answer") in allowed
+                and (not papers or row.get("paper") in papers)}
     if existing:
         pending = [it for it in pending
-                   if it.get("sig") not in existing]
+                   if identity(it) not in existing]
         print("resuming: %d already answered in %s" % (len(existing), out))
     if not allowed:
         print("the todo file lists no allowed answers: nothing to ask")
         return 2
-    if args.limit:
-        pending = pending[:args.limit]
     if not pending:
-        print("nothing to ask: every phrase already has an answer")
+        print("nothing to ask: every occurrence already has an answer")
         return 0
 
-    print("phrases: %d pending, %d batch, %d allowed answers"
+    print("slots: %d pending, legacy batch %d, %d allowed answers"
           % (len(pending), args.batch, len(allowed)))
+    scoped = bool(pending[0].get("anchor"))
+    if any(bool(it.get("anchor")) != scoped for it in pending):
+        ap.error("mixed occurrence and legacy phrase questions")
+    if scoped:
+        groups = collections.defaultdict(list)
+        for it in pending:
+            groups[(it["paper"], it.get("source_formula", it["formula"]))].append(it)
+        batches = list(groups.values())
+        if args.limit:
+            batches = batches[:args.limit]  # a complete formula is the unit of work
+    else:
+        if args.limit:
+            pending = pending[:args.limit]
+        batches = [pending[i:i + args.batch] for i in range(0, len(pending), args.batch)]
+    prompt_for = occurrence_prompt if scoped else build_prompt
     if args.dry_run:
-        print(build_prompt(pending[:args.batch], allowed, meaning))
+        for batch in batches:
+            print(prompt_for(batch, allowed, meaning))
         return 0
 
-    import pending_names as P
     cfg = P.backend_config(args.backend)
-    if not cfg["key"] and args.backend != "local-openai":
-        print("no API key: set NL_PREP_API_KEY (or --backend local-openai)")
-        return 2
-    print("backend %s (%s) model %s"
-          % (cfg["backend"], cfg["protocol"], cfg["model"]))
-
+    print("backend %s (%s) model %s" % (cfg["backend"], cfg["protocol"], cfg["model"]))
     written = []
     started = time.strftime("%Y-%m-%dT%H:%M:%S")
-    for start in range(0, len(pending), args.batch):
-        batch = pending[start:start + args.batch]
+    for start, batch in enumerate(batches, 1):
         try:
-            reply = P.call_model(cfg, build_prompt(batch, allowed, meaning),
-                                 timeout=180, system=SYS_PROMPT)
+            reply = P.call_model(cfg, prompt_for(batch, allowed, meaning), timeout=180,
+                                 system=OCCURRENCE_SYSTEM if scoped else SYS_PROMPT)
         except Exception as exc:
             print("  batch at %d failed: %s" % (start, exc))
             continue
-        got = parse_answers(reply, len(batch), set(allowed))
+        got = (occurrence_answers(reply, batch, allowed) if scoped else
+               parse_answers(reply, len(batch), set(allowed)))
         if args.show_reply or not got:
             print("  raw reply (%d chars): %r" % (len(reply or ""),
                                                   (reply or "")[:400]))
         for n, answer in sorted(got.items()):
             it = batch[n - 1]
-            written.append({"sig": it["sig"], "answer": answer,
+            written.append({**{k: it[k] for k in ("id", "paper", "anchor", "formula") if k in it},
+                            "sig": it["sig"], "answer": answer,
                             "raw": it.get("raw"), "context": it.get("context"),
                             "source": "model", "model": cfg["model"],
                             "asked_at": started})

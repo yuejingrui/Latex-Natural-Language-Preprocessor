@@ -121,19 +121,18 @@ python3 scripts/split_audit.py --run '/tmp/runs/*' -o out/split-audit-baseline.m
 
 ```sh
 # 5. 先看题目，不花钱
-python3 scripts/ask_boundaries.py $RUN/sentence_todo.json --dry-run
-python3 scripts/ask_slots.py      $RUN/slot_todo.json      --dry-run
+python3 pipeline/scripts/ask_boundaries.py $RUN/sentence_todo.json --dry-run
+python3 pipeline/scripts/ask_slots.py      $RUN/slot_questions.json      --dry-run
 
 # 6. 问模型，答案写到运行目录里
-python3 scripts/ask_boundaries.py $RUN/sentence_todo.json -o $RUN/sentence_answers.json
-python3 scripts/ask_slots.py      $RUN/slot_todo.json      -o $RUN/slot_answers.json
+python3 pipeline/scripts/ask_boundaries.py $RUN/sentence_todo.json -o $RUN/sentence_answers.json
+python3 pipeline/scripts/ask_slots.py      $RUN/slot_questions.json      -o $RUN/slot_answers.json
 
-# 7. 带着答案重跑切分（slot 表先复制一份，免得改到全局表）
-cp data/slot_roles.json $RUN/slot_roles.json
+# 7. 使用本篇的位置答案重跑切分
 python3 scripts/latex2nl.py $RUN/normalized.tex -o $RUN --canonical \
         --issues $RUN/issues_latex2nl.json \
         --merge-sentence-answers $RUN/sentence_answers.json \
-        --merge-slot-answers $RUN/slot_answers.json --slot-table $RUN/slot_roles.json
+        --merge-slot-answers $RUN/slot_answers.json
 ```
 
 ---
@@ -210,6 +209,8 @@ When $\operatorname{dim} Y=1$, Katz proved Simpson's conjecture by describing ..
 | `unresolved.log` | latex2nl | 需要复核的项，一行一条（§4.3） |
 | `sentence_todo.json` | latex2nl | 判不准的句界，题目文件（§7.3） |
 | `slot_todo.json` | latex2nl | 公式里还没有角色的短语，题目文件（§7.3） |
+| `slot_questions.json` | latex2nl | 按位置提交给模型的文字槽，含可选的规则核对 |
+| `rule_reviews.json` | 两个 pipeline 入口 | 规则与模型的独立答案、定位、确认或分歧 |
 | `issues_latex2nl.json` | latex2nl | 切分阶段的账本 |
 | `issues.json` | verify_output | 合并后的账本和 C1–C16 结果（§4.5） |
 
@@ -388,7 +389,7 @@ danmark 的分布：`env` 里 `prose` 856、`proof` 299、`remark` 66、`item` 3
 | `--issues FILE` | 账本 |
 | `--paper-id ID` | 读这篇的名字答案 |
 | `--merge-sentence-answers FILE` | 合并句界答案（§7.7） |
-| `--merge-slot-answers FILE` | 合并短语角色答案，写入 `--slot-table` 指定的表（默认 `data/slot_roles.json`） |
+| `--merge-slot-answers FILE` | 按本篇的文字槽 ID 和位置指纹读取答案 |
 | `--slot-table FILE` | 短语 → 角色表的位置 |
 | `--sentence-todo FILE` / `--slot-todo FILE` | 题目文件写到别处（默认在 `-o` 目录里） |
 | `--proposition-form {bare,holds}` | 命题类占位符写成 `MATH7` 还是 `MATH7 holds` |
@@ -538,10 +539,10 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
 | # | 题目 | 谁出题 | 题目文件 | 谁去问 | 允许的答案 | 默认批量 | 答案文件 | 谁合并 | 本包有吗 |
 |--:|:--|:--|:--|:--|:--|--:|:--|:--|:--|
 | 1 | 句点后面是小写词，这里到底断不断句 | `latex2nl` | `sentence_todo.json` | `pipeline/scripts/ask_boundaries.py` | `split`、`join` | 20 | `sentence_answers.json` | `latex2nl --merge-sentence-answers` | 在 |
-| 2 | 公式里 `\text{…}` 短语的角色 | `latex2nl` | `slot_todo.json` | `pipeline/scripts/ask_slots.py` | `condition`、`proposition`、`predicate`、`predicate_part`、`guard`、`consequent`、`scope`、`connective`、`restriction`、`default`、`label`、`text`、`operator` | 15 | `slot_answers.json` | `latex2nl --merge-slot-answers` | 在 |
-| 3 | 并置构造的读法（`D\cdot o`） | `pipeline/scripts/lexicon.py` | `construction_todo.json` | `pipeline/scripts/ask_lexicon.py` | `multiply`、`apply`、`label`、`index` | 15 | `construction_answers.json` | `lexicon --merge-answers` | 在 |
+| 2 | 公式里 `\text{…}` 短语的角色 | `latex2nl` | `slot_questions.json` | `pipeline/scripts/ask_slots.py` | `condition`、`proposition`、`predicate`、`predicate_part`、`guard`、`consequent`、`scope`、`connective`、`restriction`、`default`、`label`、`text`、`operator` | 每次一条完整公式 | `slot_answers.json` | `latex2nl --merge-slot-answers` | 在 |
+| 3 | 并置构造的读法（`D\cdot o`） | `pipeline/scripts/lexicon.py` | `construction_questions.json` | `pipeline/scripts/ask_lexicon.py` | `multiply`、`apply`、`label`、`index` | 15 | `construction_answers.json` | `lexicon --merge-answers` | 在 |
 | 4 | 没人认识的命令名 | `run_pipeline.sh`（收集 `lexicon`、`normalize-stats`、`unresolved.log` 里的名字） | `names_todo.json` | `pipeline/scripts/pending_names.py --answer-with-model` | 动作：`allow`、`font`、`unwrap`、`ignore`、`expand`、`unknown`；`allow` 时还要给类（13 类） | 20 | 写回 `names_todo.json` 本身 | `pending_names.py --merge` → `data/name_answers.json` | 客户端在；收集器在 `run_pipeline.sh` 里 |
-| 5 | 定义句、假设句里公式的角色 | `pipeline/scripts/roles.py` | `role_todo.json` | `pipeline/scripts/ask_roles.py --answer` | `constraint`、`proposition`、`unsure` | 一次一个块 | 写回 `role_todo.json` 本身 | `roles --merge-answers` | 在 |
+| 5 | 定义句、假设句里公式的角色 | `pipeline/scripts/roles.py` | `role_questions.json` | `pipeline/scripts/ask_roles.py --answer` | `constraint`、`proposition`、`unsure` | 一次一个块 | 写回 `role_questions.json` | `roles --merge-answers` | 在 |
 | 6 | 这篇论文里哪些写法会绊倒规则 | `ask_triage.py` 自己 | — | `ask_triage.py` | 只是建议 | 一篇一次 | `data/paper_watch.json` | 不合并，不改输出 | 否 |
 
 ### 7.3 题目文件的格式
@@ -567,21 +568,17 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
  "count": 1, "default": "split", "answer": null, "sid_before": null, "sid_after": null}
 ```
 
-`slot_todo.json` 的一条（danmark）：
+文字槽按本篇的出现位置出题。例如在一条公式内，两个相同的英文词可以分别编号为 MATH1.t1 和 MATH1.t2。提问器把标记插在原位置，发送完整公式和所在句，要求模型逐个返回 ID 和角色。缺失、重复或非法的 ID 不能替另一处作答。
 
-```json
-{"sig": "-mod", "raw": "-mod", "formula": "MATH1297", "count": 6, "answer": null,
- "context": "appa,\\operatorname{Ran}_{X,S}}<TXT>^{(\\overset{\\circ}{\\check{I}_S"}
-```
-
-- `sig` 是题目的身份：由内容生成，**不依赖编号**，所以重跑、改上游之后同一道题仍能对上；
-- `count` 是这道题在全篇出现的次数，答一次全篇生效；
-- `default` 是没有答案时实际采用的做法；
-- 人也可以直接在 `answer` 里填，再走同样的合并。
+位置答案带有论文、ID 和锚点。合并后只改变该位置的记录。内置词表仍由切分器读取。句界题仍使用其原有的签名和计数。
 
 ### 7.4 后端配置
 
 所有提问脚本共用 `pending_names.py` 里的客户端，只用标准库（`urllib`），不需要装 SDK。
+
+优先使用 `pipeline/model_config.json`。复制 `pipeline/model_config.example.json` 后，填写 `backend`、`base_url`、`model`，并按服务要求设置 `api_key` 或 `api_key_env`。模板使用本机 OpenAI 兼容服务，模型名为 `qwen3.5-9b`。两个入口都接受 `--model-config FILE`；单独使用提问器时可通过 `NL_PREP_MODEL_CONFIG` 指定配置文件。显式指定文件时只读取该文件的服务配置。配置示例及优先级见 [pipeline 使用说明](pipeline/README.md#4-接自己的模型)。
+
+以下是兼容原有部署的环境变量方案。
 
 | 变量 | 默认值 | 说明 |
 |:--|:--|:--|
@@ -601,10 +598,10 @@ python3 scripts/sentences_md.py --run RUN -o RUN/sentences.md
 **已经设置的环境变量总是优先**。建议把 key 写进 `~/.config/nlprep/env` 并 `chmod 600`，
 不要放进 shell 历史或仓库。
 
-**检查配置**（key 打码显示，不发请求）：
+**检查当前选择的后端及密钥配置状态**
 
 ```sh
-python3 scripts/pending_names.py --check-config
+python3 pipeline/scripts/pending_names.py --check-config
 ```
 
 ### 7.5 一次调用是什么样
@@ -613,7 +610,7 @@ python3 scripts/pending_names.py --check-config
 |:--|:--|
 | OpenAI 协议 | `POST {base}/chat/completions`，`Authorization: Bearer <key>`，`response_format: json_object` |
 | Anthropic 协议 | `POST {base}/v1/messages`，`x-api-key`，`anthropic-version: 2023-06-01` |
-| 采样 | `temperature 0`，`max_tokens 4000` |
+| 采样 | 由 JSON 配置决定，模板为 `temperature=0`、`max_tokens=768`；旧式环境变量方案使用 4000 |
 | 超时 | 180 秒 |
 | 消息 | 一条 system（该类题的规则与闭集）+ 一条 user（这一批题目） |
 | 期望的回复 | 只有一个 JSON 对象：`{"answers": [{"n": 1, "answer": "join"}, …]}`（名字题是 `{"answers": [{"name", "action", "class", "body", "note"}]}`） |
@@ -655,10 +652,10 @@ Answer as JSON: {"answers": [{"n": 1, "answer": "join"}, ...]}
 | 答案 | 生效方式 | 注意 |
 |:--|:--|:--|
 | 句界 | `latex2nl.py … --merge-sentence-answers FILE` | `join` 把两半合成一句；用不上的答案（`sig` 已不存在）列在报告的 `answers_unused` 里 |
-| 短语角色 | `latex2nl.py … --merge-slot-answers FILE --slot-table TABLE` | 答案会**写进** `TABLE`；不给 `--slot-table` 时写的是全局 `data/slot_roles.json`。单篇试跑先复制一份表 |
+| 文字槽角色 | `latex2nl.py … --merge-slot-answers FILE` | 按位置读取，内置表只读 |
 | 构造读法 | `lexicon.py … --merge-answers FILE` | 论文自己的声明优先于旧答案 |
 | 名字 | `pending_names.py --merge FILE`，再从 `normalize.py` 重跑 | 写进全局 `data/name_answers.json`；单篇题带 `paper` 字段，只对那篇生效 |
-| 公式角色 | `roles.py … --merge-answers role_todo.json` | 按 `paper` + 公式原文核对 |
+| 公式角色 | `roles.py … --merge-answers role_questions.json` | 按 `paper` + 公式原文核对 |
 
 另外两个默认路径要留意：`ask_boundaries.py` 不给 `-o` 时写到全局 `data/sentence_answers.json`；
 `ask_slots.py`、`ask_lexicon.py` 不给 `-o` 时写在题目文件旁边。
@@ -671,16 +668,19 @@ Answer as JSON: {"answers": [{"n": 1, "answer": "join"}, ...]}
 
 ### 7.8 全链脚本 `pipeline/scripts/run_pipeline.sh` 的问答顺序
 
+两个 pipeline 入口默认调用可用的 TeX 引擎。可用 `--tex-engine xelatex` 选择指定引擎；无引擎时回退到静态分析，依赖章节选择或提前结束文件的稿件保留待处理。输入和输出路径从调用目录解析。论文级答案按原稿路径和各本地输入的 SHA-256 绑定，详见 [pipeline 使用说明](pipeline/README.md)。
+
+
 ```
 normalize → latex2nl → lexicon                       （带上已有答案）
-  ├─ ask_lexicon   construction_todo.json
-  ├─ ask_slots     slot_todo.json
+  ├─ ask_lexicon   construction_questions.json
+  ├─ ask_slots     slot_questions.json
   ├─ ask_boundaries sentence_todo.json
   └─ 有新答案：normalize → latex2nl → lexicon 重跑一遍，让答案生效
 names：收集没人认识的名字 → names_todo.json
   → pending_names --answer-with-model → --merge → 再重跑一遍
   → 仍没解决的名字 → human_todo.json
-roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles --merge-answers
+roles → role_questions.json → ask_roles（没答完的块再问一次）→ roles --merge-answers
   → 模型答 unsure 的 → human_todo.json
 保真门 verify_formulas → 输出检查 verify_output --strict
 状态：失败 → 退出码 1；还有任何题目文件 → 3（有待答题）；否则 0
@@ -715,22 +715,20 @@ roles → role_todo.json → ask_roles（没答完的块再问一次）→ roles
 | 名字 | 0 | 0 |
 | 人工表 | 224 | 10 |
 
-切分层自己出的只有后两类里的句界与短语：平均每篇约 2 道句界题、14 道短语题，一批 15–20 道，
-**一篇通常一两次调用**。大头在下游的构造读法（每篇约 110 道）与公式角色（约 66 道）。
+以上是旧版按短语和构造合并时的统计。当前文字槽按完整公式发请求，并置按出现位置判断；本篇的实际必答数见各待办文件。
 
 ### 7.11 在本包里接模型
 
 `pipeline/scripts/` 里已经带着 `pending_names.py` 和四个 `ask_*.py`，不用另外补文件。先用
-`python3 pipeline/scripts/pending_names.py --check-config` 核对配置（key 打码显示），再用
+`python3 pipeline/scripts/pending_names.py --check-config` 核对配置（仅显示密钥设置状态），再用
 `--dry-run` 看题、不花钱：
 
 ```sh
 python3 pipeline/scripts/ask_boundaries.py OUT/sentence_todo.json --dry-run
-python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
+python3 pipeline/scripts/ask_slots.py      OUT/slot_questions.json      --dry-run
 ```
 
-本包**不含任何厂商端点**：`NL_PREP_API_BASE`（OpenAI 兼容）或 `NL_PREP_ANTHROPIC_BASE` 必须自己设，
-没配就会明确报错停下。
+云端模型需填写服务商的地址、模型名与凭据。`local-openai` 可连接免密本地服务。正式提问前，两个入口都会检查所选后端的配置。
 
 ### 7.12 模型答得准不准，怎么知道
 
@@ -752,8 +750,8 @@ python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
 | `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 绿（带基料夹具时 8） |
 | `tests/probe_audit.py` | 未闭合环境、`\ifcase`、`\end {env}` 等复现 | 31 绿，另有 3 组缺夹具跳过（带全部夹具时 34 / 2） |
 | `tests/probe_review.py` | 句界、图片、重音、脚注、日期和向量记号 | 27 绿 |
-| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 90 个用例，其中 13 个依赖 TeX/pdftotext |
-| `pipeline/tests/test_pipeline.py` | 管线层：夹具离线跑通、两个入口一致 | 2 个用例 |
+| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 91 个用例，其中 13 个依赖 TeX/pdftotext |
+| `pipeline/tests/test_pipeline.py` | 管线层：两个入口、论文身份、角色待办、并置冲突与公式验收 | 10 个用例 |
 
 合计 **11 个切分套件 + 1 个管线模块**（`tests/run_all.py` 串起前 11 个）。
 
@@ -865,7 +863,7 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 | 文件 | 缺了会怎样 |
 |:--|:--|
 | `format_aliases.json` | `normalize.py` 一启动就 `FileNotFoundError` |
-| `slot_roles.json` | `latex2nl.py` 照样运行，但 `\text{…}` 短语全部判成 `unclassified`，自测 7 条失败 |
+| `slot_roles.json` | `latex2nl.py` 仍可按公式结构辨认部分文字，依赖词表的短语进入待办 |
 | `abbreviations.json` | 退回内置的较短缩写表 |
 
 **注意 2：探针验证本包（2026-11-21 起）。** 五个探针现在按脚本自身位置找 `scripts/`

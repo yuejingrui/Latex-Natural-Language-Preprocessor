@@ -40,6 +40,9 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
         _sys.path.insert(0, _p)
 
 
+import rule_reviews
+
+
 CANDIDATE_ACTS = ("definition", "assumption")
 CANDIDATE_ROLES = ("proposition", "constraint")
 ALLOWED = ("constraint", "proposition", "unsure")
@@ -55,12 +58,13 @@ INSTRUCTIONS = (
     "not a constraint ('and put W = ...', 'and set d = ...', 'define H_i = "
     "...', 'we have MATH4').\n"
     "- unsure: the sentence does not settle it.\n"
+    "If the entire sentence says Let followed by an equality between two "
+    "symbols, treat it as an assumption (constraint) unless the text introduces "
+    "a new name or explicitly assigns a definition. An equals sign alone is "
+    "insufficient evidence of a definition.\n"
     "In short: a formula used to *bound* a variable is a constraint, a formula "
     "used to *know what a symbol stands for* is a proposition. Give "
     "'introducer' as the words that decided it, then 'answer'.\n"
-    "A model asked with this wording agreed with the paper's reader on 14 of "
-    "15 scored items, against 8 of 15 for the previous wording -- which said a "
-    "definition should be 'unsure' and was simply wrong."
 )
 
 
@@ -186,6 +190,22 @@ def anchor_window(sentences, index, width=1):
     return [sentences[k] for k in range(lo, hi)]
 
 
+def explicit_role(sentence, formula):
+    """A directly attached quantifier or condition governing a relation."""
+    target = _find(sentence, formula["id"])
+    rel = formula.get("top_relation")
+    if not target or not rel:
+        return None
+    prefix = sentence[:target.start()]
+    m = re.search(r"\b(for (?:each|every|all|any))\s*$", prefix, re.I)
+    if m and rel.get("symbol") in ("∈", r"\in"):
+        return {"name": "quantified_membership", "answer": "constraint", "introducer": m[1]}
+    m = re.search(r"\b(such that|provided that|subject to)\s*$", prefix, re.I)
+    if m:
+        return {"name": "explicit_condition", "answer": "constraint", "introducer": m[1]}
+    return None
+
+
 def build_todo(formulas, sentences, paper=""):
     items = []
     # a sid can repeat when two papers' sentence files are concatenated: the map
@@ -217,6 +237,7 @@ def build_todo(formulas, sentences, paper=""):
             "window": window,
             "formula": shape(f["expanded"]),
             "role_now": f["role"],
+            "rule": explicit_role(sent["text"], f),
             "introducer": None,
             "answer": None,
         })
@@ -318,7 +339,7 @@ def apply_answers(roles, items, only_unset=False, paper="", current=None):
         roles[fid] = {
             "role_now": roles.get(fid, {}).get("role_now") or item.get("role_now"),
             "final": None if answer == "unsure" else answer,
-            "source": item.get("source") or "manual",
+            "source": item.get("source") or item.get("by") or "manual",
             "introducer": item.get("introducer"),
         }
         if current is not None:
@@ -335,7 +356,8 @@ def apply_answers(roles, items, only_unset=False, paper="", current=None):
 
 def _load_formulas(path):
     """The formula list of a formulas.json, whichever shape it was written in."""
-    doc = json.load(open(path, encoding="utf-8"))
+    with open(path, encoding="utf-8") as stream:
+        doc = json.load(stream)
     if isinstance(doc, dict):
         doc = doc.get("formulas") or doc.get("items") or []
     return doc
@@ -368,8 +390,7 @@ def summarise(items, roles, formulas):
     return {
         "candidates": len(items),
         "sentences": len({i["sid"] for i in items}),
-        "answered": sum(1 for r in roles.values() if r.get("final")
-                        or r.get("unsure")),
+        "answered": sum(1 for r in roles.values() if r.get("final")),
         "changed": len(changed),
         "unsure": len(unsure),
         "groups_with_conflicting_answers": inconsistent,
@@ -538,6 +559,8 @@ def _self_test():
     with tempfile.TemporaryDirectory() as td:
         paper_dir = os.path.join(td, "0708.2512")
         os.makedirs(paper_dir)
+        with open(os.path.join(paper_dir, "normalize-stats.json"), "w") as stream:
+            json.dump({"paper_id": PAPER}, stream)
         json.dump([{"id": "MATH5", "expanded": "a=b", "role": "proposition"},
                    {"id": "MATH6", "expanded": "c=d", "role": "proposition"}],
                   open(os.path.join(paper_dir, "formulas.json"), "w"))
@@ -768,6 +791,9 @@ def reanchor(judgements_path: str, run_dir: str, report_path: str = "",
     return 0
 
 
+from paper_metadata import run_paper_id
+
+
 def check_answers(judgements_path, formulas_paths, allow_missing=False):
     """Every stored answer must still name the formula it was written for.
 
@@ -783,7 +809,7 @@ def check_answers(judgements_path, formulas_paths, allow_missing=False):
     items = _load_items(judgements_path)
     tables = {}
     for path in formulas_paths:
-        paper = os.path.basename(os.path.dirname(os.path.abspath(path)))
+        paper = run_paper_id(os.path.dirname(path))
         tables[paper] = {f["id"]: f for f in _load_formulas(path)}
 
     def norm(text):
@@ -849,7 +875,7 @@ def main(argv=None):
                          "against, e.g. --check-answers out/*/formulas.json")
     ap.add_argument("--paper-id", default=None,
                     help="which paper this formula table belongs to; defaults "
-                         "to the name of the directory holding formulas.json. "
+                         "to the paper identity recorded by normalization. "
                          "An answer recorded for another paper is skipped, "
                          "because MATH65 means a different formula there")
     ap.add_argument("--reanchor", action="store_true",
@@ -888,61 +914,30 @@ def main(argv=None):
     base = os.path.dirname(args.formulas) or "."
     out = args.output or os.path.join(base, "roles.json")
     todo_path = args.todo or os.path.join(base, "role_todo.json")
-    paper = args.paper_id if args.paper_id is not None else os.path.basename(
-        os.path.abspath(base))
+    paper = args.paper_id if args.paper_id is not None else run_paper_id(base)
     if not paper:
         ap.error("the paper id is empty: an answer is only valid inside one "
                  "paper, so roles.py has to know which one it is reading")
 
     formulas = _load_formulas(args.formulas)
-    sentences = [json.loads(line) for line in open(args.sentences,
-                                                  encoding="utf-8")]
+    with open(args.sentences, encoding="utf-8") as stream:
+        sentences = [json.loads(line) for line in stream if line.strip()]
     items = build_todo(formulas, sentences, paper=paper)
 
     # the formula at every id, not only at the ids that are candidates: an id
     # that moved onto a non-candidate formula used to skip the comparison
     current = {f["id"]: (f.get("expanded") or "") for f in formulas}
 
-    # the answer library, by (paper, fid): used to verify an entry that an
-    # older roles.json carries without the text it was checked against
-    lib = {}
-    if args.judgements and not os.path.exists(args.judgements):
-        ap.error("--judgements %s does not exist" % args.judgements)
-    if not args.no_judgements:
-        try:
-            for item in _load_items(args.judgements or _default_judgements()):
-                if item.get("paper") and item.get("formula"):
-                    lib[(item["paper"], item["fid"])] = item["formula"]
-        except OSError:
-            lib = {}
-
+    anchors = {item["fid"]: {k: item[k] for k in ("sid", "unit", "sentence", "window", "formula")}
+               for item in items}
     roles = {}
-    dropped = []
     if os.path.exists(out):
-        old = json.load(open(out, encoding="utf-8"))
-        for k, v in (old.get("roles") or {}).items():
-            if not (v.get("final") or v.get("unsure")):
-                continue
-            was = re.sub(r"\s+", " ", (v.get("formula") or "")).strip()
-            now = re.sub(r"\s+", " ", (current.get(k) or "")).strip()
-            if was and now and was != now:
-                dropped.append(k)
-                continue
-            if not was:
-                # the entry does not say what it was checked against.  Trusting
-                # it kept a stale reading and stopped the question being asked
-                store = re.sub(r"\s+", " ",
-                               lib.get((paper, k)) or "").strip()
-                if not store or store != now:
-                    dropped.append(k)
-                    continue
-                v = dict(v)
-                v["formula"] = now
-            roles[k] = dict(v)
-        if dropped:
-            print("dropped %d entries carried over from an older roles.json "
-                  "(the formula at that id changed, or was never checked)"
-                  % len(dropped))
+        with open(out, encoding="utf-8") as fh:
+            previous = json.load(fh)
+        if previous.get("paper") == paper:
+            for fid, rec in previous.get("roles", {}).items():
+                if fid in anchors and rec.get("anchor") == anchors[fid]:
+                    roles[fid] = rec
 
     # formula ids are paper-specific (MATH65 is a different formula in another
     # paper), so answers must not leak across papers
@@ -967,28 +962,83 @@ def main(argv=None):
             print("rejected %r in judgements: %r is not one of %s"
                   % (fid, answer, ALLOWED))
 
-    if args.merge_answers:
-        applied, skipped, rejected, stale = apply_answers(
-            roles, _load_items(args.merge_answers), paper=paper,
-            current=current)
-        if stale:
-            print("stale answers skipped : %d" % len(stale))
-        for fid, answer in rejected:
-            print("rejected %r: %r is not one of %s" % (fid, answer, ALLOWED))
-        print("answers applied       : %d (skipped %d, rejected %d)"
-              % (applied, skipped, len(rejected)))
+    # The queue doubles as the editable answer sheet. Read it before rebuilding
+    # it, including on an offline rerun. An old positional id alone is insufficient.
+    saved = {}
+    question_path = os.path.join(base, "role_questions.json")
+    # A stopped run may have written model answers but not yet merged them.
+    for sheet in dict.fromkeys((question_path, todo_path)):
+        if not os.path.isfile(sheet):
+            continue
+        matched = []
+        for row in _load_items(sheet):
+            fid = row.get("fid")
+            if (row.get("paper") == paper and fid in anchors and
+                    all(row.get(k) == v for k, v in anchors[fid].items())):
+                matched.append(row)
+                if row.get("asked"):
+                    saved[fid] = max(saved.get(fid, 0), row["asked"])
+        apply_answers(roles, matched, paper=paper, current=current)
+    if args.merge_answers and os.path.abspath(args.merge_answers) not in (
+            os.path.abspath(todo_path), os.path.abspath(question_path)):
+        entries = [row for row in _load_items(args.merge_answers)
+                   if row.get("fid") in anchors and
+                   all(k not in row or row[k] == v for k, v in anchors[row["fid"]].items())]
+        apply_answers(roles, entries, paper=paper, current=current)
+        for row in entries:
+            if row.get("paper") == paper and row.get("asked"):
+                saved[row["fid"]] = max(saved.get(row["fid"], 0), row["asked"])
+
+    for item in items:
+        rule = item["rule"]
+        fid = item["fid"]
+        if not rule:
+            # An earlier version's rule (or a rule since removed) is not an answer.
+            if roles.get(fid, {}).get("source") == "rule":
+                roles.pop(fid)
+            continue
+        old = roles.get(fid, {})
+        rec = {"role_now": item["role_now"], "final": rule["answer"], "source": "rule",
+               "rule": rule["name"], "introducer": rule["introducer"], "formula": current[fid]}
+        review = old.get("model_review")
+        if rule_reviews.from_model(old.get("source")):
+            rec["model_review"] = rule_reviews.compare(rule["name"], rule["answer"],
+                old.get("final") or "unsure", old["source"])
+        elif review:
+            rec["model_review"] = rule_reviews.compare(rule["name"], rule["answer"],
+                review["model_answer"], review["model"])
+        roles[fid] = rec
+    roles = {fid: dict(rec, anchor=anchors[fid]) for fid, rec in roles.items() if fid in anchors}
 
     summary, changed, unsure = summarise(items, roles, formulas)
-    payload = {"summary": summary, "allowed_answers": list(ALLOWED),
+    payload = {"paper": paper, "summary": summary, "allowed_answers": list(ALLOWED),
                "roles": roles}
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
-    pending = [i for i in items if not (roles.get(i["fid"]) or {}).get("final")
-               and not (roles.get(i["fid"]) or {}).get("unsure")]
-    export_todo(pending, todo_path) if pending else None
-    if not pending and os.path.exists(todo_path):
+    pending = []
+    questions = []
+    for item in items:
+        fid = item["fid"]
+        role = roles.get(fid, {})
+        if role.get("final"):
+            if item["rule"] and not role.get("model_review"):
+                questions.append(item)
+            continue
+        if role.get("unsure"):
+            item.update(answer="unsure", introducer=role.get("introducer"), source=role["source"])
+        if saved.get(fid):
+            item["asked"] = saved[fid]
+        pending.append(item)
+        questions.append(item)
+    if questions:
+        export_todo(questions, question_path)
+    elif os.path.exists(question_path):
+        os.remove(question_path)
+    if pending:
+        export_todo(pending, todo_path)
+    elif os.path.exists(todo_path):
         os.remove(todo_path)
 
     print("candidates            : %d formulas in %d sentences"

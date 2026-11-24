@@ -69,6 +69,7 @@ import preserved
 import conditionals
 import format_names
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -231,6 +232,41 @@ def local_styles(root_path: str, text: str) -> List[str]:
             if os.path.isfile(path) and path not in out:
                 out.append(path)
     return out
+
+
+def read_style_sources(paths, sources):
+    styles = {}
+    queue = [(os.path.splitext(os.path.basename(path))[0], path) for path in paths]
+    seen = set()
+    while queue:
+        name, path = queue.pop(0)
+        if name in styles or not os.path.isfile(path):
+            continue
+        sty = read_source(path, sources=sources)
+        styles[name] = sty
+        path = os.path.abspath(path)
+        if path in seen:
+            continue
+        seen.add(path)
+        for package in L.USE_PACKAGE_RE.finditer(sty):
+            for dep in package[1].split(','):
+                dep = dep.strip()
+                queue.append((dep, os.path.join(os.path.dirname(path), dep + '.sty')))
+    return styles
+
+
+def paper_identity(main, sources, dependencies):
+    """Bind answers to a specific entry file and the version of its local inputs."""
+    main = os.path.realpath(main)
+    base = os.path.dirname(main)
+    files = dict(dependencies)
+    for path in sources:
+        relative = os.path.relpath(path, base).replace(os.sep, "/")
+        if relative not in files:
+            with open(path, "rb") as fh:
+                files[relative] = hashlib.sha256(fh.read()).hexdigest()
+    key = json.dumps([os.path.normcase(main), files], sort_keys=True, ensure_ascii=False)
+    return "sha256-" + hashlib.sha256(key.encode("utf-8")).hexdigest(), files
 
 
 def augment_macros(macros, text: str) -> None:
@@ -688,7 +724,7 @@ class Normalizer:
         self.dimension_names: set = set()
 
     # -- entry ----------------------------------------------------------
-    def normalize(self, tex: str, style_paths: List[str] = ()) -> str:
+    def normalize(self, tex: str, style_paths: List[str] = (), *, loaded_styles=None) -> str:
         """Normalise, then feed the result back until it stops changing.
 
         Each rewrite can expose work for a later one (a macro expands to an
@@ -698,7 +734,7 @@ class Normalizer:
         guarantee local instead of leaving it to every caller.  ``self.stats``
         describes the first pass; ``extra_rounds`` says how many more it took.
         """
-        out = self._run(tex, style_paths)
+        out = self._run(tex, self.read_styles(style_paths) if loaded_styles is None else loaded_styles)
         for _ in range(4):
             # the same name table: re-reading the data files per round would let
             # a round disagree with the one before it about the same command
@@ -715,7 +751,7 @@ class Normalizer:
                 self.stats["not_converged"] = 1
         return preserved.locate(out, self.sources)
 
-    def _run(self, tex: str, style_paths: List[str] = ()) -> str:
+    def _run(self, tex: str, styles=None) -> str:
         tex, capsules = preserved.mask(tex)
         tex = L.strip_comments(tex)
         macros = L.MacroTable()
@@ -728,7 +764,7 @@ class Normalizer:
         # unknown container.  These are the largest class of unknown
         # environment in the corpus (rmk alone: 89 papers, 850 uses).
         self.theorem_envs = read_theorem_decls(tex)
-        styles = self.read_styles(style_paths)
+        styles = styles or {}
         for sty in styles.values():
             macros.parse(sty)
             augment_macros(macros, sty)
@@ -942,24 +978,7 @@ class Normalizer:
         return name in RULE_NAMES
 
     def read_styles(self, paths):
-        styles = {}
-        queue = [(os.path.splitext(os.path.basename(path))[0], path) for path in paths]
-        seen = set()
-        while queue:
-            name, path = queue.pop(0)
-            if name in styles or not os.path.isfile(path):
-                continue
-            sty = read_source(path, sources=self.sources)
-            styles[name] = sty
-            path = os.path.abspath(path)
-            if path in seen:
-                continue
-            seen.add(path)
-            for package in L.USE_PACKAGE_RE.finditer(sty):
-                for dep in package[1].split(','):
-                    dep = dep.strip()
-                    queue.append((dep, os.path.join(os.path.dirname(path), dep + '.sty')))
-        return styles
+        return read_style_sources(paths, self.sources)
 
     def execute_document(self, preamble, body, macros, styles, source):
         """Execute ordinary definitions at their call sites; leave specialist
@@ -3183,7 +3202,9 @@ def main(argv: List[str] = None) -> int:
                     help="write the ledger of let-throughs here")
     ap.add_argument("--check", action="store_true",
                     help="assert fixed point and closed vocabulary")
-    ap.add_argument("--paper-id",
+    ids = ap.add_mutually_exclusive_group()
+    ids.add_argument("--hash-paper", action="store_true", help="identify this entry and its local inputs by SHA-256")
+    ids.add_argument("--paper-id",
                     help="select the per-paper answers in data/name_answers.json"
                          " (a paper may give its own meaning to a name)")
     ap.add_argument("--switch", type=conditionals.switch_option, action="append", default=[],
@@ -3195,7 +3216,8 @@ def main(argv: List[str] = None) -> int:
         return self_test()
     if not args.tex:
         ap.error("give a .tex file or --self-test")
-    n = Normalizer(paper=args.paper_id or "", switches=dict(args.switch))
+    sources = {}
+    dependencies = {}
 
     if args.out and not args.tex_engine:
         tex_execution.clear_report(os.path.dirname(args.out))
@@ -3203,17 +3225,38 @@ def main(argv: List[str] = None) -> int:
         if not args.out or args.no_inputs or args.style or args.switch:
             ap.error("--tex-engine requires -o and uses the project's own inputs, styles and switches")
         report_path = os.path.join(os.path.dirname(args.out), 'execution.json')
-        tex = tex_execution.observe(args.tex, args.tex_engine, report_path, n.sources)
+        tex = tex_execution.observe(args.tex, args.tex_engine, report_path, sources)
+        if args.hash_paper:
+            with open(report_path, encoding="utf-8") as fh:
+                dependencies = json.load(fh).get("local_dependency_sha256", {})
     elif args.no_inputs:
         with open(args.tex, encoding="utf-8", errors="replace") as fh:
             tex = fh.read()
-        n.sources[os.path.abspath(args.tex)] = tex
+        sources[os.path.abspath(args.tex)] = tex
     else:
-        tex = read_source(args.tex, sources=n.sources)
+        tex = read_source(args.tex, sources=sources)
     styles = list(args.style)
     if not args.no_inputs:
         styles += local_styles(args.tex, tex)
-    out = n.normalize(tex, styles)
+    loaded_styles = read_style_sources(styles, sources)
+    if args.hash_paper and not args.tex_engine:
+        classes = [os.path.join(os.path.dirname(args.tex), name + ".cls")
+                   for name in re.findall(r"\\documentclass\s*(?:\[[^\]]*\]\s*)?\{([^}]+)\}", L.lexical_view(tex))]
+        read_style_sources(classes, sources)
+    paper = args.paper_id or ""
+    if args.hash_paper:
+        paper, dependencies = paper_identity(args.tex, sources, dependencies)
+        if not args.tex_engine and any(
+                re.search(r"\\includeonly(?![A-Za-z@])|\\endinput(?![A-Za-z@])[^\n]*\n\s*\S",
+                          L.lexical_view(raw))
+                for path, raw in sources.items() if path.lower().endswith(".tex")):
+            main = os.path.abspath(args.tex)
+            tex = preserved.pack("tex_execution", sources[main], status="pending",
+                                 reason="file selection requires a TeX engine", file=main,
+                                 input_sources={p: raw for p, raw in sources.items() if p != main})
+    n = Normalizer(paper=paper, switches=dict(args.switch))
+    n.sources = sources
+    out = n.normalize(tex, loaded_styles=loaded_styles)
     vocab = n.vocabulary(out)
     # Whole-document name inventory is informational. Only names outside known
     # mathematical boundaries can prevent text/formula splitting.
@@ -3227,6 +3270,7 @@ def main(argv: List[str] = None) -> int:
     report = {
         "kept_macros": dict(n.kept_macros),
         "input": args.tex,
+        "paper_id": paper,
         "input_chars": len(tex),
         "output_chars": len(out),
         "stats": dict(sorted(n.stats.items())),
@@ -3238,6 +3282,8 @@ def main(argv: List[str] = None) -> int:
         "labels_unrendered": {"%s %s" % k: v
                               for k, v in n.unrendered.most_common()},
     }
+    if args.hash_paper:
+        report["source_sha256"] = dependencies
     if args.check:
         again = Normalizer(n.names).normalize(out)
         report["idempotent"] = again == out

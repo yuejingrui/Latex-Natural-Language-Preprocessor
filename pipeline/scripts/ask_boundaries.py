@@ -48,6 +48,9 @@ sys.path.insert(0, HERE)
 
 BOUNDARY_ANSWERS = ("join", "split")
 
+import pending_names as P
+
+
 SYS_PROMPT = """You decide where a sentence ends in mathematics papers.
 
 Each item is one full stop that a splitter treated as a sentence boundary, with
@@ -97,7 +100,6 @@ def parse_answers(reply, count):
     found = {}
     order = []
     try:
-        import pending_names as P
         doc = P._json_from(text)
     except Exception:
         doc = None
@@ -226,10 +228,9 @@ def main(argv=None):
                     default=os.path.join(DATA, "sentence_answers.json"),
                     help="where the answers are written (default: "
                          "pipeline/data/sentence_answers.json)")
-    ap.add_argument("--backend", default=os.environ.get("NL_PREP_BACKEND",
-                                                        "api-openai"))
-    ap.add_argument("--batch", type=int, default=20)
-    ap.add_argument("--limit", type=int, default=0,
+    ap.add_argument("--backend", default="")
+    ap.add_argument("--batch", type=P.positive_count, default=20)
+    ap.add_argument("--limit", type=P.positive_count, default=0,
                     help="ask at most this many items")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the prompts, call nothing")
@@ -257,11 +258,7 @@ def main(argv=None):
         print(build_prompt(pending[:args.batch]))
         return 0
 
-    import pending_names as P
     cfg = P.backend_config(args.backend)
-    if not cfg["key"] and args.backend != "local-openai":
-        print("no API key: set NL_PREP_API_KEY (or use --backend local-openai)")
-        return 2
     print("backend %s (%s) model %s"
           % (cfg["backend"], cfg["protocol"], cfg["model"]))
 

@@ -39,10 +39,11 @@ def reset() -> None:
 
 def add(reason: str, detail: str, source: str = "", kind: str = "") -> dict:
     """One entry; the same (reason, detail) pair is recorded once."""
+    detail = detail[:200]
     for it in _ITEMS:
         if it["reason"] == reason and it["detail"] == detail:
             return it
-    item = {"reason": reason, "detail": detail[:200], "source": source,
+    item = {"reason": reason, "detail": detail, "source": source,
             "kind": kind, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
     _ITEMS.append(item)
     return item
@@ -89,46 +90,49 @@ def merge_into(path: str) -> int:
             added += 1
     return added
 
-#: a name the model answered "unknown", or left without a decision
-def from_names(names_todo: str, out_path: str) -> int:
+def refresh(path, source):
+    previous = load(path)
+    reset()
+    _ITEMS.extend(it for it in previous.values() if it.get("source") != source)
+    return set(previous)
+
+
+def finish_refresh(path, previous):
+    if _ITEMS:
+        write(path)
+    elif os.path.isfile(path):
+        os.remove(path)
+    return len({(it["reason"], it["detail"]) for it in _ITEMS} - previous)
+
+
+def read_current(path):
     try:
-        doc = json.load(open(names_todo, encoding="utf-8"))
-    except (OSError, ValueError):
-        return 0
-    merge_into(out_path)
-    added = 0
+        with open(path, encoding="utf-8") as stream:
+            return json.load(stream)
+    except FileNotFoundError:
+        return {}
+
+
+def from_names(names_todo: str, out_path: str) -> int:
+    doc = read_current(names_todo)
+    previous = refresh(out_path, "names_todo")
     for it in doc.get("items") or []:
         action = it.get("action")
         if action in (None, "", "unknown"):
-            before = len(_ITEMS)
-            add("name_undecided", "\\" + str(it.get("name")),
+            add("name_undecided", "\\\\" + str(it.get("name")),
                 source="names_todo", kind="name")
-            added += len(_ITEMS) - before
-    write(out_path)
-    return added
+    return finish_refresh(out_path, previous)
 
 
-#: a role the model called unsure, or refused twice
 def from_roles(role_todo: str, out_path: str) -> int:
-    try:
-        doc = json.load(open(role_todo, encoding="utf-8"))
-    except (OSError, ValueError):
-        return 0
-    merge_into(out_path)
-    added = 0
+    doc = read_current(role_todo)
+    previous = refresh(out_path, "role_todo")
     for it in doc.get("items") or []:
-        fid = it.get("fid")
         if it.get("answer") == "unsure":
-            before = len(_ITEMS)
-            add("role_unsure", fid, source="role_todo", kind="role")
-            added += len(_ITEMS) - before
+            add("role_unsure", it["fid"], source="role_todo", kind="role")
         elif not it.get("answer") and int(it.get("asked") or 0) >= 2:
-            before = len(_ITEMS)
-            add("model_refused", fid, source="role_todo", kind="role")
-            added += len(_ITEMS) - before
-    write(out_path)
-    return added
-
+            add("model_refused", it["fid"], source="role_todo", kind="role")
+    return finish_refresh(out_path, previous)
 
 
 #: kinds from a ledger that need a person: a strategy is undecided, or the
@@ -144,23 +148,24 @@ ERROR_KINDS = {
 
 
 def from_issues(issues_path: str, out_path: str) -> int:
-    try:
-        doc = json.load(open(issues_path, encoding="utf-8"))
-    except (OSError, ValueError):
-        return 0
-    merge_into(out_path)
-    added = 0
+    doc = read_current(issues_path)
+    previous = refresh(out_path, "issues.json")
+    blocks = read_current(os.path.join(os.path.dirname(issues_path), "content_blocks.json"))
+    if isinstance(blocks, dict):
+        blocks = blocks.get("content_blocks", [])
+    for block in blocks:
+        reason = block.get("reason", "")
+        if (block.get("kind") == "tex_execution" and block.get("status") == "pending"
+                and "not found" in reason.lower()):
+            add("source_error", reason, source="issues.json", kind="human:source_error")
     for e in doc.get("entries") or []:
         kind = e.get("kind") or ""
         spec = STRATEGY_KINDS.get(kind) or ERROR_KINDS.get(kind)
         if not spec:
             continue
-        before = len(_ITEMS)
         add(spec[0], "%s: %s" % (kind, e.get("where") or e.get("site") or ""),
             source="issues.json", kind=kind)
-        added += len(_ITEMS) - before
-    write(out_path)
-    return added
+    return finish_refresh(out_path, previous)
 
 
 def _cli_from_issues(todo, out):

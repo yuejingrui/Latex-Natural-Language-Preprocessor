@@ -101,6 +101,18 @@ class SplitContractTests(unittest.TestCase):
         result['formulas'][0]['expanded'] = 'x>y'
         self.assertEqual(self.verify(norm, result)[0], 1)
 
+    def test_fidelity_of_formula_body_and_slots(self):
+        import verify_output
+        for raw, variants in [("x+2y", ["x-2y", "z+2y", "y+2x", "x+22+2y", "x+y"]),
+                              (r"x+\text{if some}y", ["z+<TXT1>y", "x+<TXT2>y"])]:
+            _, result = self.convert("We have $" + raw + "$.")
+            rec = result["formulas"][0]
+            self.assertIsNone(verify_output.formula_error(rec))
+            for expanded in variants:
+                with self.subTest(raw=raw, expanded=expanded):
+                    self.assertIsNotNone(verify_output.formula_error(dict(rec, expanded=expanded)))
+            self.assertIsNotNone(verify_output.formula_error(dict(rec, flags=["diagram"])))
+
     def test_metadata_ends_before_grouped_formula(self):
         body = r'First. \setcounter{section}{2}{Keep $x$.} \noindent{Keep $y$.}'
         for canonical in (False, True):

@@ -37,6 +37,9 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 
 sys.path.insert(0, HERE)
 
+import pending_names as P
+
+
 SYS_PROMPT = """You decide how a product written without an operator sign is meant.
 
 Each item is a piece of LaTeX in which two things sit next to each other.  Decide
@@ -57,18 +60,29 @@ Reply with one JSON object and nothing else:
 
 
 
-def load_answers(path):
+def load_answers(path, scope):
     """Answers already in the file, by {id}; a missing file is an empty set."""
     try:
         with open(path, encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, ValueError):
         return {}
+    from lexicon import answer_digest, scope_matches
+    owner = (data.get("meta") or {}) if isinstance(data, dict) else {}
+    if not owner.get("source_file"):
+        lexicon_path = os.path.join(os.path.dirname(path), "paper_lexicon.json")
+        if os.path.isfile(lexicon_path):
+            with open(lexicon_path, encoding="utf-8") as fh:
+                binding = json.load(fh).get("local_answer_scope") or {}
+            if binding.get("sha256") == answer_digest(path):
+                owner = {**binding, **{k: v for k, v in owner.items() if v}}
+    if not scope_matches(owner, scope):
+        return {}
     items = data.get("items") if isinstance(data, dict) else data
     out = {}
     for it in items or []:
         ident = it.get("key")
-        if ident and it.get("answer"):
+        if ident and it.get("answer") and scope_matches(it, scope):
             out[ident] = it
     return out
 
@@ -83,11 +97,11 @@ def merge_items(old, new):
     return list(by.values())
 
 
-def save_answers(path, items):
+def save_answers(path, items, scope):
     """Write atomically, so a killed run leaves the previous file intact."""
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump({"items": items}, fh, ensure_ascii=False, indent=2)
+        json.dump({"meta": scope, "items": items}, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     os.replace(tmp, path)
 
@@ -96,8 +110,16 @@ def build_prompt(items, allowed):
     lines = ["Allowed answers: " + ", ".join(allowed), ""]
     for n, it in enumerate(items, 1):
         lines.append("%d. %s" % (n, it.get("question")))
+        if it.get("conflict"):
+            lines.append("   Conflicting readings for the same occurrence: %s" % it["conflict"])
         for ex in (it.get("examples") or [])[:2]:
-            lines.append("   e.g. %s: %s" % (ex.get("id"), ex.get("formula")))
+            formula = ex.get("formula") or ""
+            if "offset" in ex:
+                pos = ex["offset"]
+                formula = formula[:pos] + "[[target]]" + formula[pos:]
+            lines.append("   e.g. %s: %s" % (ex.get("id"), formula))
+            if ex.get("sentence"):
+                lines.append("   sentence: " + ex["sentence"])
         lines.append("")
     lines.append('Answer with one JSON object: {"answers": [{"n": 1, "answer":'
                  ' "..."}]}')
@@ -109,7 +131,6 @@ def parse_answers(reply, count, allowed):
     text = (reply or "").replace("**", "").replace("`", "")
     numbers = lambda s: re.sub(r"\s+", "", s).lower()
     try:
-        import pending_names as P
         doc = P._json_from(text)
     except Exception:
         doc = None
@@ -147,7 +168,9 @@ def load_todo(path):
     allowed = (doc.get("allowed_readings") if isinstance(doc, dict) else None) \
         or ["multiply", "apply", "label", "index"]
     pending = [it for it in items or [] if it.get("key") and not it.get("answer")]
-    return pending, allowed
+    meta = (doc.get("meta") or {}) if isinstance(doc, dict) else {}
+    scope = {k: meta[k] for k in ("paper", "source_file") if meta.get(k)}
+    return pending, allowed, scope
 
 
 def self_test():
@@ -186,10 +209,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("todo", nargs="?", help="OUT/construction_todo.json")
     ap.add_argument("-o", "--out", help="answer file (default: next to the todo)")
-    ap.add_argument("--backend", default=os.environ.get("NL_PREP_BACKEND",
-                                                        "api-openai"))
-    ap.add_argument("--batch", type=int, default=15)
-    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--backend", default="")
+    ap.add_argument("--batch", type=P.positive_count, default=15)
+    ap.add_argument("--limit", type=P.positive_count, default=0)
     ap.add_argument("--restart", action="store_true",
                     help="ignore an existing answer file and ask everything again")
     ap.add_argument("--dry-run", action="store_true")
@@ -202,15 +224,17 @@ def main(argv=None):
     if not args.todo:
         ap.error("a construction_todo.json is required (or --self-test)")
 
-    pending, allowed = load_todo(args.todo)
+    pending, allowed, scope = load_todo(args.todo)
 
 
     out = args.out or os.path.join(os.path.dirname(args.todo) or ".",
                                    "construction_answers.json")
-    existing = {} if args.restart else load_answers(out)
+    existing = {} if args.restart else load_answers(out, scope)
+    existing = {key: row for key, row in existing.items() if row.get("answer") in allowed}
     if existing:
         pending = [it for it in pending
-                   if it.get("key") not in existing]
+                   if it.get("conflict") or it.get("key") not in existing
+                   or existing[it["key"]].get("anchor") != it.get("anchor")]
         print("resuming: %d already answered in %s" % (len(existing), out))
     if args.limit:
         pending = pending[:args.limit]
@@ -224,11 +248,7 @@ def main(argv=None):
         print(build_prompt(pending[:args.batch], allowed))
         return 0
 
-    import pending_names as P
     cfg = P.backend_config(args.backend)
-    if not cfg["key"] and args.backend != "local-openai":
-        print("no API key: set NL_PREP_API_KEY (or --backend local-openai)")
-        return 2
     print("backend %s (%s) model %s"
           % (cfg["backend"], cfg["protocol"], cfg["model"]))
 
@@ -248,14 +268,14 @@ def main(argv=None):
                                                   (reply or "")[:400]))
         for n, answer in sorted(got.items()):
             it = batch[n - 1]
-            written.append({"key": it["key"], "answer": answer,
+            written.append({"key": it["key"], "anchor": it.get("anchor"), "answer": answer,
                             "source": "model", "model": cfg["model"],
                             "asked_at": started,
                             "note": "default was %s"
                                     % it.get("default_if_unanswered")})
         print("  batch at %d: %d of %d answered" % (start, len(got), len(batch)))
         if written:
-            save_answers(out, merge_items(existing, written))
+            save_answers(out, merge_items(existing, written), scope)
 
     if written:
         print("written %d answers to %s (file holds %d)"

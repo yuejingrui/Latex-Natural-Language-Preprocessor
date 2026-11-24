@@ -44,6 +44,9 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
+from pathlib import Path
+from urllib.parse import urlsplit
 import multiprocessing as mp
 import os
 import re
@@ -167,42 +170,75 @@ def _setting(name: str, default: str = "") -> str:
     return (_env_file_values().get(name) or "").strip() or default
 
 
-def backend_config(name: str = "") -> dict:
-    """Read one backend's settings from the environment.
+def positive_count(text):
+    if not re.fullmatch(r"[0-9]+", text) or not 1 <= int(text) <= 2147483647:
+        raise argparse.ArgumentTypeError("expected an integer from 1 to 2147483647")
+    return int(text)
 
-    ``NL_PREP_BACKEND`` picks which, so the same code runs against the hosted
-    API or a local server without a flag: set the variables and go.
-    """
-    name = name or _setting("NL_PREP_BACKEND") or DEFAULT_BACKEND
+
+def backend_config(name=""):
+    explicit = os.environ.get("NL_PREP_MODEL_CONFIG")
+    path = Path(explicit).expanduser() if explicit else Path(HERE).parent / "model_config.json"
+    if explicit or (path.is_file() and not (name or os.environ.get("NL_PREP_BACKEND"))):
+        try:
+            with path.open(encoding="utf-8-sig") as fh:
+                settings = json.load(fh)
+        except (OSError, ValueError):
+            raise ValueError(f"cannot read model configuration at {path}") from None
+        if not isinstance(settings, dict):
+            raise ValueError("model configuration must be a JSON object")
+        unknown = settings.keys() - {"backend", "base_url", "model", "api_key", "api_key_env",
+                                     "max_tokens", "temperature", "timeout"}
+        if unknown:
+            raise ValueError("unrecognized model configuration field(s): " + ", ".join(sorted(unknown)))
+        def string(field):
+            value = settings.get(field, "")
+            if not isinstance(value, str):
+                raise ValueError(f"{field} must be a string")
+            return value.strip()
+        backend = string("backend")
+        if name and name != backend:
+            raise ValueError("--backend conflicts with the selected model configuration")
+        name = backend
+        base = string("base_url")
+        model = string("model")
+        key_var = string("api_key_env")
+        key = string("api_key")
+        if key_var:
+            if key:
+                raise ValueError("choose one of api_key and api_key_env")
+            key = os.environ.get(key_var, "").strip()
+    else:
+        settings = {}
+        name = name or _setting("NL_PREP_BACKEND") or DEFAULT_BACKEND
+        if name not in BACKENDS:
+            raise ValueError("unsupported backend")
+        base_var, key_var, model_var, _ = BACKENDS[name]
+        local = name == "local-openai"
+        base = _setting(base_var, "http://127.0.0.1:11434/v1" if local else "")
+        model = _setting(model_var, "qwen3:8b" if local else "qwen3.7-flash")
+        key = _setting(key_var)
     if name not in BACKENDS:
-        raise SystemExit("unknown backend %r; one of %s"
-                         % (name, ", ".join(BACKENDS)))
-    base_var, key_var, model_var, protocol = BACKENDS[name]
-    base = _setting(base_var).rstrip("/")
-    if not base and name == "api-openai":
-        base = os.environ.get("NL_PREP_API_BASE", "").strip()
-    if not base and name == "api-anthropic":
-        base = os.environ.get("NL_PREP_ANTHROPIC_BASE", "").strip()
-
-    if not base and name == "local-openai":
-        base = "http://127.0.0.1:11434/v1"
-    if not base:
-        raise SystemExit("no endpoint configured: set NL_PREP_API_BASE "
-                         "(OpenAI-compatible) or NL_PREP_ANTHROPIC_BASE, for example\n"
-                         "  export NL_PREP_API_BASE=https://your-host/v1")
-    model = _setting(model_var)
+        raise ValueError("backend must be one of " + ", ".join(BACKENDS))
+    url = urlsplit(base)
+    if (url.scheme not in ("http", "https") or not url.hostname or url.username is not None
+            or url.password is not None or url.query or url.fragment):
+        raise ValueError("base_url must be an HTTP(S) service address without embedded credentials")
     if not model:
-        model = "qwen3.7-flash" if name.startswith("api") else "qwen3:8b"
-    return {
-        "backend": name,
-        "protocol": protocol,
-        "base": base,
-        "key": _setting(key_var),
-        "model": model,
-        "key_var": key_var,
-        "base_var": base_var,
-        "model_var": model_var,
-    }
+        raise ValueError("model must be specified")
+    if name != "local-openai" and not key:
+        raise ValueError("the selected hosted backend requires an API key")
+    tokens = settings.get("max_tokens", 4000)
+    timeout = settings.get("timeout", 180)
+    temperature = settings.get("temperature", 0)
+    if type(tokens) is not int or tokens <= 0 or type(timeout) is not int or timeout <= 0:
+        raise ValueError("max_tokens and timeout must be positive integers")
+    if type(temperature) not in (int, float) or not math.isfinite(temperature) or not 0 <= temperature <= 2:
+        raise ValueError("temperature must be between 0 and 2")
+    if name == "api-anthropic" and temperature > 1:
+        raise ValueError("Anthropic temperature must be at most 1")
+    return dict(backend=name, protocol=BACKENDS[name][3], base=base.rstrip("/"), key=key,
+                model=model, max_tokens=tokens, temperature=temperature, timeout=timeout)
 
 
 def _opener():
@@ -247,11 +283,14 @@ def call_model(cfg: dict, user: str, timeout: int = 180,
     ``system`` lets another question kind reuse the same backend: the boundary
     asker sends its own instructions instead of the name-classification ones.
     """
+    timeout = cfg.get("timeout", timeout)
+    tokens = cfg.get("max_tokens", 4000)
+    temperature = cfg.get("temperature", 0)
     if cfg["protocol"] == "anthropic":
         url = cfg["base"] + "/v1/messages"
         headers = {"x-api-key": cfg["key"], "anthropic-version": "2023-06-01"}
-        payload = {"model": cfg["model"], "max_tokens": 4000,
-                   "temperature": 0, "system": system,
+        payload = {"model": cfg["model"], "max_tokens": tokens,
+                   "temperature": temperature, "system": system,
                    "messages": [{"role": "user", "content": user}]}
         out = _post(url, payload, headers, timeout)
         parts = out.get("content") or []
@@ -261,7 +300,7 @@ def call_model(cfg: dict, user: str, timeout: int = 180,
     headers = {}
     if cfg["key"]:
         headers["Authorization"] = "Bearer " + cfg["key"]
-    payload = {"model": cfg["model"], "temperature": 0, "max_tokens": 4000,
+    payload = {"model": cfg["model"], "temperature": temperature, "max_tokens": tokens,
                "messages": [{"role": "system", "content": system},
                             {"role": "user", "content": user}],
                "response_format": {"type": "json_object"}}
@@ -353,28 +392,13 @@ def _clean_body(rec: dict) -> tuple:
 
 
 def do_check_config(a) -> int:
-    """Print what the backend resolves to, with the key masked."""
-    from_files = _env_file_values()
-    for name in ("api-openai", "api-anthropic", "local-openai"):
-        try:
-            cfg = backend_config(name)
-        except SystemExit as exc:      # an endpoint nobody configured yet
-            mark = "->" if name == (a.backend or _setting("NL_PREP_BACKEND")
-                                    or DEFAULT_BACKEND) else "  "
-            print("%s %-13s not configured: %s" % (mark, name, exc))
-            continue
-        key = cfg["key"]
-        shown = ("%s…%s (%d chars)" % (key[:6], key[-4:], len(key))
-                 if len(key) > 10 else ("(empty)" if not key else "(short)"))
-        where = "from file" if cfg["key_var"] in from_files and \
-            cfg["key_var"] not in os.environ else (
-                "from shell" if os.environ.get(cfg["key_var"]) else "unset")
-        mark = "->" if name == (a.backend or _setting("NL_PREP_BACKEND")
-                                or DEFAULT_BACKEND) else "  "
-        print("%s %-13s %-9s %s" % (mark, cfg["backend"], cfg["protocol"],
-                                    cfg["base"]))
-        print("     model=%s  %s=%s %s" % (cfg["model"], cfg["key_var"], shown,
-                                           where))
+    try:
+        cfg = backend_config(a.backend)
+    except ValueError as exc:
+        print("model configuration error: " + str(exc), file=sys.stderr)
+        return 2
+    print("backend=%s model=%s endpoint=%s key=%s" %
+          (cfg["backend"], cfg["model"], cfg["base"], "set" if cfg["key"] else "optional"))
     return 0
 
 
@@ -392,11 +416,6 @@ def do_answer(a) -> int:
     print("backend %s (%s) model %s, %d item(s), batch %d"
           % (cfg["backend"], cfg["protocol"], cfg["model"], len(items),
              a.batch))
-    if cfg["key"]:
-        print("  key: set (%d chars, not printed)" % len(cfg["key"]))
-    else:
-        print("  note: %s is empty -- set it in the environment or in "
-              "~/.config/nlprep/env" % cfg["key_var"])
     if a.dry_run:
         print("\n--- prompt for the first batch ---")
         print(make_user_prompt(items[:a.batch])[:1500])
@@ -411,7 +430,7 @@ def do_answer(a) -> int:
             try:
                 got = ask_batch(cfg, batch)
                 break
-            except (urllib.error.URLError, OSError, ValueError) as exc:
+            except (urllib.error.URLError, OSError, ValueError, RuntimeError) as exc:
                 if attempt == 2:
                     print("  batch %d failed twice: %r" % (i // a.batch, exc))
                 else:
@@ -421,7 +440,7 @@ def do_answer(a) -> int:
             failed += 1
             continue
         for ans in got:
-            if ans["action"] not in N.NAME_ACTIONS:
+            if ans["action"] != "unknown" and ans["action"] not in N.NAME_ACTIONS:
                 rejected += 1
                 continue
             if ans["action"] in ("allow", "font") and (
@@ -518,7 +537,7 @@ def do_calibrate(a) -> int:
         batch = picked[i:i + a.batch]
         try:
             got = ask_batch(cfg, batch)
-        except (urllib.error.URLError, OSError, ValueError) as exc:
+        except (urllib.error.URLError, OSError, ValueError, RuntimeError) as exc:
             print("  batch failed: %r" % exc)
             continue
         for ans in got:
@@ -951,7 +970,7 @@ def main(argv=None) -> int:
                          "paper) for --export/--report; the package ships none")
     ap.add_argument("--step", type=int, default=14)
     ap.add_argument("--export", metavar="FILE")
-    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--limit", type=positive_count, default=0)
     ap.add_argument("--merge", metavar="FILE")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--answer-with-model", metavar="FILE",
@@ -962,7 +981,7 @@ def main(argv=None) -> int:
     ap.add_argument("--backend", default="",
                     help="api-openai | api-anthropic | local-openai "
                          "(default: $NL_PREP_BACKEND or api-openai)")
-    ap.add_argument("--batch", type=int, default=20)
+    ap.add_argument("--batch", type=positive_count, default=20)
     ap.add_argument("--dry-run", action="store_true",
                     help="print the prompt instead of calling anything")
     ap.add_argument("--check-config", action="store_true",

@@ -1,17 +1,22 @@
 #!/bin/sh
-# run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--no-names]
+# run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]
 #
 # One paper, whole chain: normalise -> split -> lexicon -> ask what is open
 # (constructions, slots, boundaries) -> apply -> names -> roles -> gate.
 # Every asking step resumes from its answer file, so re-running is cheap.
 set -u
 
+ENGINE=""
 PAPER=""
 OUT=""
 ASK=1
 NAMES=1
-for arg in "$@"; do
+while [ "$#" -gt 0 ]; do
+  arg=$1; shift
   case "$arg" in
+    --model-config) [ -n "${1:-}" ] || exit 2; NL_PREP_MODEL_CONFIG=$1; shift ;;
+    --tex-engine) [ "$#" -gt 0 ] && [ -n "$1" ] || exit 2; ENGINE=$1; shift ;;
+    --tex-engine=?*) ENGINE=${arg#*=} ;;
     --no-ask)   ASK=0 ;;
     --no-names) NAMES=0 ;;
     -*)         echo "run_pipeline: unknown option $arg" >&2; exit 2 ;;
@@ -20,25 +25,19 @@ for arg in "$@"; do
                 else echo "run_pipeline: too many arguments: $arg" >&2; exit 2; fi ;;
   esac
 done
-[ -n "$PAPER" ] || { echo "usage: run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--no-names]" >&2; exit 2; }
+[ -n "$PAPER" ] || { echo "usage: run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]" >&2; exit 2; }
 
-NAME=$(basename "$PAPER" .tex)
-OUT="${OUT:-runs/$NAME}"
-HERE=$(cd "$(dirname "$0")" && pwd)
-ROOT=$(cd "$HERE/../.." && pwd)
-cd "$ROOT" || exit 1
-PY=python3
-
+OUT="${OUT:-runs/$(basename "$PAPER" .tex)}"
 step() { printf '\n=== %s\n' "$*"; }
 need() { [ -f "$1" ] || { echo "  (no $1: skipped)"; return 1; }; return 0; }
 
-mkdir -p "$OUT"
+. "$(dirname "$0")/pipeline_common.sh" || exit 2
+prepare_pipeline || exit 2
+if [ "$ASK" -eq 1 ]; then check_model_config || exit 2; fi
 
 pipeline() {
   step "normalize"
-  $PY scripts/normalize.py "$PAPER" -o "$OUT/normalized.tex" \
-      --stats "$OUT/normalize-stats.json" --paper-id "$NAME" \
-      --issues "$OUT/issues_normalize.json" || return 1
+  normalize_paper || return 1
 
   step "latex2nl --canonical (applying the answers already on disk)"
   set -- --canonical --paper-id "$NAME"
@@ -46,11 +45,9 @@ pipeline() {
     set -- "$@" --merge-sentence-answers "$OUT/sentence_answers.json"
   fi
   if [ -f "$OUT/slot_answers.json" ]; then
-    [ -f "$OUT/slot_roles.json" ] || cp data/slot_roles.json "$OUT/slot_roles.json"
-    set -- "$@" --merge-slot-answers "$OUT/slot_answers.json" \
-                 --slot-table "$OUT/slot_roles.json"
+    set -- "$@" --merge-slot-answers "$OUT/slot_answers.json"
   fi
-  $PY scripts/latex2nl.py "$OUT/normalized.tex" -o "$OUT" \
+  "$PY" scripts/latex2nl.py "$OUT/normalized.tex" -o "$OUT" \
       --issues "$OUT/issues_latex2nl.json" "$@" || {
     _rc=$?
     # 3 means "content kept, pending"; 1/2 are real failures
@@ -62,23 +59,23 @@ pipeline() {
   if [ -f "$OUT/construction_answers.json" ]; then
     set -- "$@" --merge-answers "$OUT/construction_answers.json"
   fi
-  $PY pipeline/scripts/lexicon.py "$@" || return 1
+  "$PY" pipeline/scripts/lexicon.py "$@" || return 1
 }
 
 pipeline || exit 1
 
 if [ "$ASK" -eq 1 ]; then
   step "ask: construction readings"
-  if need "$OUT/construction_todo.json"; then
-    $PY pipeline/scripts/ask_lexicon.py "$OUT/construction_todo.json" || true
+  if need "$OUT/construction_questions.json"; then
+    "$PY" pipeline/scripts/ask_lexicon.py "$OUT/construction_questions.json" || true
   fi
   step "ask: text-slot roles"
-  if need "$OUT/slot_todo.json"; then
-    $PY pipeline/scripts/ask_slots.py "$OUT/slot_todo.json" || true
+  if need "$OUT/slot_questions.json"; then
+    "$PY" pipeline/scripts/ask_slots.py "$OUT/slot_questions.json" || true
   fi
   step "ask: doubtful sentence boundaries"
   if need "$OUT/sentence_todo.json"; then
-    $PY pipeline/scripts/ask_boundaries.py "$OUT/sentence_todo.json" \
+    "$PY" pipeline/scripts/ask_boundaries.py "$OUT/sentence_todo.json" \
         -o "$OUT/sentence_answers.json" || true
   fi
   # apply what was just produced before judging anything downstream
@@ -92,7 +89,7 @@ fi
 # ---- the name layer ------------------------------------------------------
 if [ "$ASK" -eq 1 ] && [ "$NAMES" -eq 1 ]; then
   step "names: what neither TeX nor the paper defines"
-  if $PY - "$OUT" "$NAME" <<'PY'
+  if "$PY" - "$OUT" "$NAME" <<'PY'
 import json, os, re, sys
 out, paper = sys.argv[1], sys.argv[2]
 lex = json.load(open(os.path.join(out, "paper_lexicon.json"), encoding="utf-8"))
@@ -166,15 +163,11 @@ print("  %d name(s): %s" % (len(items), ", ".join("\\" + i["name"] for i in item
 sys.exit(0)
 PY
   then
-    $PY pipeline/scripts/pending_names.py --answer-with-model "$OUT/names_todo.json" || true
-    $PY pipeline/scripts/pending_names.py --merge "$OUT/names_todo.json" || true
+    "$PY" pipeline/scripts/pending_names.py --answer-with-model "$OUT/names_todo.json" || true
+    "$PY" pipeline/scripts/pending_names.py --merge "$OUT/names_todo.json" || true
     step "re-run the pipeline so the name answers take effect"
     pipeline || exit 1
-    # Q1: the queue is removed only when the names are really gone, and the
-    # ones the model could not decide go to a person
-    $PY pipeline/scripts/human.py --from-names "$OUT/names_todo.json" \
-        "$OUT/human_todo.json" || true
-    if $PY - "$OUT" <<'PY'
+    if "$PY" - "$OUT" <<'PY'
 import json, os, sys
 out = sys.argv[1]
 lex = json.load(open(os.path.join(out, "paper_lexicon.json"), encoding="utf-8"))
@@ -182,64 +175,60 @@ stats = {}
 path = os.path.join(out, "normalize-stats.json")
 if os.path.exists(path):
     stats = json.load(open(path, encoding="utf-8")).get("outside_vocabulary") or {}
-sys.exit(0 if (lex.get("unknown_commands") or {}) or stats else 1)
+with open(os.path.join(out, "names_todo.json"), encoding="utf-8") as fh:
+    undecided = any(it.get("action") in (None, "", "unknown") for it in json.load(fh)["items"])
+sys.exit(0 if undecided or (lex.get("unknown_commands") or {}) or stats else 1)
 PY
     then
       echo "  names still open: keeping names_todo.json"
     else
       rm -f "$OUT/names_todo.json"
     fi
+  else
+    rm -f "$OUT/names_todo.json"
   fi
 fi
 
 step "formula roles"
-$PY pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
+"$PY" pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
     -o "$OUT/roles.json" --todo "$OUT/role_todo.json" --paper-id "$NAME" || exit 1
-if [ "$ASK" -eq 1 ] && need "$OUT/role_todo.json"; then
-  $PY pipeline/scripts/ask_roles.py --answer "$OUT/role_todo.json" || true
+if [ "$ASK" -eq 1 ] && need "$OUT/role_questions.json"; then
+  "$PY" pipeline/scripts/ask_roles.py --answer "$OUT/role_questions.json" || true
   # one retry: a block the model skipped often comes back the second time
-  if $PY - "$OUT/role_todo.json" <<'PY'
+  if "$PY" - "$OUT/role_questions.json" <<'PY'
 import json, sys
 items = (json.load(open(sys.argv[1], encoding="utf-8")).get("items") or [])
 sys.exit(0 if any(not i.get("answer") for i in items) else 1)
 PY
   then
-    $PY pipeline/scripts/ask_roles.py --answer "$OUT/role_todo.json" || true
+    "$PY" pipeline/scripts/ask_roles.py --answer "$OUT/role_questions.json" || true
   fi
-  $PY pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
+  "$PY" pipeline/scripts/roles.py "$OUT/formulas.json" "$OUT/sentences.jsonl" \
       -o "$OUT/roles.json" --todo "$OUT/role_todo.json" --paper-id "$NAME" \
-      --merge-answers "$OUT/role_todo.json" || true
-  $PY pipeline/scripts/human.py --from-roles "$OUT/role_todo.json" \
-      "$OUT/human_todo.json" || true
+      --merge-answers "$OUT/role_questions.json" || exit 1
 fi
 
 
+"$PY" scripts/rule_reviews.py "$OUT" || exit 1
+"$PY" pipeline/scripts/human.py --from-names "$OUT/names_todo.json" "$OUT/human_todo.json" || exit 1
+"$PY" pipeline/scripts/human.py --from-roles "$OUT/role_todo.json" "$OUT/human_todo.json" || exit 1
+
 step "fidelity gate"
 # this run's directory, not its parent: the parent holds every other run too
-$PY pipeline/scripts/verify_formulas.py "$OUT" >/dev/null 2>&1
+"$PY" pipeline/scripts/verify_formulas.py "$OUT" >/dev/null 2>&1
 VF=$?
 echo "  verify_formulas rc=$VF"
 
 step "output checks (GAPS.md C1-C14)"
-$PY scripts/verify_output.py "$OUT" --strict >"$OUT/output_checks.txt" 2>&1
+"$PY" scripts/verify_output.py "$OUT" --strict >"$OUT/output_checks.txt" 2>&1
 VO=$?
 tail -3 "$OUT/output_checks.txt"
 
-$PY pipeline/scripts/human.py --from-issues "$OUT/issues.json" \
-    "$OUT/human_todo.json" || true
-
-# an empty question file is not a pending question
-if [ -f "$OUT/human_todo.json" ]; then
-  H=$($PY -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(len(d.get("items") or []))' "$OUT/human_todo.json" 2>/dev/null || echo 0)
-  [ "$H" = "0" ] && rm -f "$OUT/human_todo.json"
-fi
+"$PY" pipeline/scripts/human.py --from-issues "$OUT/issues.json" \
+    "$OUT/human_todo.json" || exit 1
 
 PEND=0
-for f in construction_todo.json slot_todo.json sentence_todo.json \
-         role_todo.json names_todo.json human_todo.json \
-         content_todo.json conditional_todo.json; do
-  [ -f "$OUT/$f" ] && PEND=1
-done
+pipeline_has_pending && PEND=1
 
 case "$VO" in
   0) ;;
@@ -257,7 +246,7 @@ fi
 
 step "summary"
 echo "  status         : $STATUS"
-$PY - "$OUT" <<'PY'
+"$PY" - "$OUT" <<'PY'
 import json, os, sys
 out = sys.argv[1]
 sents = sum(1 for _ in open(os.path.join(out, "sentences.jsonl"), encoding="utf-8"))
@@ -271,12 +260,14 @@ def count(name):
         return "-"
     d = json.load(open(path, encoding="utf-8"))
     return len(d.get("items") or d.get("formulas") or [])
-open_cons = sum(1 for c in cons.values() if not c.get("reading"))
-open_total = open_cons + sum(
-    len(json.load(open(os.path.join(out, n), encoding="utf-8")).get("items") or [])
-    for n in ("construction_todo.json", "slot_todo.json", "sentence_todo.json",
-              "role_todo.json", "names_todo.json")
-    if os.path.exists(os.path.join(out, n)))
+open_total = 0
+for name in ("construction", "slot", "sentence", "role", "names"):
+    path = os.path.join(out, name + "_todo.json")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            items = json.load(fh).get("items") or []
+        field = "action" if name == "names" else "answer"
+        open_total += sum(not it.get(field) for it in items)
 print("  open questions :", open_total, "(provisional readings below)")
 print("  sentences      :", sents)
 print("  formulas       :", len(recs))
