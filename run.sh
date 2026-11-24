@@ -70,13 +70,17 @@ set -- "$PAPER" -o "$OUT/normalized.tex" \
 
 # A failed build is not an error here -- the body is preserved and marked -- but
 # it must not look like a normal run either.
-if [ -f "$OUT/execution.json" ]; then
+if [ -n "$ENGINE" ] && [ -f "$OUT/execution.json" ]; then
     "$PY" - "$OUT/execution.json" <<'PY' || true
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as fh:
     report = json.load(fh)
 status = report.get("status")
-if status != "observed":
+if status == "partial":
+    sites = ", ".join(map(str, report.get("pending_sites") or []))
+    print("run.sh: TeX execution partial; unresolved sites: " + sites +
+          ". See content_todo.json for the preserved passages.", file=sys.stderr)
+elif status == "pending":
     print("run.sh: TeX execution %s: %s" % (status, report.get("reason") or "no reason given"),
           file=sys.stderr)
     print("run.sh: the paper is preserved whole as pending content; see content_todo.json",

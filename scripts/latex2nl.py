@@ -2703,6 +2703,7 @@ class LatexToNL:
         body = normalize.conditionals.preserve_late_conditions(body)
         body = keeper._preserve_floats(body)
         body = keeper._preserve_notes(body)
+        body = keeper._preserve_graphics(body)
         body = preserved.restore_calls(body, keeper.held_calls)
         body = keeper.preserve_prose_calls(body, self.macros)
         body = preserved.locate(body, self.sources)
@@ -3312,6 +3313,8 @@ class LatexToNL:
 
     def _clean_segment(self, text: str) -> str:
         """Clean prose that sits outside math spans."""
+        text = re.sub(r"(?<!\\)\\(th|TH)(?![A-Za-z@])(?:[ \t]+|\n[ \t]*)?",
+                      lambda m: "þ" if m[1] == "th" else "Þ", text)
         # spacing and page machinery, starred or not: \vspace*{0.2in} was
         # reaching the sentence stream as a "sentence" of its own
         text = re.sub(r"\\(?:vspace|hspace|vskip|hskip|kern|rule)\*?"

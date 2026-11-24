@@ -747,12 +747,12 @@ python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
 | 文件 | 内容 | 实测（2026-11-24） |
 |:--|:--|--:|
 | `tests/probe_split.py` | 句界、缩写、注释行、分段、字体切换、display 边界 | 31 绿 |
-| `tests/probe_envs.py` | 五条环境规则与回归 | 14 绿 |
+| `tests/probe_envs.py` | 五条环境规则与回归 | 15 绿 |
 | `tests/probe_brace.py` | 裸花括号五条 + `\ensuremath` 三条 | 9 绿 |
 | `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 绿（带基料夹具时 8） |
 | `tests/probe_audit.py` | 未闭合环境、`\ifcase`、`\end {env}` 等复现 | 31 绿，另有 3 组缺夹具跳过（带全部夹具时 34 / 2） |
-| `tests/probe_review.py` | 复核意见的五类边界、图片、重音、条目与续句 | 24 绿 |
-| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 87 个用例，13 个需要 TeX/pdftotext 的跳过 |
+| `tests/probe_review.py` | 句界、图片、重音、脚注、日期和向量记号 | 27 绿 |
+| `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 90 个用例，其中 13 个依赖 TeX/pdftotext |
 | `pipeline/tests/test_pipeline.py` | 管线层：夹具离线跑通、两个入口一致 | 2 个用例 |
 
 合计 **11 个切分套件 + 1 个管线模块**（`tests/run_all.py` 串起前 11 个）。
@@ -826,6 +826,8 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 ---
 
 ## 11. 2026-11-23 验收结果
+
+下表保留该轮记录，当前版本的套件和用例数见第 8 节。
 
 | 范围 | 结果 |
 |---|---|

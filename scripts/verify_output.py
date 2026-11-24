@@ -356,6 +356,35 @@ def check_c14(doc) -> List[dict]:
     return hits
 
 
+RELATION_TOKEN = re.compile(r"\\([A-Za-z@]+|.)|([<=>])", re.S)
+
+
+def relation_error(rec):
+    """Compare the ordered relation signs before and after extracting slots and conditions."""
+    if rec.get("kind") not in ("inline", "display") or "diagram" in (rec.get("flags") or []):
+        return None
+    import latex2nl as L
+    core, _ = L.strip_trailing_punct(rec.get("raw") or "")
+    if not rec.get("opaque"):
+        core, _ = L.split_side_condition(core)
+    expanded = rec.get("expanded") or ""
+    slots = [dict(s, index=i) for i, s in enumerate(rec.get("text_slots") or [], 1)]
+    slot_text = {s["index"]: s.get("raw", "") for s in slots}
+    visible = L.SLOT_RE.sub(lambda m: slot_text.get(int(m[1]), m[0]), expanded)
+
+    def symbols(body):
+        return [m[2] or L.REL_COMMANDS[m[1]] for m in RELATION_TOKEN.finditer(body)
+                if m[2] or m[1] in L.REL_COMMANDS]
+
+    if symbols(core) != symbols(visible):
+        return "relation signs differ between raw and expanded"
+    if rec.get("top_relation") is not None:
+        _, _, top = L.classify_role(expanded, rec["kind"], "", "", slots)
+        if top != rec["top_relation"]:
+            return "top_relation differs from expanded"
+    return None
+
+
 def check_links(doc, normalized):
     hits = []
     def hit(where): hits.append({'where': where})
@@ -377,6 +406,9 @@ def check_links(doc, normalized):
         for fid in set(text_ids) | set(sentence['formulas']):
             if fid not in by_id: hit(sentence['sid']+' missing '+fid)
     for f in forms:
+        problem = relation_error(f)
+        if problem:
+            hit(f['id']+' '+problem)
         if f['id'] not in used: hit('unreachable '+f['id'])
         if f.get('trailing_punct') == '!':
             hit(f['id']+' formula exclamation mark moved into prose')

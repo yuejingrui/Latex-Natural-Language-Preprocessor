@@ -356,17 +356,15 @@ def read_theorem_decls(text: str) -> Dict[str, str]:
         if end is None:
             continue
         display = re.sub(r"\\[A-Za-z]+|[{}~]", " ", text[i + 1: end - 1])
-        words = re.findall(r"[A-Za-z]+", display)
-        kind = THEOREM_KINDS.get((words[0].lower() if words else ""), "")
-        if not kind and counter:
-            # ``\newtheorem{taller}[lemma]{$\!\!$}``: the display name is empty,
-            # so the counter it shares says what kind this is (MERGE-PLAN F6)
-            kind = THEOREM_KINDS.get(counter.lower()) or out.get(counter, "")
-        if not kind:
-            kind = (words[0].lower() if words else m.group(1).lower())
+        words = re.findall(r"[^\W\d_]+", display)
+        if words:
+            title = words[0].lower()
+            kind = THEOREM_KINDS.get(title, title)
+        elif not re.sub(r"\\(?:[,;:! ]|quad\b|qquad\b)|[\s{}$~]", "", text[i + 1:end - 1]):
+            kind = out.get(counter) or THEOREM_KINDS.get(counter.lower()) or m.group(1).lower()
+        else:
+            kind = m.group(1).lower()
         out[m.group(1)] = kind
-        if counter and not THEOREM_KINDS.get(kind.lower()):
-            out.setdefault(counter, kind)
     return out
 
 
@@ -779,8 +777,8 @@ class Normalizer:
         # Preserve semantic side content before any layout/name cleanup. Shield
         # newly created capsules in this pass as well as ones from prior passes.
         body = self._preserve_floats(body)
-        body = self._preserve_graphics(body)
         body = self._preserve_notes(body)
+        body = self._preserve_graphics(body)
         body = preserved.restore_calls(body, self.held_calls)
         body = self.preserve_prose_calls(body, macros)
         body, new_capsules = preserved.mask(body, 'NEW')
@@ -1058,11 +1056,16 @@ class Normalizer:
             i = bisect_right(starts, match.start()) - 1
             if i >= 0 and match.start() < spans[i].end:
                 continue
-            if name in self.structural_names or self._known_name(name, macros):
+            if name == 'today':
+                # The build determines the date and its language. Keep the token
+                # at its prose site after any document-defined expansion.
+                stop, reason = match.end(), 'build_date'
+            elif name in self.structural_names or self._known_name(name, macros):
                 continue
-            stop = preserved.call_end(body, match.end())
+            else:
+                stop, reason = preserved.call_end(body, match.end()), 'missing_definition'
             raw = body[match.start():stop]
-            fields = dict(command=match[0], reason='missing_definition',
+            fields = dict(command=match[0], reason=reason,
                           source_stage='expanded_body', offset=match.start())
             if name in self.kept_macros:
                 fields.update(reason='unsupported_definition', definition=self.kept_macros[name])
@@ -1097,20 +1100,23 @@ class Normalizer:
         out.append(body[pos:])
         return ''.join(out)
 
-    #: A picture is not prose: ``\includegraphics[opt]{path}`` outside a float
-    #: (``\begin{center}``, a bare ``\begin{equation}``) used to survive into a
-    #: sentence as the literal command and its file path -- six of them in
-    #: 1811.02461 reached the sentence stream and tripped the C2 check.  It is
-    #: preserved as a content block like a float, so nothing is lost and no
-    #: control word reaches a sentence.
+    # Keep standalone graphics as anchored content. Inside a math span the
+    # graphic already has an owner and must stay in that formula.
     GRAPHIC_RE = re.compile(
         r"\\(?:includegraphics|includesvg|includestandalone)\*?(?![A-Za-z@])"
         r"\s*(?:\[[^\]]*\]\s*)*\{")
 
     def _preserve_graphics(self, body: str) -> str:
         out, pos = [], 0
+        if not self.GRAPHIC_RE.search(body):
+            return body
+        spans = iter(L.find_math_spans(body, clean=False, inspect_arguments=True,
+                                       report_unclosed=False))
+        span = next(spans, None)
         for m in self.GRAPHIC_RE.finditer(body):
-            if m.start() < pos:
+            while span and span.end <= m.start():
+                span = next(spans, None)
+            if m.start() < pos or (span and span.start <= m.start()):
                 continue
             end = L.find_group_end(body, m.end() - 1)
             if end is None:
@@ -1136,11 +1142,6 @@ class Normalizer:
         macros = getattr(self, "macros", None) or L.MacroTable()
         body = macros.expand(text)
         body = self._apply_names(body)
-        # build-time metadata (	oday prints the build date): the value says
-        # nothing about the paper, and the original stays in raw
-        body, k = re.subn(r"\\today(?![A-Za-z])", "", body)
-        if k:
-            self.stats["content_meta_removed:today"] += k
         return body
 
     def _preserve_notes(self, body: str) -> str:
@@ -1164,7 +1165,8 @@ class Normalizer:
                     while cursor < len(body) and body[cursor] in " \t\n":
                         cursor += 1
             if cursor >= len(body) or body[cursor] != "{":
-                stop = cursor + 1 if cursor < len(body) else cursor
+                token = conditionals.TOKEN.match(body, cursor)
+                stop = token.end() if token else min(cursor + 1, len(body))
                 out.append(body[pos:m.start()])
                 out.append(preserved.pack(m.group(1), body[m.start():stop],
                            status='pending', reason='note_without_argument',
@@ -2570,14 +2572,6 @@ class Normalizer:
             body, k = re.subn(r"\\" + cmd + r"(?![A-Za-z])", "", body)
             if k:
                 self.stats["layout_removed:" + cmd] += k
-        # \th is TeX's thorn character, but this corpus uses it as an empty
-        # authoring marker right before a reference or a label ("from \th\ref{x}",
-        # "\begin{proposition}\th\label{x}"); the class that made it empty is not
-        # shipped with the source (MERGE-PLAN F5)
-        body, k = re.subn(r"\\th(?![A-Za-z])\s*(?=\\(?:ref|eqref|label|cite|autoref|cref)\b)",
-                          "", body)
-        if k:
-            self.stats["meta_marker:th"] += k
         body = self._drop_section_machinery(body)
         body = self._drop_inline_tikz(body)
         return self._apply_names(body)

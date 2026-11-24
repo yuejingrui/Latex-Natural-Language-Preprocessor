@@ -339,10 +339,10 @@
    "note": "It is a formatting command for URLs, carrying no mathematical content."
   },
   "vb": {
-   "action": "unwrap",
+   "action": "font",
    "source": "answer",
-   "class": "letter",
-   "note": "\\vb{v} prints a bold v (a vector); the paper uses it inside \\vv = {\\vb{v}} but ships no definition, so the argument is the content and the boldness is styling"
+   "class": "font",
+   "note": "Preserve the vector notation, including the star in \\vb* and the argument."
   },
   "widecheck": {
    "action": "allow",

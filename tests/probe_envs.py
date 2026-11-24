@@ -103,6 +103,9 @@ norm, doc = run("\\documentclass{article}\n"
 envs = [s.get("env") for s in doc["sentences"]]
 check("an empty display name inherits its counter's kind",
       envs and all(e == "lemma" for e in envs), str(envs))
+named = N.read_theorem_decls(r"\newtheorem{lem}{Lemma}\newtheorem{ax}[lem]{Axiom}")
+check("a shared counter preserves the explicit statement type",
+      named == {"lem": "lemma", "ax": "axiom"}, str(named))
 
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))

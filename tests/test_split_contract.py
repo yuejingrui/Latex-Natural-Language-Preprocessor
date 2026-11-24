@@ -72,6 +72,35 @@ class SplitContractTests(unittest.TestCase):
             result['formulas'][2]['trailing_punct'] = '!'
             self.assertEqual(self.verify(norm, result)[0], 1)
 
+    def test_graphics_keep_their_prose_or_math_owner(self):
+        graphic = r'\includegraphics[height=1em]{example-image-a}'
+        body = 'Before. ' + graphic + ' After. Value $x+' + graphic + '$.'
+        for canonical in (False, True):
+            with self.subTest(canonical=canonical):
+                norm, result = self.convert(body, canonical)
+                blocks = result['content_blocks']
+                self.assertEqual([(b['kind'], b['raw']) for b in blocks], [('graphic', graphic)])
+                formulas = [f for f in result['formulas'] if f['kind'] == 'inline']
+                self.assertEqual([(f['raw'], f['expanded']) for f in formulas],
+                                 [('x+' + graphic, 'x+' + graphic)])
+                self.assertEqual(self.verify(norm, result)[0], 3)
+
+    def test_ungrouped_note_owns_a_whole_tex_token(self):
+        for canonical in (False, True):
+            for token in (r'\TeX', r'\%', 'x'):
+                with self.subTest(canonical=canonical, token=token):
+                    call = r'\footnote[2]' + token
+                    norm, result = self.convert('Before' + call + '{} after $x$.', canonical)
+                    self.assertEqual([s['text'] for s in result['sentences']], ['Before REF1 after MATH1.'])
+                    self.assertEqual([b['raw'] for b in result['content_blocks']], [call])
+                    self.assertEqual(self.verify(norm, result)[0], 3)
+
+    def test_strict_rejects_a_reversed_relation(self):
+        norm, result = self.convert(r'We have $x<y$.')
+        self.assertEqual(self.verify(norm, result)[0], 0)
+        result['formulas'][0]['expanded'] = 'x>y'
+        self.assertEqual(self.verify(norm, result)[0], 1)
+
     def test_metadata_ends_before_grouped_formula(self):
         body = r'First. \setcounter{section}{2}{Keep $x$.} \noindent{Keep $y$.}'
         for canonical in (False, True):

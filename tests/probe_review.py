@@ -96,8 +96,12 @@ for body, want in (
 # F3 (MERGE-PLAN 3): a note body goes through the same name pass
 norm, doc = run("Text.\\footnotetext{\\emph{Date:} \\today} More text.\n")
 sent = " ".join(texts(doc))
-check("a note body is cleaned of metadata",
-      "\\today" not in sent and "\\emph" not in sent, sent)
+date = next((b for b in doc["content_blocks"] if b["raw"] == r"\today"), {})
+check("a note keeps the build-dependent date anchored",
+      date.get("status") == "pending" and date.get("anchor_ref") in sent
+      and "Date:" in sent and r"\emph" not in sent, sent)
+norm, doc = run(r"Body.\footnote{Valid until \today.}", r"\renewcommand{\today}{Monday}")
+check("a redefined date uses the author's text", "Valid until Monday." in texts(doc), texts(doc))
 
 # F1 (MERGE-PLAN 3): a placeholder with an affix still belongs to the sentence
 for body, want in (("We write $n$th.\n", "MATH1th"),
@@ -115,11 +119,18 @@ check("a placeholder after a letter is still found",
       any(s["formulas"] for s in doc["sentences"]),
       str([(s["text"], s["formulas"]) for s in doc["sentences"]]))
 
-# F5 (MERGE-PLAN 3): a template's \th before a reference is an empty marker
+# A standard thorn prints even before a label; a paper may redefine it as empty.
 norm, doc = run("\\begin{proposition}\\th\\label{a} Let MATH1 be a set."
                 "\\end{proposition}\nAs in \\th\\ref{a}, MATH2 holds.\n")
 sent = " ".join(texts(doc))
-check("the authoring marker is dropped", "\\th" not in sent, sent)
+check("thorn before a reference or label remains visible", sent.count("þ") == 2, sent)
+_, doc = run(r"A\th\label{x} B.", r"\renewcommand{\th}{}")
+check("an explicitly empty authoring marker stays empty", "þ" not in " ".join(texts(doc)), texts(doc))
+_, doc = run(r"Body $q$.\footnote{Compare $\vb{q}$ and $q$.}")
+note = [f for f in doc["formulas"] if f["kind"] == "inline"]
+check("a note keeps the vector notation distinct from the scalar",
+      [f["raw"] for f in note] == ["q", r"\vb{q}", "q"]
+      and [f["expanded"] for f in note] == ["q", r"\vb{q}", "q"], note)
 
 # C2: a bare \includegraphics outside a float is a picture, not prose
 norm, doc = run("The quiver is given by\n\\begin{center}\n"
