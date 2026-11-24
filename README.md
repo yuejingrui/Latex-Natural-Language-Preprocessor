@@ -750,7 +750,7 @@ python3 pipeline/scripts/ask_slots.py      OUT/slot_todo.json      --dry-run
 | `tests/probe_envs.py` | 五条环境规则与回归 | 14 绿 |
 | `tests/probe_brace.py` | 裸花括号五条 + `\ensuremath` 三条 | 9 绿 |
 | `tests/probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 | 6 绿（带基料夹具时 8） |
-| `tests/probe_audit.py` | 未闭合环境、`\ifcase`、`\end {env}` 等复现 | 34 绿，另有 2 组缺夹具跳过 |
+| `tests/probe_audit.py` | 未闭合环境、`\ifcase`、`\end {env}` 等复现 | 31 绿，另有 3 组缺夹具跳过（带全部夹具时 34 / 2） |
 | `tests/probe_review.py` | 复核意见的五类边界、图片、重音、条目与续句 | 24 绿 |
 | `tests/test_*.py`（5 个文件） | 内容保留、公式契约、源码顺序、条件验收、TeX 执行回放 | 87 个用例，13 个需要 TeX/pdftotext 的跳过 |
 | `pipeline/tests/test_pipeline.py` | 管线层：夹具离线跑通、两个入口一致 | 2 个用例 |
@@ -829,7 +829,7 @@ python3 scripts/sentences_md.py --run out/example/2005.01702 -o /tmp/x.md
 
 | 范围 | 结果 |
 |---|---|
-| 包内测试 | 118 项探针、87 项单元测试、2 项管线用例和 3 个脚本自测通过。另有 13 项因缺 TeX/pdftotext 跳过 |
+| 包内测试 | 115 项探针、87 项单元测试、2 项管线用例和 3 个脚本自测通过。另有 3 组探针缺夹具、13 个用例缺 TeX/pdftotext 而跳过 |
 | 46 个原稿的三条切分路径 | 138 次严格验收，129 次通过并核对公式操作数和 PDF 可见文字顺序，9 次保留原文待处理，0 次硬错误 |
 | 另测的 9 个早期反例 | 启用 TeX 后，全部与此前独立 PDF 的正文一致，严格退出码均为 0 |
 | 附带论文 2005.01702 | **362 句、795 条公式**（inline 574 / display 57 / 引用 164）、4 个内容块；硬错误 0，未决项（1 个未切分内容 + 3 条 `unresolved.log`）使严格退出码为 3 |
