@@ -711,7 +711,7 @@ class Normalizer:
         self._diagrams: List[str] = []
         self.theorem_envs = {}
         self.structural_names = (set(self.DEF_CMDS) | set(L.META_CMDS) | set(L.NOT_AN_ARGUMENT) | set(L.LAYOUT_WRAPPERS)
-                                 | L.STANDARD_SECTION_NAMES | {'partmarker', 'taglabel', 'nlprepcontent'})
+                                 | L.STANDARD_SECTION_NAMES | {'partmarker', 'taglabel', 'rowlabel', 'nlprepcontent'})
         self.sources = {}
         self.switch_defaults = switches or {}
         self.kept_macros = {}
@@ -820,6 +820,7 @@ class Normalizer:
         body, new_capsules = preserved.mask(body, 'NEW')
         body, opaque_math = self._protect_opaque_math(
             body, known=lambda name: self._known_name(name, macros))
+        body = self._preserve_unobserved_list_counters(body)
         body = L.drop_metadata(body)
         body = L.drop_command_all_args(body, self.TITLE_CMDS)
         body = self._drop_bare(body)
@@ -1279,7 +1280,7 @@ class Normalizer:
         body = self._keep_first_of_two(body, "texorpdfstring")
         # \hyperref[label]{text}: the text is the content, the label is the link
         # hyperref takes [label] then {text}: one brace group is enough
-        body = self._unwrap_last_arg(body, "hyperref", min_groups=1)
+        body = self._unwrap_last_arg(body, "hyperref")
         # a marginal note, an edit tag and a proof heading print text that is
         # not part of the proposition; the tag's number is display metadata
         # a \tag{3} is the equation's number: turn it into a label before the
@@ -1308,10 +1309,13 @@ class Normalizer:
         body = re.sub(r"\\[lc]?dots(?![A-Za-z@])", "\u2026", body)
         body = re.sub(r"\\vdots(?![A-Za-z@])", "\u22ee", body)
         body = re.sub(r"\\ddots(?![A-Za-z@])", "\u22f1", body)
-        # \theequation, \thesection: a counter's value, which the reference
-        # table already carries.  The counter names are listed, because \the is
-        # a prefix of \theorem and \thebibliography.
-        body = re.sub(L.COUNTER_TOKEN, " ", body)
+        if re.search(L.COUNTER_TOKEN, body):
+            spans = L.find_math_spans(body, clean=False, inspect_arguments=True, report_unclosed=False)
+            def keep_counter(match):
+                if any(s.start <= match.start() < s.end for s in spans):
+                    return match[0]
+                return preserved.pack("counter", match[0], status="pending", reason="unobserved_counter")
+            body = re.sub(L.COUNTER_TOKEN, keep_counter, body)
         # text ligatures that arrive as commands
         body = re.sub(r"\\ae(?![A-Za-z@])", "\u00e6", body)
         body = re.sub(r"\\oe(?![A-Za-z@])", "\u0153", body)
@@ -1331,7 +1335,7 @@ class Normalizer:
             body = self._unwrap_one(body, cmd)
         # boxes: keep the content, drop the size.  Early, because a drawing
         # inside a box must still be reachable by the environment pass.
-        for cmd in ("scalebox", "resizebox", "raisebox", "rotatebox"):
+        for cmd in ("scalebox", "resizebox", "raisebox", "rotatebox", "framebox"):
             body = self._unwrap_last_arg(body, cmd)
         return body
 
@@ -1760,13 +1764,8 @@ class Normalizer:
     def _bracket_displays(self, body: str) -> str:
         """``\\[...\\]`` and ``$$...$$`` are displays, not environments."""
         def repl(m):
-            # _hoist returns (label, tag, body) -- unpacking it in this order
-            # used to put the formula before \begin{display} and leave the
-            # environment empty in more than half of all displays
-            label, tag, inner = self._hoist(m.group(1))
             self.stats["display_bracket"] += 1
-            return "\n%s%s\\begin{display}%s\\end{display}\n" % (
-                label, tag, inner.strip())
+            return "\n\\begin{display}%s\\end{display}\n" % m.group(1).strip()
 
         body = re.sub(r"(?<!\\)\\\[(.+?)(?<!\\)\\\]", repl, body, flags=re.S)
         return self._bracket_doubles(body)
@@ -2047,10 +2046,8 @@ class Normalizer:
                 if close is None:
                     out.append(body[i:])
                     break
-                label, tag, inner = self._hoist(body[i + 2: close])
                 self.stats["display_bracket"] += 1
-                out.append("\n%s%s\\begin{display}%s\\end{display}\n"
-                           % (label, tag, inner.strip()))
+                out.append("\n\\begin{display}%s\\end{display}\n" % body[i+2:close].strip())
                 i = close + 2
                 continue
             in_inline = True
@@ -2134,7 +2131,7 @@ class Normalizer:
                 pos = m.start()
         return body
 
-    def _envs(self, text: str, depth: int) -> str:
+    def _envs(self, text: str, depth: int, display_body=False) -> str:
         out: List[str] = []
         pos = 0
         while True:
@@ -2164,6 +2161,15 @@ class Normalizer:
                 continue
             out.append(text[pos: m.start()])
             inner = text[m.end(): em.start()]
+            if display_body and self.name_to.get(env, (None,))[0] == "inner_display":
+                outside = text[:m.start()] + text[em.end():]
+                for start, end, _, _ in reversed(list(L.display_marks(outside))):
+                    outside = outside[:start] + outside[end:]
+                if outside.strip(" \n\t.,;:"):
+                    body = self._transform(env, inner, depth).strip()
+                    out.append(r"\begin{grid}{" + env + "}" + body + r"\end{grid}")
+                    pos = em.end()
+                    continue
             out.append(self._transform(env, inner, depth))
             pos = em.end()
         return "".join(out)
@@ -2194,7 +2200,7 @@ class Normalizer:
             return "\\begin{statement}{%s}%s\\end{statement}" % (
                 kind or "theorem", self._envs(rest, depth))
         if env == "display":
-            return "\\begin{display}%s\\end{display}" % self._envs(inner, depth)
+            return "\\begin{display}%s\\end{display}" % self._envs(inner, depth, display_body=True)
         if env == "grid":
             name, rest = self._brace_arg(inner)
             return "\\begin{grid}{%s}%s\\end{grid}" % (
@@ -2235,7 +2241,16 @@ class Normalizer:
                 env.lower())
             if kind:
                 cls = "statement"
-        opt, rest = self._opt_arg(inner)
+        base_env = env.rstrip("*")
+        takes_option = (cls in ("statement", "list") or env == "restatable"
+                        or base_env in ("aligned", "alignedat", "gathered", "multlined",
+                                        "IEEEeqnarray", "subeqn", "minipage", "multicols",
+                                        "mdframed", "tcolorbox"))
+        opt, rest = self._opt_arg(inner) if takes_option else (None, inner)
+        if base_env in ("alignat", "alignedat", "xalignat", "xxalignat"):
+            columns, after = self._brace_arg(rest)
+            if columns is not None:
+                rest = after
 
         if cls is None:
             # rule 2: TeX's own semantics -- \begin{X} runs \X.  When X is a
@@ -2281,16 +2296,23 @@ class Normalizer:
             self.stats["env_statement:" + env] += 1
             return "\\begin{statement}{%s}%s%s\\end{statement}" % (
                 kind, opt or "", self._envs(rest, depth))
+        if base_env == "subequations":
+            # A counter scope may enclose prose and several independent displays.
+            return "\n" + self._envs(rest, depth) + "\n"
         if cls == "display":
             self.stats["env_display:" + env] += 1
             if env.startswith("IEEEeqnarray") or env.startswith("subeqn"):
                 _, rest = self._brace_arg(rest)   # {rCl}: a column spec
-            body = self._envs((opt or "") + rest, depth)
-            label, tag, body = self._hoist(body)
-            return "%s%s\\begin{display}%s\\end{display}" % (label, tag,
-                                                             body.strip())
+            body = self._envs((opt or "") + rest, depth, display_body=True)
+            if base_env in L.ROW_NUMBERED_ENVS and r"\label" in body and len(L.alignment_cells(body)) > 1:
+                for start, _, name, _ in reversed(list(L.display_marks(body))):
+                    if name == "label":
+                        body = body[:start] + r"\rowlabel" + body[start + len(r"\label"):]
+            return "\\begin{display}%s\\end{display}" % body.strip()
         if cls == "grid":
             self.stats["env_grid:" + env] += 1
+            if env == "array":
+                _, rest = self._opt_arg(rest)
             body = self._envs((opt or "") + rest, depth)
             if env == "array" or env.endswith("NiceArray") \
                     or env.endswith("NiceMatrix") or env == "NiceTabular":
@@ -2305,19 +2327,29 @@ class Normalizer:
         return "\\begin{%s}%s%s\\end{%s}" % (env, opt or "",
                                              self._envs(rest, depth), env)
 
-    def _hoist(self, body: str) -> Tuple[str, str, str]:
-        label = tag = ""
-        m = re.search(r"\\label\s*\{[^{}]*\}", body)
-        if m:
-            label = m.group(0) + "\n"
-            body = body[:m.start()] + body[m.end():]
-        m = re.search(r"\\tag\s*\{[^{}]*\}", body)
-        if m:
-            tag = m.group(0) + "\n"
-            body = body[:m.start()] + body[m.end():]
-        return label, tag, body
-
     # -- lists ----------------------------------------------------------
+    @staticmethod
+    def _preserve_unobserved_list_counters(body):
+        # TeX replay inserts the printed label of each affected item. Without
+        # that evidence retain the list as one reviewable source block.
+        if not re.search(r"\\(?:setcounter|addtocounter)\s*\{enum[iv]+\}", body):
+            return body
+        pos = 0
+        opening = re.compile(r"\\begin\s*\{enumerate\}")
+        while match := opening.search(body, pos):
+            end = L.find_env_end(body, match.end(), "enumerate")
+            if not end:
+                break
+            source = body[match.start():end.end()]
+            if (re.search(r"\\(?:setcounter|addtocounter)\s*\{enum[iv]+\}", source) and
+                    re.search(r"\\item(?![A-Za-z@])\s*(?!\s|\[)", source)):
+                capsule = preserved.pack("list", source, status="pending", reason="unobserved_item_numbers")
+                body = body[:match.start()] + capsule + body[end.end():]
+                pos = match.start()+len(capsule)
+            else:
+                pos = match.end()
+        return body
+
     def _list(self, env: str, opt: Optional[str], inner: str,
               depth: int) -> str:
         spec = parse_label_option(opt)
@@ -2490,51 +2522,38 @@ class Normalizer:
             body = (body[:m.start()] + body[m.start(1) + 1: first - 1]
                     + body[second:])
 
-    def _unwrap_last_arg(self, body: str, name: str,
-                         min_groups: int = 2) -> str:
-        """``\\scalebox{0.7}{x}`` -> ``x`` (drop the size, keep the content).
-
-        As a META command the whole call went, so a drawing wrapped in
-        ``\\scalebox`` vanished and left an empty display behind.
-
-        These calls have one argument that is content and one or more that are
-        not: a raise, an angle, a scale, or an optional ``[0ex]`` height and
-        depth.  The content is the last brace group, the rest is size.  Only the
-        brace groups were counted, so ``\\raisebox{-0.25ex}[0ex][0ex]{x}``
-        stopped at the first ``[`` and the call came out as
-        ``\\raisebox [0ex][0ex]{x}`` -- a command that means nothing, inside a
-        formula.  The optional groups are skipped, not counted.
-        """
-        pat = re.compile(r"\\" + name + r"(?![A-Za-z@])\s*")
+    def _unwrap_last_arg(self, body: str, name: str) -> str:
+        """Read the command's signature and leave the next independent group intact."""
+        signatures = {"raisebox": "{[[{", "scalebox": "{[{", "resizebox": "{{{",
+                      "rotatebox": "[{{", "framebox": "[[{", "hyperref": "[{"}
+        pat = re.compile(r"\\" + name + r"(?![A-Za-z@])" + (r"\*?" if name == "resizebox" else ""))
         pos = 0
-        while True:
-            m = pat.search(body, pos)
-            if not m:
-                return body
-            i = m.end()
-            groups: List[Tuple[int, int]] = []
-            while True:
-                j = i
-                while j < len(body) and body[j] in " \t\n":
-                    j += 1
-                if j < len(body) and body[j] in "{[":
-                    end = L.find_group_end(body, j)
-                    if end is None:
-                        break
-                    if body[j] == "{":
-                        groups.append((j + 1, end - 1))
-                    i = end
-                    continue
-                break
-            if len(groups) < min_groups:
-                pos = m.end()
+        while match := pat.search(body, pos):
+            cursor = match.end()
+            signature = signatures[name]
+            if name == "hyperref" and not body[cursor:].lstrip().startswith("["):
+                signature = "{{{{"  # legacy URL/category/name/text form
+            for delimiter in signature:
+                while cursor < len(body) and body[cursor].isspace():
+                    cursor += 1
+                if not body.startswith(delimiter, cursor):
+                    if delimiter == "[":
+                        continue
+                    break
+                end = L.find_group_end(body, cursor)
+                if end is None:
+                    break
+                start, cursor = cursor + 1, end
+            else:
+                body = body[:match.start()] + body[start:cursor-1] + body[cursor:]
+                pos = match.start()
+                self.stats["unwrap:" + name] += 1
                 continue
-            s, e = groups[-1]
-            body = body[:m.start()] + body[s:e] + body[i:]
-            pos = m.start()
-            self.stats["unwrap:" + name] += 1
+            pos = match.end()
+        return body
 
     def _commands(self, body: str) -> str:
+        body = re.sub(r"\\(ref|eqref|cref|Cref|autoref)\*(?=\s*\{)", r"\\\1", body)
         # one reference form: \eqref{x}, \cref{x}, \autoref{x} -> \ref{x}
         for old in ("eqref", "cref", "Cref", "autoref", "cites"):
             new = "ref" if old != "cites" else "cite"
@@ -2820,8 +2839,7 @@ class Normalizer:
             extra = extra | set(self.names.unwrap) | set(self.names.ignore)
         extra = extra | self.dimension_names
         allowed = (self.lexicon | extra |
-                   {"begin", "end", "item", "label", "tag", "ref", "cite",
-                    "section", "subsection", "subsubsection", "paragraph",
+                   set(L.HEADING_CMDS) | {"begin", "end", "item", "label", "rowlabel", "tag", "taglabel", "ref", "cite",
                     "statement", "display", "list", "grid", "diagram"})
         out = Counter()
         for name in L.control_words(body):
@@ -3095,7 +3113,7 @@ def self_test() -> int:
         ("size stripped", "\\left" not in out and "( \\frac{a}{b} )" in out),
         ("display canonical", out.count("\\begin{display}") == 2),
         ("statement canonical", "\\begin{statement}{lemma}" in out),
-        ("label hoisted", "\\label{eq:a}\n\\begin{display}" in out),
+        ("label stays in its display", re.search(r"\\begin\{display\}(?:(?!\\end\{display\}).)*?\\label\{eq:a\}", out, re.S) is not None),
         ("list canonical", "\\begin{list}{enumerate}" in out),
         ("label rendered", "\\item[(i)] first" in out
          and "\\item[(ii)] second" in out),
@@ -3258,7 +3276,8 @@ def main(argv: List[str] = None) -> int:
     manual_names = manual_review.decisions(os.path.dirname(args.out) or ".", paper, "names") if args.out else {}
     table = NameTable(paper=paper)
     for name, decision in manual_names.items():
-        table._add(name, decision, "manual", force=True)
+        if table.origin.get(name) not in ("tex", "override"):
+            table._add(name, decision, decision.get("source", "manual"), force=True)
     n = Normalizer(names=table, paper=paper, switches=dict(args.switch))
     n.sources = sources
     out = n.normalize(tex, loaded_styles=loaded_styles)
@@ -3276,7 +3295,7 @@ def main(argv: List[str] = None) -> int:
         "kept_macros": dict(n.kept_macros),
         "input": args.tex,
         "paper_id": paper,
-        "manual_names": {name: dict(rec, source="manual") for name, rec in manual_names.items()},
+        "manual_names": manual_names,
         "input_chars": len(tex),
         "output_chars": len(out),
         "stats": dict(sorted(n.stats.items())),
@@ -3304,6 +3323,12 @@ def main(argv: List[str] = None) -> int:
         print("issues written: %s" % args.issues)
 
     if args.stats:
+        import formula_review
+        directory = os.path.dirname(os.path.abspath(args.stats))
+        evidence = formula_review.source_evidence(tex, sources, paper, out)
+        tex_execution.write_report(formula_review.evidence_path(directory), evidence)
+        report["source_evidence"] = "source_evidence.json"
+        report["source_evidence_sha256"] = manual_review.digest(evidence)
         with open(args.stats, "w", encoding="utf-8") as fh:
             json.dump(report, fh, ensure_ascii=False, indent=2)
     print(json.dumps({k: report[k] for k in

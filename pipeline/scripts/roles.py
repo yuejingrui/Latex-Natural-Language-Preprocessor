@@ -96,11 +96,18 @@ def shape(formula):
     return (formula or "").replace("\n", " ").strip()
 
 
+def effective_relation(formula):
+    if "logical_relations" in formula:
+        rows = formula["logical_relations"]
+        return rows[0] if len(rows) == 1 and "symbol" in rows[0] else None
+    return formula.get("top_relation")
+
+
 def group_key(sentence, formula, fid):
     words = preceding_words(sentence.get("text") or "", fid)
     # the last two content words are a stable mechanical label, not a decision
     tail = " ".join(words[-2:]) if words else "(start)"
-    symbol = (formula.get("top_relation") or {}).get("symbol") or "atomic"
+    symbol = (effective_relation(formula) or {}).get("symbol") or "atomic"
     # the rest of the sentence, with every formula id masked: two formulas from
     # different sentences used to share a group whenever their last two words and
     # their relation matched, and the conflict report then named formulas that
@@ -194,7 +201,7 @@ def anchor_window(sentences, index, width=1):
 def explicit_role(sentence, formula):
     """A directly attached quantifier or condition governing a relation."""
     target = _find(sentence, formula["id"])
-    rel = formula.get("top_relation")
+    rel = effective_relation(formula)
     if not target or not rel:
         return None
     prefix = sentence[:target.start()]
@@ -1016,7 +1023,7 @@ def main(argv=None):
         anchor = anchors[fid]
         decision = manual.get(manual_review.role_key(fid, anchor))
         if decision:
-            roles[fid] = {"source": "manual", "final": decision["answer"], "formula": current[fid],
+            roles[fid] = {**manual_review.provenance(decision), "final": decision["answer"], "formula": current[fid],
                           "role_now": item["role_now"],
                           "note": decision["note"],
                           "before_manual": dict(roles[fid], anchor=anchor) if fid in roles else None}
@@ -1035,7 +1042,7 @@ def main(argv=None):
         fid = item["fid"]
         role = roles.get(fid, {})
         if role.get("final"):
-            if item["rule"] and role.get("source") != "manual" and not role.get("model_review"):
+            if item["rule"] and role.get("source") != "manual" and "before_manual" not in role and not role.get("model_review"):
                 questions.append(item)
             continue
         if role.get("unsure"):

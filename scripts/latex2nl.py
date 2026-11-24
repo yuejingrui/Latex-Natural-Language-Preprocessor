@@ -104,7 +104,7 @@ DROP_ENVS = (
 )
 
 #: sectioning commands, outermost first
-HEADING_CMDS = ("section", "subsection", "subsubsection", "paragraph",
+HEADING_CMDS = ("part", "chapter", "section", "subsection", "subsubsection", "paragraph",
                 "subparagraph")
 
 #: accent commands -> combining character
@@ -320,6 +320,8 @@ class Unit:
     section: str
     title: Optional[str]
     body: str
+    section_scope: tuple = ()
+    enclosing_units: tuple = ()
 
 
 @dataclass
@@ -347,6 +349,9 @@ class FormulaRecord:
     ref_kind: Optional[str] = None
     opaque: bool = False
     unrecognized_commands: List[str] = field(default_factory=list)
+    labels: List[str] = field(default_factory=list)
+    rows: List[dict] = field(default_factory=list)
+    display_tags: List[dict] = field(default_factory=list)
     #: the sentence this formula came from was dropped, so nothing points at
     #: the record; the anchors say where it stood
     orphan: bool = False
@@ -354,6 +359,9 @@ class FormulaRecord:
 
     def to_dict(self) -> dict:
         out = dict(self.__dict__)
+        for key in ('labels', 'rows', 'display_tags'):
+            if not out[key]:
+                del out[key]
         if not self.opaque:
             out.pop('opaque', None)
         if not self.unrecognized_commands:
@@ -375,6 +383,10 @@ class Span:
     body: str
     env: Optional[str] = None
     label: Optional[str] = None
+
+    labels: List[str] = field(default_factory=list)
+    row_labels: List[List[str]] = field(default_factory=list)
+    display_tags: List[dict] = field(default_factory=list)
 
 
 #: ``\partmarker{step}`` comes from normalize when a paper writes a bare
@@ -409,6 +421,8 @@ class Sentence:
     #: {"kind": "step", "index": 3} when the sentence starts a declared part
     part: Optional[dict] = None
     content_kind: str = "prose"
+    section_scope: tuple = ()
+    enclosing_units: tuple = ()
 
     def to_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -1655,6 +1669,70 @@ def tokenize(sentence: str) -> List[str]:
 # --------------------------------------------------------------------------
 
 
+ALIGN_TOKEN = re.compile(r"\\(?:begin|end)\s*\{[^{}]+\}|\\\\|\\[a-zA-Z@]+|\\.|[{}&]")
+ROW_NUMBERED_ENVS = {"align", "alignat", "flalign", "xalignat", "xxalignat", "gather", "eqnarray", "IEEEeqnarray"}
+DISPLAY_LABEL = re.compile(r"\\(rowlabel|label|taglabel|tag)\*?\s*\{")
+
+
+def alignment_cells(body):
+    """Split only alignment tabs and row breaks belonging to the outer display."""
+    rows, cells = [], []
+    start = depth = 0
+    for token in ALIGN_TOKEN.finditer(body):
+        if token.start() < start:
+            continue
+        value = token[0]
+        if value == "{" or value.startswith(r"\begin") and value.endswith("}"):
+            depth += 1
+        elif value == "}" or value.startswith(r"\end") and value.endswith("}"):
+            depth = max(0, depth - 1)
+        elif not depth and value in ("&", r"\\"):
+            cells.append(body[start:token.start()])
+            start = token.end()
+            if value == r"\\":
+                rows.append(cells)
+                cells = []
+                option = re.match(r"\*?\s*\[", body[start:])
+                if option:
+                    start = find_group_end(body, start + option.end() - 1) or start
+                elif body.startswith("*", start):
+                    start += 1
+    cells.append(body[start:])
+    if not rows or any(cell.strip() for cell in cells):
+        rows.append(cells)
+    return rows
+
+
+def display_marks(body):
+    """Read balanced label/tag arguments, preserving offsets for source cleanup."""
+    pos = 0
+    for m in DISPLAY_LABEL.finditer(body):
+        if m.start() < pos or (m.start() - len(body[:m.start()].rstrip("\\"))) % 2:
+            continue
+        pos = find_group_end(body, m.end()-1)
+        if pos is None:
+            return
+        yield m.start(), pos, m[1], body[m.end():pos-1]
+
+
+def formula_destinations(formulas):
+    targets = {}
+    for f in formulas:
+        if f.get("kind") not in ("display", "inline"):
+            continue
+        for label in f.get("labels", []):
+            targets[label] = {"formula": f["id"]}
+        for n, row in enumerate(f.get("rows", []), 1):
+            for label in row.get("labels", []):
+                targets[label] = {"formula": f["id"], "row": n}
+    return targets
+
+
+def reference_keys(target):
+    # A comma may also occur inside a single label; callers prefer an exact match.
+    return [k.strip() for k in (target or "").split(",") if k.strip()]
+
+
 def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
                     report_unclosed=True) -> List[Span]:
     """Locate ``$..$``, ``$$..$$``, ``\\(..\\)``, ``\\[..\\]`` and display envs."""
@@ -1797,15 +1875,29 @@ def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
     for s in spans:
         # Opaque formula interiors are data, not a place for heuristic cleanup.
         # In particular, unknown argument groups may hold text or nested math.
-        if not clean or unknown_commands(s.body):
+        if not clean:
             continue
-        # \taglabel{X} is a \tag the normalizer turned into a label; it is not a
-        # \label, so the hoisting that moves \label out of the body never sees it
-        for lm in re.finditer(r"\\(?:label|taglabel)\{([^}]*)\}", s.body):
-            s.label = lm.group(1)
-            break
-        if s.label:
-            s.body = re.sub(r"\\(?:label|taglabel)\{[^}]*\}", " ", s.body).strip()
+        marks = list(display_marks(s.body))
+        if marks:
+            s.labels = [name for _, _, kind, name in marks if kind in ("label", "rowlabel")]
+            s.label = s.labels[0] if s.labels else marks[0][3]
+            cells_by_row = alignment_cells(s.body)
+            for n, cells in enumerate(cells_by_row, 1):
+                for _, _, kind, tag in display_marks("&".join(cells)):
+                    if kind in ("tag", "taglabel"):
+                        s.display_tags.append({"value":tag, "line":n})
+            if len(cells_by_row) > 1:
+                kinds = {"rowlabel"}
+                if (s.env or "").rstrip("*") in ROW_NUMBERED_ENVS:
+                    kinds.add("label")
+                s.row_labels = [[name for _, _, kind, name in display_marks("&".join(cells)) if kind in kinds]
+                                for cells in cells_by_row]
+        if unknown_commands(s.body):
+            continue
+        for start, end, _, _ in reversed(marks):
+            s.body = s.body[:start] + " " + s.body[end:]
+        if marks:
+            s.body = s.body.strip()
         if "\\ensuremath" in s.body:
             # the wrapper means "this is maths", already true inside a formula
             s.body = re.sub(r"\\ensuremath\s*\{([^{}]*)\}", r"\1", s.body)
@@ -2017,24 +2109,36 @@ def extract_text_slots(body: str, promoted: Optional[List[str]] = None,
         out.append(body[cursor:start])
         # A standalone word labelling a symbol's subscript has its own role,
         # including when that word also names an operator elsewhere.
-        label = (re.search(r"[A-Za-z0-9]_\{\s*$", body[:start])
-                 and re.match(r"\s*\}", body[end:])
-                 and re.fullmatch(r"[A-Za-z]+", raw.strip())
-                 and not re.search(r"\\[A-Za-z]+_\{\s*$", body[:start])
-                 and not (not body.startswith(r"\text{", start)
-                          and is_operator_name(raw, roles, declared)))
-        if not label and is_operator_name(raw, roles, declared):
+        prefix, suffix = body[:start], body[end:]
+        named = is_operator_name(raw, roles, declared)
+        script = re.search(r"([_^])\{\s*$", prefix)
+        simple_script = script and re.match(r"\s*\}", suffix) and raw.strip().isalpha()
+        label = simple_script and (named or (
+            re.search(r"[A-Za-z0-9]_\{\s*$", prefix)
+            and not re.search(r"\\[A-Za-z]+_\{\s*$", prefix)))
+        applied = named and re.match(r"\s*(?:\\left\s*)?[(\[]", suffix)
+        if applied and not re.match(r"\\text(?![A-Za-z@])", body[start:]):
             out.append("\\operatorname{%s}" % raw)
             if promoted is not None:
                 promoted.append(raw)
             cursor = end
             continue
+        role = classify_text_slot(raw, roles)
+        rule = "slot_table"
+        if label:
+            role, rule = "label", "symbol_script_label"
+            if script[1] == "_":
+                rule = "symbol_subscript_label"
+        elif applied:
+            role, rule = "operator", "applied_operator_name"
+        elif role == "operator":
+            role = "unclassified"
         slots.append({
             "index": len(slots) + 1,
             "raw": raw,
             "key": slot_key(raw),
-            "role": "label" if label else classify_text_slot(raw, roles),
-            "rule": "symbol_subscript_label" if label else "slot_table",
+            "role": role,
+            "rule": rule,
             "offset": start,
             "before": "".join(out)[-30:],
             "after": body[end: end + 30],
@@ -2265,6 +2369,13 @@ def top_level_relations(body: str,
         elif kind[:3] == "TXT" and kind[3:] in predicates:
             found.append({"pos": pos, "end": end, "op": body[pos:end],
                           "symbol": predicates[kind[3:]]})
+    negated = {"=":"≠", "∈":"∉", "∋":"∌", "<":"≮", ">":"≯", "≤":"≰", "≥":"≱",
+               "⊂":"⊄", "⊆":"⊈", "⊃":"⊅", "⊇":"⊉", "≡":"≢", "≈":"≉", "∼":"≁"}
+    for relation in found:
+        modifier = re.search(r"(?<!\\)\\not\s*$", body[:relation["pos"]])
+        if modifier:
+            relation.update(pos=modifier.start(), op=body[modifier.start():relation["end"]],
+                            symbol=negated.get(relation["symbol"], r"\not " + relation["op"]))
     return found
 
 
@@ -2377,6 +2488,34 @@ def is_simple_identifier(s: str) -> bool:
 def last_word_prefix(before: str) -> str:
     m = re.search(r"([A-Za-z][A-Za-z\-']*)[^A-Za-z]*$", before)
     return m.group(1).lower() if m else ""
+
+
+def aligned_relations(body, slots=None):
+    if "&" not in body and r"\\" not in body:
+        return []
+    lines = alignment_cells(body)
+    if len(lines) == 1 and len(lines[0]) == 1:
+        return []
+    rows = []
+    for cells in lines:
+        row = {"expanded": "&".join(cells).strip(), "relations": []}
+        # eqnarray puts the relation alone in the middle of three cells.
+        groups = [cells[i:i+2] for i in range(0, len(cells), 2)]
+        if len(cells) == 3:
+            middle = cells[1].strip()
+            rels = top_level_relations(middle, slots)
+            if len(rels) == 1 and rels[0]["pos"] == 0 and rels[0]["end"] == len(middle):
+                groups = [cells]
+        for group in groups:
+            expression = "".join(group).strip().rstrip(",;").rstrip()
+            relations = top_level_relations(expression, slots)
+            if relations:
+                rel = relations[-1]
+                row["relations"].append({"symbol": rel["symbol"],
+                                         "lhs": expression[:rel["pos"]].strip(),
+                                         "rhs": expression[rel["end"]:].strip()})
+        rows.append(row)
+    return rows
 
 
 def classify_role(body: str, kind: str, before: str, after: str,
@@ -2570,7 +2709,7 @@ def unknown_commands(body: str) -> List[str]:
     """
     out = []
     for name in control_words(body):
-        if name == 'taglabel':
+        if name in ('taglabel', 'rowlabel'):
             continue  # Internal label transport produced by normalize, not math vocabulary.
         if (name not in LEXICON_COMMANDS and name not in ANSWERED_COMMANDS
                 and name not in _PAPER_ANSWERED):
@@ -2779,9 +2918,18 @@ class LatexToNL:
         names: Dict[str, int] = {}
         for name in self.operator_names:
             names[name] = names.get(name, 0) + 1
+        formulas = [f.to_dict() for f in self.formulas]
+        targets = formula_destinations(formulas)
+        for f in formulas:
+            if f.get("ref_kind") == "ref":
+                key = f["ref_target"]
+                keys = [key] if key in targets else reference_keys(key)
+                matches = [dict(label=k, **targets[k]) for k in keys if k in targets]
+                if matches:
+                    f["ref_destinations"] = matches
         return {
             "sentences": [s.to_dict() for s in self.sentences],
-            "formulas": [f.to_dict() for f in self.formulas],
+            "formulas": formulas,
             "content_blocks": self.content_blocks,
             "unresolved": list(self.unresolved),
             "formula_diagnostics": list(self.formula_diagnostics),
@@ -2846,7 +2994,7 @@ class LatexToNL:
             note = self._shield_opaque_math(note)
             before = len(self.sentences)
             unit = Unit(uid=block["id"], env="caption" if pending else block["kind"],
-                        section=anchors[0].section if anchors else "",
+                        section=anchors[0].section if anchors else "", section_scope=anchors[0].section_scope if anchors else (),
                         title=None, body=note)
             self._process_unit(unit)
             block["preview_sentence_ids" if pending else "sentence_ids"] = [s.sid for s in self.sentences[before:]]
@@ -2929,38 +3077,54 @@ class LatexToNL:
 
     # -- stage: segmentation -------------------------------------------
     def _segment(self, body: str) -> List[Unit]:
-        chunks: List[Tuple[str, str]] = []
-        heading_re = re.compile(r"\\(" + "|".join(HEADING_CMDS) + r")\*?\s*\{")
+        chunks = []
+        heading_re = re.compile(r"\\(" + "|".join(HEADING_CMDS) + r")(?![A-Za-z@])\*?\s*")
         pos = 0
         stack: Dict[str, str] = {}
         current = ""
-        for m in heading_re.finditer(body):
-            chunks.append((current, body[pos: m.start()]))
-            end = find_group_end(body, m.end() - 1)
-            if end is None:
-                pos = m.end()
+        scope = {}
+        for number, m in enumerate(heading_re.finditer(body), 1):
+            start = m.end()
+            if m.start() < pos:
                 continue
-            title = self._clean_heading(body[m.end(): end - 1])
+            if body.startswith("[", start):
+                after_short = find_group_end(body, start)
+                if after_short is None:
+                    continue
+                start = after_short
+                while start < len(body) and body[start].isspace():
+                    start += 1
+            if not body.startswith("{", start):
+                continue
+            end = find_group_end(body, start)
+            if end is None:
+                continue
+            chunks.append((current, tuple(scope.values()), body[pos: m.start()]))
+            title = self._clean_heading(body[start + 1:end - 1])
             if m.group(1) in ("paragraph", "subparagraph") and title.endswith("."):
                 # a run-in heading ("Run-in. Text follows.") is the start of the
                 # sentence, not a section of its own (AUDIT.md small items)
-                chunks.append((current, " " + title))
+                chunks.append((current, tuple(scope.values()), " " + title))
                 pos = end
                 continue
             level = HEADING_CMDS.index(m.group(1))
             for k in list(stack):
                 if HEADING_CMDS.index(k) >= level:
                     del stack[k]
+                    del scope[k]
+            scope[m.group(1)] = number
             stack[m.group(1)] = title
             ordered = sorted(stack.items(),
                              key=lambda kv: HEADING_CMDS.index(kv[0]))
             current = " > ".join(t for _k, t in ordered)
             pos = end
-        chunks.append((current, body[pos:]))
+        chunks.append((current, tuple(scope.values()), body[pos:]))
 
         units: List[Unit] = []
-        for section, chunk in chunks:
-            units.extend(self._units_in_chunk(chunk, section))
+        for section, section_scope, chunk in chunks:
+            for unit in self._units_in_chunk(chunk, section):
+                unit.section_scope = section_scope
+                units.append(unit)
         return units
 
     def _clean_heading(self, title: str) -> str:
@@ -3026,7 +3190,14 @@ class LatexToNL:
             if env == "proof" and title is None and last_claim:
                 title = "proof of " + last_claim
             pieces = self._split_items(content)
-            if len(pieces) > 1:
+            if begin_re.search(content):
+                for child in self._units_in_chunk(content, section):
+                    if child.env == "prose":
+                        units.append(Unit(uid, env, section, title, child.body))
+                    else:
+                        child.enclosing_units = (uid,) + child.enclosing_units
+                        units.append(child)
+            elif len(pieces) > 1:
                 for k, piece in enumerate(pieces, start=1):
                     units.append(Unit("%s/item%d" % (uid, k), env, section,
                                       title, piece))
@@ -3276,7 +3447,7 @@ class LatexToNL:
                              if real_words > self.max_words else [])
                     self.sentences.append(Sentence(
                         sid="s%d" % self._sentence_count, text=sent, unit=unit.uid,
-                        env=unit.env, section=unit.section, title=unit.title,
+                        env=unit.env, section=unit.section, title=unit.title, section_scope=unit.section_scope, enclosing_units=unit.enclosing_units,
                         speech_act=classify_speech_act(sent),
                         formulas=ids, tokens=toks, words=words, flags=flags,
                         part=part, content_kind=content_kind,
@@ -3304,7 +3475,7 @@ class LatexToNL:
                 manual = self.reviewed.get(("sentence", sig))
                 if manual:
                     answer = manual["answer"]
-                    self.applied_boundaries.append({"sig": sig, "answer": answer, "source": "manual"})
+                    self.applied_boundaries.append({"sig": sig, "answer": answer, **manual_review.provenance(manual)})
                 if answer is not None:
                     self._answers_used.add(sig)
                 # A single initial before a capitalized word is ambiguous:
@@ -3549,7 +3720,7 @@ class LatexToNL:
         manual = self.reviewed.get(("slot", anchor))
         if manual:
             answer = role = manual["answer"]
-            record["source"] = "manual"
+            record.update(manual_review.provenance(manual))
         elif role != "unclassified":
             record["rule"] = slot["rule"]
             if answer and rule_reviews.from_model(row.get("source")):
@@ -3589,7 +3760,7 @@ class LatexToNL:
             split = decision["answer"] == "split"
             mark = rec.trailing_punct
             drop = (mark in (",", ";") if split else mark in (".", "!", "?"))
-            self.applied_boundaries.append({"id": rec.id, "answer": decision["answer"], "source": "manual"})
+            self.applied_boundaries.append({"id": rec.id, "answer": decision["answer"], **manual_review.provenance(decision)})
         else:
             self._note(rec.id, message)
         if drop:
@@ -3669,6 +3840,8 @@ class LatexToNL:
             rec = FormulaRecord(id=pid, raw=body, expanded=core, kind=span.kind,
                                 role='opaque', opaque=True, unrecognized_commands=unknown,
                                 env=span.env, label=span.label, trailing_punct=punct,
+                                labels=list(span.labels), display_tags=list(span.display_tags),
+                                rows=[{"labels": names} if names else {} for names in span.row_labels] if any(span.row_labels) else [],
                                 flags=['opaque_formula'], context_before=before[-120:],
                                 context_after=after[:80])
             if unknown:
@@ -3680,7 +3853,7 @@ class LatexToNL:
         side: List[str] = []
         terminal = ""
 
-        if span.kind == "display" and self.split_qquad:
+        if span.kind == "display" and self.split_qquad and not span.label and r"\\" not in body:
             raw_parts = [p.strip() for p in split_top_level(body, "\\qquad")]
             raw_parts = [p for p in raw_parts if p]
             if len(raw_parts) > 1:
@@ -3745,8 +3918,14 @@ class LatexToNL:
                     slot["offset"] = part_offset + offsets[slot["offset"]]
             text_slots = [self._slot_record(pid, slot, body, source_id, before, after)
                           for slot in raw_slots]
-            role, flags, top = classify_role(core, span.kind, before, after,
-                                             raw_slots)
+            role, flags, top = classify_role(core, span.kind, before, after, raw_slots)
+            rows = aligned_relations(core, raw_slots) if span.kind == "display" and not diagram else []
+            if rows:
+                flags = [flag for flag in flags if flag != "relation_chain"] + ["alignment"]
+                top = rows[0]["relations"][0] if len(rows) == 1 and len(rows[0]["relations"]) == 1 else None
+                for row, labels in zip(rows, span.row_labels):
+                    if labels:
+                        row["labels"] = labels
             if diagram:
                 role, flags = "term", ["diagram"]
             affix = None
@@ -3762,7 +3941,8 @@ class LatexToNL:
                 trailing_punct=punct if idx == len(parts) - 1 else "",
                 side_conditions=list(side) if idx == len(parts) - 1 else [],
                 text_slots=text_slots,
-                top_relation=top, flags=list(flags),
+                top_relation=top, flags=list(flags), rows=rows,
+                labels=list(span.labels), display_tags=list(span.display_tags),
                 context_before=re.sub(r"\s+", " ", normalize_dashes_quotes(
                     before.replace(HARD_BREAK, " "))).strip()[-80:],
                 context_after=re.sub(r"\s+", " ", normalize_dashes_quotes(
@@ -3933,6 +4113,7 @@ def write_outputs(result: Dict[str, object], out_dir: str,
     with open(os.path.join(out_dir, "split_status.json"), "w", encoding="utf-8") as f:
         json.dump({"version": 2, "paper_id": result.get("paper_id"),
                    "manual_boundaries": result.get("manual_boundaries", []),
+                   "structure_schema": result.get("structure_schema", 0),
                    "counts": {key: len(result.get(key, [])) for key in ('sentences','formulas','content_blocks')},
                    "pending": {"content": sum(b.get('status') == 'pending' for b in result.get('content_blocks', [])),
                                "boundaries": sum(not b.get('answer') for b in result.get('sentence_boundaries', [])),
@@ -4163,11 +4344,7 @@ def _self_test() -> int:
           str(r["unresolved"]))
 
     print("[12c] an upright name is an operator, not a text slot")
-    # the paper has to say the name is an operator somewhere: it writes
-    # \operatorname{Ric} (a \DeclareMathOperator expands to that form) and
-    # \operatorname{PIC}, so \textup{Ric} and C_{\textup{PIC}} are the same
-    # names set upright.  Without that evidence they stay text slots, which the
-    # check below [12d] covers.
+    # An applied upright name and an isolated script label have distinct roles.
     r = run("We have $\\textup{Ric}(S)\\ge 0\\quad\\text{for every } S"
             "\\in C_{\\textup{PIC}}$ and $\\textbf{v}=0$ and $n\\text{ even}$,"
             " where $\\operatorname{Ric}(T)$ and $\\operatorname{PIC}$ are "
@@ -4175,13 +4352,13 @@ def _self_test() -> int:
     f = r["formulas"][0]
     check("name kept in formula", "\\operatorname{Ric}(S)" in f["expanded"],
           f["expanded"])
-    check("label kept in subscript", "C_{\\operatorname{PIC}}" in f["expanded"],
+    check("label kept in subscript", "C_{<TXT2>}" in f["expanded"] and f["text_slots"][1]["role"] == "label",
           f["expanded"])
     check("phrase is still a slot",
-          [s["raw"] for s in f["text_slots"]] == ["for every "],
+          [s["raw"] for s in f["text_slots"]] == ["for every ", "PIC"],
           str(f["text_slots"]))
     check("raw untouched", "\\textup{Ric}" in f["raw"], f["raw"])
-    check("names reported", r["operator_names"] == {"Ric": 1, "PIC": 1},
+    check("names reported", r["operator_names"] == {"Ric": 1},
           str(r["operator_names"]))
     check("single letter left alone",
           len(r["formulas"][1]["text_slots"]) == 1, str(r["formulas"][1]))
@@ -4753,10 +4930,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     _PAPER_ANSWERED.update(key for kind, key in conv.reviewed if kind == "names")
     result = conv.convert(tex)
     result["paper_id"] = conv.paper
+    import formula_review
+    evidence, numbers = formula_review.evidence(args.out, conv.paper) if args.canonical else ({}, {})
+    formula_review.attach(result["formulas"], evidence, numbers, conv.reviewed)
+    result["structure_schema"] = 1
     for block in result["content_blocks"]:
         if (block.get("kind") == "float" and block.get("status") == "pending"
                 and ("content", manual_review.block_key(block)) in conv.reviewed):
-            block.update(status="retained", source="manual")
+            block.update(status="retained", **manual_review.provenance(conv.reviewed[("content", manual_review.block_key(block))]))
     paths = write_outputs(result, args.out, write_tokens=not args.no_tok)
     # after the conversion: writing here used to produce an empty ledger,
     # because nothing had been recorded yet

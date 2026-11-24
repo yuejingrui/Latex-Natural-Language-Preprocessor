@@ -367,12 +367,16 @@ class FormulaScan:
             if kind == "_" and items and items[-1]["t"] == "factor" \
                     and items[-1]["k"] == "ident" \
                     and not items[-1]["sig"].endswith("_\u00b7"):
+                last, position = self.toks[self.i - 1]
+                items[-1]["symbol"] = symbol_key(items[-1]["sig"] + self.body[pos:position+len(last)].strip())
                 items[-1]["sig"] += "_\u00b7"
             return
         if kind == "prime":
             self.i += 1
             if items and items[-1]["t"] == "factor" and items[-1]["k"] == "ident":
                 items[-1]["sig"] += "'"
+                if "symbol" in items[-1]:
+                    items[-1]["symbol"] += "'"
             return
         if kind in ("thin", "ignore", "postfix"):
             self.i += 1
@@ -557,10 +561,11 @@ class FormulaScan:
                 if any(it["t"] == "break" and it["k"] == "arrow"
                        and it["text"].lstrip("\\") in self.lex.type_arrows
                        for it in rest):
-                    return heads
+                    family = any(h.get("k") == "ellipsis" for h in self.top[:n])
+                    return [h["sig"] if family else h.get("symbol", h["sig"]) for h in heads]
                 return []
             if item["t"] == "factor" and item["k"] == "ident":
-                heads.append(item["sig"])
+                heads.append(item)
             elif item["t"] == "break" and item["k"] in ("punct", "ellipsis"):
                 continue
             else:
@@ -607,9 +612,10 @@ def _paper_answered(paper):
 
 import rule_reviews
 import manual_review
+from notation_scopes import NotationScopes, symbol_key
 
 
-PAPER_EVIDENCE = {"arrow_decl", "tuple_arg", "product_decl", "function_value"}  # tuple_arg occurs in older caches
+PAPER_EVIDENCE = {"arrow_decl", "tuple_arg", "product_decl", "function_value", "scalar_decl", "function_decl"}  # tuple_arg occurs in older caches
 PRODUCT_DECL = re.compile(
     r"^(?:(?:Throughout|In this paper)\s*,?\s+)?(?P<id>MATH\d+)\s+"
     r"(?:denotes|is defined as)\s+(?:the|an?)\s+(?:(?:ordinary|usual)\s+)?"
@@ -637,7 +643,7 @@ def asserted_reading(text):
 
 
 def product_sites(sentences):
-    sites, definitions, other_definitions = set(), set(), set()
+    sites, definitions = set(), set()
     for sent in sentences:
         text = sent.get("text", "")
         ids = set(sent.get("formulas", ()))
@@ -646,15 +652,11 @@ def product_sites(sentences):
         if asserted and declaration and declaration["id"] in ids:
             sites.add(declaration["id"])
             definitions.add(declaration["id"])
-        else:
-            for match in re.finditer(r"\b(MATH\d+)\s+(?:denotes|is defined as|represents)\b", text, re.I):
-                if match[1] in ids:
-                    other_definitions.add(match[1])
         if not asserted:
             continue
         for match in PRODUCT_USE.finditer(text):
             sites.update(fid for fid in match.groups() if fid in ids)
-    return sites, definitions, other_definitions
+    return sites, definitions
 
 
 def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
@@ -664,7 +666,6 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
     decided = collections.Counter()
     operators = collections.Counter()
     unknown = collections.defaultdict(list)
-    declared = {}                       # sig -> formula id
 
     bodies = []
     slot_operators = {}
@@ -691,7 +692,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
             bodies.append(("%s.side%d" % (f["id"], n), side))
             side_bodies += 1
 
-    products, definitions, other_definitions = product_sites(sentences)
+    products, definitions = product_sites(sentences)
     body_by_id = dict(bodies)
     order = {fid: i for i, (fid, _) in enumerate(bodies)}
     contexts = {fid: sent.get("text", "") for sent in sentences for fid in sent.get("formulas", [])}
@@ -700,15 +701,18 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
                    for fid in match.groups() if fid}
     entries = collections.defaultdict(list)
     declarations = collections.defaultdict(list)
+    row_formulas = {f["id"]: f["rows"] for f in formulas if f.get("rows")}
     for fid, body in bodies:
         scan = FormulaScan(lex, body, slot_operators.get(fid))
         decided.update(scan.decided)
         operators.update(scan.operators)
         for cmd in scan.unknown:
             unknown[cmd].append(fid)
-        for sig in scan.declared_functions():
-            declared.setdefault(sig, fid)
-            declarations[sig].append(fid)
+        declarations[fid] = scan.declared_functions()
+        for row in row_formulas.get(fid, []):
+            expression = row.get("expanded", "")
+            if r"\colon" in expression or ":" in expression:
+                declarations[fid].extend(FormulaScan(lex, expression.replace("&"," ")).declared_functions())
         for item in scan.idents:
             if item.get("absorbed"):
                 continue
@@ -723,6 +727,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
             left, right = site["L"], site["R"]
             entries[key].append({
                 "form": left["k"] + " " + right["k"], "left": left["sig"], "right": right["sig"],
+                "symbol": left.get("symbol", left["sig"]),
                 "context": site["ctx"], "count": 1, "sites": [fid], "offset": left["pos"],
                 "example": scan.snippet(left["pos"]), "reading": None, "source": None,
                 "whole": len(scan.top) == 2 and left is scan.top[0] and right is scan.top[1],
@@ -739,45 +744,41 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
                               "count": 1, "sites": [fid], "offset": body.index(word), "example": word,
                               "whole": len(word) == 2, "reading": None, "source": None, "default": "label"})
 
-    scalar_declarations = collections.defaultdict(list)
-    for sent in sentences:
-        for match in re.finditer(r"\b(MATH\d+(?:\s+and\s+MATH\d+)?)\s+(?:be|is|are)\s+(?:a\s+)?scalars?\b",
-                                 sent.get("text", ""), re.I):
-            for declared_id in re.findall(r"MATH\d+", match[1]):
-                for sig in body_by_id.get(declared_id, "").split(","):
-                    if re.fullmatch(r"[A-Za-z]", sig.strip()):
-                        scalar_declarations[sig.strip()].append(order[declared_id])
+    scopes = NotationScopes(formulas, sentences, declarations, definitions)
 
     for shape, occurrences in entries.items():
         occurrences.sort(key=lambda e: (order[e["sites"][0]], e["offset"]))
-        definition = None
-        latest_product = -1
         for entry in occurrences:
             fid = entry["sites"][0]
             parent = fid.split(".")[0]
             body = body_by_id[fid]
             sentence = contexts.get(parent, "")
             whole = entry.pop("whole")
-            if fid in other_definitions:
-                definition = None
+            visible = scopes.at.get(parent, {})
+            symbol = entry.pop("symbol", entry["left"])
+            binding = visible.get(symbol) or visible.get(entry["left"])
+            notation = visible.get(body.strip())
+            if entry["form"] == "ident ident":
+                notation = visible.get(entry["left"] + entry["right"], notation)
+            if notation and binding and order[notation["formula"]] < order[binding["formula"]]:
+                notation = None  # An operand was rebound after the expression was defined.
+            evidence = notation or binding
+            if evidence:
+                entry["scope_definition"] = {k: evidence[k] for k in ("symbol", "kind", "formula", "section", "sentence")}
             if whole and fid in products:
-                latest_product = order[fid]
                 entry.update(reading="multiply", source="product_decl:" + fid)
-                if fid in definitions:
-                    definition = fid
             elif whole and fid in local_apply and entry["right"] == "(":
                 entry.update(reading="apply", source="function_value:" + fid)
-                definition = None
-            elif definition and (body.strip() == body_by_id[definition].strip()
-                                 or re.fullmatch(r"[A-Za-z]{2}", body_by_id[definition].strip())):
-                entry.update(reading="multiply", source="product_decl:" + definition)
-            elif entry["right"] == "(":
-                # A declaration must precede the use. Local rebinding or an
-                # explicit product elsewhere prevents a paper-wide inference.
-                earlier = [d for d in declarations.get(entry["left"], []) if order[d] < order[fid]]
-                overrides = [idx for idx in scalar_declarations[entry["left"]] if idx <= order[fid]]
-                if earlier and order[earlier[-1]] > max([latest_product] + overrides):
-                    entry.update(reading="apply", source="arrow_decl:" + earlier[-1])
+            elif notation and notation["kind"] == "product" and (
+                    whole or entry["form"] == "ident ident" and notation["symbol"] == entry["left"] + entry["right"]):
+                entry.update(reading="multiply", source="product_decl:" + notation["formula"])
+            elif entry["right"] == "(" and binding and not (notation and notation["kind"] == "notation"):
+                origin = binding["formula"]
+                if binding["kind"] == "scalar":
+                    entry.update(reading="multiply", source="scalar_decl:" + origin)
+                elif binding["kind"] == "function" and origin != parent:
+                    source = "arrow_decl:" if binding["symbol"] in declarations.get(origin, []) else "function_decl:"
+                    entry.update(reading="apply", source=source + origin)
             location = "%s@%d" % (fid, entry["offset"])
             entry.update(shape=shape, location=location)
             entry["anchor"] = hashlib.sha256(json.dumps(
@@ -819,9 +820,14 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
         if old.get("note"):
             new["note"] = old["note"]
 
-    for sig, fid in declared.items():
+    by_symbol = collections.defaultdict(list)
+    for definition in scopes.definitions:
+        by_symbol[definition["symbol"]].append(definition)
+    for sig, bindings in by_symbol.items():
         if sig in symbols:
-            symbols[sig]["declared"] = "function@" + fid
+            symbols[sig]["definitions"] = [d["formula"] for d in bindings]
+            if len(bindings) == 1 and bindings[0]["kind"] == "function":
+                symbols[sig]["declared"] = "function@" + bindings[0]["formula"]
 
     if raw_only:
         print("  %d records have no expanded form and were scanned as empty"
@@ -833,6 +839,7 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
             print("    %-24s %r -> %r (%s)" % (key, was, now, why))
     result = {
         "paper": paper,
+        "notation_definitions": scopes.definitions,
         "readings": lex.readings,
         "summary": {
             "formulas": len(bodies) - side_bodies,
@@ -997,6 +1004,7 @@ def export_pending(result, formulas, path, sentences=(), review_rules=False):
         items.append({
             "key": key, "anchor": entry["anchor"], "location": entry["location"],
             "question": _question(entry),
+            **({"scope_definition": entry["scope_definition"]} if entry.get("scope_definition") else {}),
             **({"conflict": entry["conflict"]} if entry.get("conflict") else {}),
             "count": entry["count"],
             "default_if_unanswered": entry["default"],
@@ -1380,9 +1388,9 @@ def main(argv=None):
         choice = manual.get(("construction", keys[key]))
         if choice:
             entry["before_manual"] = dict(entry)
-            entry.update(reading=choice["answer"], source="manual", note=choice["note"])
             for field in ("model_review", "conflict", "provisional_reading"):
                 entry.pop(field, None)
+            entry.update(reading=choice["answer"], note=choice["note"], **manual_review.provenance(choice))
     for name in list(result["unknown_commands"]):
         if ("names", name.lstrip("\\")) in manual:
             result["unknown_commands"].pop(name)

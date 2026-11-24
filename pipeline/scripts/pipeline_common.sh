@@ -1,6 +1,8 @@
 # Shared setup and acceptance for the two paper runners. Sourced before cd.
 prepare_pipeline() {
     PY=${PYTHON:-python3}
+    # Git Bash can resolve python3 to an inactive Windows Store alias.
+    if [ -z "${PYTHON:-}" ] && ! "$PY" -c "import sys" >/dev/null 2>&1; then PY=python; fi
     export PYTHONUTF8=1
     HERE=$(cd "$(dirname "$0")" && pwd -P) || return 2
     ROOT=$(cd "$HERE/../.." && pwd -P) || return 2

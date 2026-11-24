@@ -7,7 +7,11 @@
 <section class="workspace"><div class="heading"><div><small>当前稿件</small><h1 id="title">审核清单</h1></div><span id="count"></span></div>
 <div id="message" role="status" aria-live="polite"></div>
 <div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input type="search" id="search" placeholder="搜索公式编号、原文或命令" aria-label="搜索条目"></label>
-<select id="filter" aria-label="筛选状态"><option value="all">全部状态</option><option value="todo">只看必办</option><option value="optional">只看可选</option><option value="warnings">警告与错误</option><option value="comparison">规则分歧与未判定</option><option value="manual">已确认</option></select></div>
+<select id="filter" aria-label="筛选状态"><option value="all">全部状态</option><option value="todo">只看必办</option><option value="optional">只看可选</option><option value="warnings">警告与错误</option><option value="comparison">规则分歧与未判定</option><option value="manual">人工确认 · manual</option><option value="model">模型确认 · model</option></select></div>
+<section class="modeltools" aria-label="模型审核"><strong>模型审核</strong><span id="modelName"></span>
+<select id="modelScope" aria-label="模型审核范围"><option value="item">当前条目</option><option value="required">整篇未确认的必办项</option><option value="all">整篇全部未确认项</option></select>
+<button id="modelStart" disabled>开始判断</button><button id="modelStop" hidden>停止审核</button>
+<div id="modelProgress" role="status" aria-live="polite"></div><details id="modelDetails" hidden><summary>查看未写入原因</summary><ul></ul></details></section>
 <div class="columns"><section class="listbox" aria-label="审核条目"><div id="list"></div><div class="pager"><button id="prev" aria-label="上一页">‹</button><span id="pages"></span><button id="next" aria-label="下一页">›</button></div></section>
 <article id="detail" aria-label="审核详情"></article></div></section></main>
 </body></html>

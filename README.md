@@ -137,7 +137,7 @@ python3 scripts/latex2nl.py $RUN/normalized.tex -o $RUN --canonical \
 
 ---
 
-人工审核可在切分后于代码包根目录运行 `python -X utf8 pipeline/review.py "OUT" --open`。所有条目先分入「空白条目标签」（必办）或「条目标签确认」（可选），再按正文句界、并置读法、验收与警告等原有类别查看。有默认建议或正式标签的可选检查，完全空白与明确冲突的标签仍须处理。可在网页确认、修改、撤销并离线复验。详见[网页人工审核](pipeline/README.md#网页人工审核)。
+切分后可在代码包根目录运行 `python -X utf8 pipeline/review.py "OUT" --open`。所有条目先分入「空白条目标签」（必办）或「条目标签确认」（可选），再按正文句界、并置读法、验收与警告等原有类别查看。有默认建议或正式标签的可选检查，完全空白与明确冲突的标签仍须处理。可由人工确认，也可点击“模型审核”判断当前条目或批量判断。审核台以模型给出的有效答案作为最终值，记录模型名以及与规则的分歧。同一输出目录重跑同稿件时保留 `manual` 和 `model` 决定，均可撤销。详见[网页人工审核](pipeline/README.md#网页人工审核)。
 
 ## 3. 一个句子走一遍（danmark 的 s13）
 
@@ -248,7 +248,11 @@ danmark 的分布：`env` 里 `prose` 856、`proof` 299、`remark` 66、`item` 3
 | `expanded` | 去掉 `\label`、尾部标点、侧条件后的公式体；`\text{…}` 换成 `<TXTn>` |
 | `role` | 初判角色（下表） |
 | `top_relation` | 顶层关系：`{"symbol", "lhs", "rhs"}`，没有关系符号时为 `null` |
-| `label` | 公式的 `\label`，供 `\ref` 回指 |
+| `label`、`labels` | `label` 保留首个标签（仅有 `\tag` 时保留显示编号）。`labels` 列出可供引用的公式标签 |
+| `rows` | 对齐公式按行保存展开式与关系；逐行编号环境另存每行的标签。多条独立关系的 `top_relation` 为空 |
+| `ref_destinations` | 指向公式的引用给出 `label`、`formula`；引用独立编号的某一行时另有从 1 开始的 `row` |
+| `logical_relations`、`structure_reviews` | 有可审核读法时保留当前有效关系、自动参考值、确认来源和原始排版行号。人工确认后单关系同步到 `top_relation` |
+| `display_tags`、`resolved_references` | 显式显示编号及其排版行，以及正文或公式内引用的有效目标列表。组引用可以指向多条子公式 |
 | `trailing_punct` | 从公式末尾剥下来的句末标点 |
 | `side_conditions` | 分出来的侧条件，如 `\quad(1\le i\le d)` 里的 `(1\le i\le d)` |
 | `text_slots` | 公式里每个 `\text{…}` 短语：`id`、`raw`、`role`、前后文 |
@@ -336,7 +340,7 @@ danmark 的分布：`env` 里 `prose` 856、`proof` 299、`remark` 66、`item` 3
 | 1 | 去注释 | 只有注释的行整行去掉，不留空行（TeX 里这种行不产生输出）；`\%` 保留 |
 | 2 | 执行声明和宏调用 | 普通宏按调用点的定义展开，分组退出时恢复局部状态。支持的 `\edef` 在定义时求值。分隔参数和专门声明由宏表处理 |
 | 3 | 判条件、文件与钩子 | 静态读取开关、字面数值和受支持的比较。`--tex-engine` 利用当次执行事件选择正文与公式，覆盖章节排除、文件查找和可定位钩子。未决条件连同分支一起保存 |
-| 4 | 去掉不带命题内容的机制 | 版式、尺寸与间距（连同操作数）、参考文献（含裸 `\thebibliography`）、浮动块完整保存为 pending，脚注另成单元并挂接正文、`\label` 外提到公式前 |
+| 4 | 去掉不带命题内容的机制 | 版式、尺寸与间距（连同操作数）、参考文献（含裸 `\thebibliography`）、浮动块完整保存为 pending，脚注另成单元并挂接正文、公式标签随展示式保留原位 |
 | 5 | 环境归成五类 | 见下表；文本块拆壳；论文用 `\newtheorem` 声明的类按定理处理；未知环境保留并报告 |
 | 6 | 同形改写与去排版 | `\le`→`\leq` 这类同一字形的不同拼写合并；`\left`/`\bigl` 等尺寸、细空格去掉；**字形不同的不合并**（`\epsilon`/`\varepsilon`、`\subset`/`\subseteq`） |
 | 7 | 名字表 | 命令按 `tex_names.json`（TeX 自己说的）、`name_overrides.json`（人工更正）、`name_answers.json`（问答得到的答案，可按篇）决定 `allow`/`font`/`unwrap`/`ignore`/`expand` |
@@ -669,6 +673,8 @@ Answer as JSON: {"answers": [{"n": 1, "answer": "join"}, ...]}
 `--show-reply`（打印模型原始回复，调试用）。
 
 ### 7.8 全链脚本 `pipeline/scripts/run_pipeline.sh` 的问答顺序
+
+常规入口默认离线切分，模型审核在网页发起。以下顺序适用于显式启用旧命令行问答的 `--ask` 或 `--model-config FILE`。
 
 两个 pipeline 入口默认调用可用的 TeX 引擎。可用 `--tex-engine xelatex` 选择指定引擎；无引擎时回退到静态分析，依赖章节选择或提前结束文件的稿件保留待处理。输入和输出路径从调用目录解析。论文级答案按原稿路径和各本地输入的 SHA-256 绑定，详见 [pipeline 使用说明](pipeline/README.md)。
 

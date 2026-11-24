@@ -37,8 +37,9 @@ def report(directory):
     tmp.replace(path)
     for row in rows:
         if row["status"] == "disagreement":
-            print("WARNING %s %s: rule %s kept %s; model proposed %s. Check this occurrence."
-                  % (row["kind"], row["location"], row["rule"], row["rule_answer"], row["model_answer"]))
+            applied = row["model_answer"] if row.get("applied_source") == "model" else row["rule_answer"]
+            print("WARNING %s %s: rule %s proposed %s; model proposed %s; applied %s. Check this occurrence."
+                  % (row["kind"], row["location"], row["rule"], row["rule_answer"], row["model_answer"], applied))
     print("Rule/model comparisons: %d confirmed, %d disagreements, %d undecided -> %s"
           % (*(sum(row["status"] == status for row in rows)
                for status in ("confirmed", "disagreement", "undecided")), path))

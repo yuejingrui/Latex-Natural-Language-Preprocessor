@@ -15,6 +15,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "scripts"))
 from review_catalog import catalog, change, read
 from manual_review import Changed
+import pending_names
+import review_model
 
 
 class Reviewer(ThreadingHTTPServer):
@@ -26,6 +28,72 @@ class Reviewer(ThreadingHTTPServer):
         self.lock = threading.Lock()
         self.job = {"running": False, "result": None}
         self.generation = 0
+        self.model_job = {"running": False}
+        self.model_stop = threading.Event()
+
+    def start_model(self, request):
+        if self.model_job["running"]:
+            raise Changed("已有模型审核正在运行。")
+        state = catalog(self.out)
+        if request.get("paper") != state["paper"]:
+            raise Changed("稿件版本已变更，请刷新。")
+        scope = request.get("scope")
+        items = [i for i in state["items"] if i["model_eligible"]]
+        if scope == "item":
+            items = [i for i in items if (i["kind"], i["target"], i["version"]) ==
+                     (request.get("kind"), request.get("target"), request.get("version"))]
+        elif scope == "required":
+            items = [i for i in items if i["required"]]
+        elif scope != "all":
+            raise ValueError("请选择本条、必办或全部可判断条目。")
+        if not items:
+            raise Changed("选定范围内没有可由模型判断的未确认条目，请刷新。")
+        cfg = pending_names.backend_config()
+        self.model_stop.clear()
+        self.model_job = dict(running=True, model=cfg["model"], total=len(items), processed=0,
+                              saved=0, skipped=0, abstained=0, failed=0, disagreements=0, details=[])
+        threading.Thread(target=self.run_model, args=(cfg, state["paper"], state["classes"], items),
+                         daemon=True).start()
+
+    def run_model(self, cfg, paper, classes, items):
+        job = self.model_job
+        try:
+            for item in items:
+                if self.model_stop.is_set():
+                    break
+                outcome, message, fatal = "abstained", "", False
+                try:
+                    answer = review_model.judge(cfg, item, classes)
+                    with self.lock:
+                        if self.model_stop.is_set():
+                            break
+                        if answer is not None:
+                            request = dict(paper=paper, kind=item["kind"], target=item["target"],
+                                           version=item["version"], op="save", **answer)
+                            decision = change(self.out, request, model=cfg["model"])
+                            outcome = "saved"
+                            if decision.get("comparison", {}).get("status") == "disagreement":
+                                job["disagreements"] += 1
+                            self.generation += 1
+                        else:
+                            message = "模型弃权"
+                except Changed as exc:
+                    outcome, message = "skipped", str(exc)
+                except ConnectionError as exc:
+                    outcome, message, fatal = "failed", str(exc), True
+                except (ValueError, TypeError, KeyError, OSError) as exc:
+                    outcome, message = "failed", str(exc)
+                with self.lock:
+                    job["processed"] += 1
+                    job[outcome] += 1
+                    if message:
+                        job["details"].append(dict(kind=item["kind"], location=item["location"], message=message))
+                if fatal:
+                    break
+        finally:
+            with self.lock:
+                job.update(running=False, stopped=self.model_stop.is_set())
+                self.generation += 1
 
     def launch(self, paper):
         stats = read(self.out, "normalize-stats.json")
@@ -84,9 +152,15 @@ class Handler(BaseHTTPRequestHandler):
         try:
             with self.server.lock:
                 if self.path == "/api/status":
-                    return self.reply(200, {**self.server.job, "generation":self.server.generation})
+                    return self.reply(200, {**self.server.job, "generation":self.server.generation, "model_job": self.server.model_job})
                 if self.path == "/api/items" and not self.server.job["running"]:
-                    return self.reply(200, catalog(self.server.out))
+                    state = catalog(self.server.out)
+                    try:
+                        cfg = pending_names.backend_config()
+                        state["model"] = {"name": cfg["model"], "backend": cfg["backend"]}
+                    except ValueError as exc:
+                        state["model"] = {"error": str(exc)}
+                    return self.reply(200, state)
                 if self.path == "/api/items":
                     return self.reply(409, {"error":"复验正在运行，请稍候。"})
         except (OSError, ValueError, KeyError, TypeError) as exc:
@@ -110,7 +184,13 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path == "/api/decision":
                     change(self.server.out, obj)
                 elif self.path == "/api/recheck":
+                    if self.server.model_job["running"]:
+                        raise Changed("请等待模型审核完成或停止审核，再应用并复验。")
                     self.server.launch(obj.get("paper"))
+                elif self.path == "/api/model-review":
+                    self.server.start_model(obj)
+                elif self.path == "/api/model-stop":
+                    self.server.model_stop.set()
                 else:
                     return self.reply(404, {})
                 return self.reply(200, {"ok":True})

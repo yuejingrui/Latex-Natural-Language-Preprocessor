@@ -72,6 +72,17 @@ def save(directory, paper, category, target, version, payload):
                    (*key, version + 1, json.dumps(payload, ensure_ascii=False) if payload else None))
 
 
+def provenance(decision):
+    """Output fields for a locked review, including the independent opinion on a rule."""
+    fields = {"source": decision.get("source", "manual")}
+    if fields["source"] == "model":
+        fields["model"] = decision["model"]
+        comparison = decision.get("comparison")
+        if comparison:
+            fields["model_review"] = comparison
+    return fields
+
+
 def restore(record):
     """Automatic baseline under the last web decision, including an unanswered baseline."""
     if record and "before_manual" in record:

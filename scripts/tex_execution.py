@@ -22,7 +22,7 @@ FILE_ARG = re.compile(r'\s*\{([\w./ -]+)\}')
 # Stand-in for a known formula with conditional control flow. The outer
 # reader can skip either branch without inspecting tokens inside its maths.
 FORMULA = '\ue320'
-BRACED_COUNTER = re.compile(r'\{\s*(' + L.COUNTER_TOKEN + r')\s*\}')
+COUNTER = re.compile(L.COUNTER_TOKEN)
 TOKEN = re.compile(C.TOKEN.pattern + '|' + FORMULA)
 HOOK_PATTERN = '|'.join(sorted(C.HOOKS))
 HIDDEN_FLOW = re.compile(r'\\(?:input|include|subfile|endinput|excludecomment|includecomment|' +
@@ -75,6 +75,7 @@ class Source:
     view: str
     formula_view: str
     formulas: dict = field(default_factory=dict)
+    list_items: set = field(default_factory=set)
     edits: dict = field(default_factory=lambda: defaultdict(list))
     nodes: list = field(default_factory=list)
 
@@ -90,6 +91,7 @@ class Plan:
         self.hooked_envs = set()
         self.token_registers = set()
         self.count_registers = set()
+        self.math_witnesses = {}
 
     def site(self, src, kind, start, end):
         site = Site(len(self.sites) + 1, kind, start, end)
@@ -118,7 +120,7 @@ class Plan:
         outer = list(masked)
         formulas = {}
         for span in spans:
-            observe = bool(BRACED_COUNTER.search(view, span.start, span.end))
+            observe = bool(COUNTER.search(view, span.start, span.end))
             if IF_WORD.search(view, span.start, span.end):
                 words = {m[0][1:] for m in C.TOKEN.finditer(view, span.start, span.end)}
                 # A user command such as \ifactor and the connective \iff are
@@ -131,6 +133,20 @@ class Plan:
                 formulas[span.start] = span
                 outer[span.start] = FORMULA
         src = Source(name, raw, ''.join(outer), view, formulas)
+        # Probe only ordinary items in enumerations whose numbering is changed.
+        # Nested itemize/description environments keep their own labels.
+        for listing in re.finditer(r"\\begin\s*\{enumerate\}", view):
+            end = L.find_env_end(view, listing.end(), "enumerate")
+            if end and re.search(r"\\(?:setcounter|addtocounter)\s*\{enum[iv]+\}", view[listing.end():end.start()]):
+                nested = 0
+                for token in re.finditer(r"\\(?:begin|end)\s*\{(?:enumerate|description|itemize)\}|\\item(?![a-zA-Z@])",
+                                         view[listing.end():end.start()]):
+                    if token[0] == r"\item" and not nested:
+                        src.list_items.add(listing.end()+token.start())
+                    elif token[0].startswith(r"\begin"):
+                        nested += 1
+                    elif token[0].startswith(r"\end"):
+                        nested -= 1
         self.files[name] = src
         entry = self.site(src, 'file', 0, 0)
         self.mark(src, 0, entry, 'enter')
@@ -139,6 +155,7 @@ class Plan:
                 line = raw.count('\n', 0, hidden[0]) + 1
                 raise Unobserved(f'control flow inside definition on line {line}')
             src.nodes = self.scan(src, 0, len(raw))
+            self.witness_inline(src, spans)
         except Unobserved as exc:
             # A file mentioned by an excluded chapter may never execute.
             # Keep its entry probe and defer the error until an actual visit.
@@ -151,13 +168,48 @@ class Plan:
             self.mark(src, 0, entry, 'excluded')
             src.edits[0].append(r'}\fi')
 
+    def witness_inline(self, src, spans):
+        # Probe standalone literal relations only. Exclude headings, floats,
+        # stored arguments and unknown environments with different output order.
+        allowed = {"document","proof","lemma","theorem","example","remark","quote","quotation",
+                   "equation","corollary","proposition","definition","itemize","enumerate","center"}
+        tokens = re.compile(r"\\(begin|end)\s*\{([\w*]+)\}|\\[a-zA-Z@]+|\\.|[{}[\]]")
+        cursor, depth, square, stack = 0, 0, 0, []
+        for span in spans:
+            for token in tokens.finditer(src.formula_view, cursor, span.start):
+                if token[1] == "begin":
+                    stack.append(token[2])
+                elif token[1] == "end":
+                    if stack and stack[-1] == token[2]:
+                        stack.pop()
+                elif token[0] == "{":
+                    depth += 1
+                elif token[0] == "}":
+                    depth = max(0, depth-1)
+                elif token[0] == "[":
+                    square += 1
+                elif token[0] == "]":
+                    square = max(0, square-1)
+            cursor = span.end
+            if (span.kind != "inline" or depth or square or not stack or "document" not in stack
+                    or any(e.rstrip("*").lower() not in allowed for e in stack)
+                    or not re.fullmatch(r"\s*[a-zA-Z0-9]+\s*(?:=|<|>)\s*[+-]?\s*\d+\s*", span.body)):
+                continue
+            ident = len(self.math_witnesses)+1
+            self.math_witnesses[ident] = dict(file=src.name, offset=span.start, latex=span.body)
+            src.edits[span.start].append(r"\immediate\write16{" + f"{self.prefix}-W:{ident}" + "}")
+
     def scan_formula(self, src, span):
         view, start, end = src.formula_view, span.start, span.end
         if not IF_WORD.search(view, start, end):
             nodes = []
-            for arg in BRACED_COUNTER.finditer(view, start, end):
-                site = self.site(src, 'counter', arg.start(1), arg.end(1))
-                self.mark(src, site.start, site, 'value=' + arg[1])
+            for arg in COUNTER.finditer(view, start, end):
+                # Script operands and unbraced command arguments are single tokens.
+                prefix = view[start:arg.start()].rstrip()
+                if prefix.endswith(("^", "_")) or re.search(r"\\[a-zA-Z@]+$", prefix):
+                    continue
+                site = self.site(src, 'counter', arg.start(), arg.end())
+                self.mark(src, site.start, site, 'value=' + arg[0])
                 nodes.append(site)
             return nodes
         lo, hi = start, end
@@ -186,6 +238,18 @@ class Plan:
                 span = src.formulas[m.start()]
                 nodes.extend(self.scan_formula(src, span))
                 pos = span.end
+                continue
+            if m.start() in src.list_items and name == "item" and not view[pos:stop].lstrip().startswith("["):
+                site = self.site(src, "list_label", m.start(), pos)
+                self.mark(src, pos, site, r"value=\csname label\csname @enumctr\endcsname\endcsname")
+                nodes.append(site)
+                continue
+            if (COUNTER.fullmatch(m[0]) and
+                    (src is not next(iter(self.files.values())) or r'\begin{document}' in view[:m.start()]) and
+                    not re.search(r"\\[A-Za-z@]+\s*$", view[:m.start()])):
+                site = self.site(src, 'counter', m.start(), pos)
+                self.mark(src, m.start(), site, 'value=' + m[0])
+                nodes.append(site)
                 continue
             if name == 'newif':
                 arg = re.match(r'\s*\\if[A-Za-z@]+', view[pos:stop])
@@ -425,19 +489,23 @@ class Replay:
                     parts.append(self.render(src, *site.parts[branch]))
                 if src.raw[lo-1:lo] != '}':
                     lo = DELIMITER.match(src.raw, lo, hi).end()
-            elif site.kind in ('counter', 'scope'):
+            elif site.kind in ('counter', 'scope', 'list_label'):
                 if not self.events or self.events[0][0] != site.id:
                     raise Unobserved(f'site {site.id}: missing counter expansion')
                 event = self.events.popleft()[1]
                 if not event.startswith('value='):
                     raise Unobserved(f'site {site.id}: missing counter value')
                 value = event[6:]
-                if site.kind == 'scope':
+                if site.kind == 'list_label':
+                    parts.append(src.raw[site.start:lo])
+                    if re.fullmatch(r"[A-Za-z0-9().:\-]+", value):
+                        parts.append("[" + value + "]")
+                elif site.kind == 'scope':
                     if not re.fullmatch(r'-?[0-9]+', value):
                         raise Unobserved(f'site {site.id}: invalid assignment scope')
                     parts.append(r'\globaldefs=' + value + ' ')
                 else:
-                    parts.append(value if re.fullmatch(r'-?\d+(?:\.\d+)*', value, re.ASCII)
+                    parts.append(value if re.fullmatch(r'[A-Za-z0-9]+(?:[.\-][A-Za-z0-9]+)*|-\d+', value, re.ASCII)
                                  else src.raw[site.start:lo])
             elif site.kind == 'unobserved formula' and self.in_body:
                 self.pending.append(site.id)
@@ -531,6 +599,29 @@ def build(engine, work, main):
     raise Unobserved('references or rerun request still outstanding after three TeX passes')
 
 
+def aux_labels(directory, entry):
+    """Read labels from the aux files reached by the independent reference build."""
+    directory = Path(directory).resolve()
+    labels, visited = {}, set()
+    def visit(path):
+        path = path.resolve()
+        if path in visited or not path.is_relative_to(directory) or not path.is_file():
+            return
+        visited.add(path)
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            include = re.fullmatch(r"\\@input\{([^{}]+\.aux)\}\s*", line)
+            if include:
+                visit(directory / include[1])
+                continue
+            match = re.match(r"\\newlabel\{([^{}]+)\}\{\{", line)
+            if match:
+                end = L.find_group_end(line, match.end()-1)
+                if end:
+                    labels[match[1]] = line[match.end():end-1]
+    visit(directory / entry)
+    return labels
+
+
 def pdf_text(work, main):
     pdf = Path(main).with_suffix('.pdf')
     if not (work / pdf).exists():
@@ -603,6 +694,7 @@ def observe(path, engine, output, sources):
             report['stage'] = 'reference build'
             _, passes = build(engine, reference, main.name)
             report['reference_passes'] = passes
+            report['label_numbers'] = aux_labels(reference, main.stem + '.aux')
             reference_inputs = local_inputs(reference, main.name)
             reference_text = pdf_text(reference, main.name)
             report['stage'] = 'observed build'
@@ -614,6 +706,8 @@ def observe(path, engine, output, sources):
             events = [(int(i), event) for i, event in re.findall(
                 rf'^{prefix}:(\d+):([a-z]+|value=[^\r\n]*)$', log, re.M)]
             report['events'] = [dict(site=i, event=event) for i, event in events]
+            report['visible_inline'] = [plan.math_witnesses[int(i)] for i in
+                                        re.findall(rf'^{prefix}-W:(\d+)$', log, re.M)]
             text_pdf = pdf_text(work, main.name)
             if reference_text != text_pdf or reference_inputs != inputs or passes != observed_passes:
                 raise Unobserved('probes changed PDF text, project input list or number of passes')

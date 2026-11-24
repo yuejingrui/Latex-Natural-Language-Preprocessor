@@ -12,8 +12,11 @@ import normalize
 import split_audit
 import pending_names
 import review_labels
+import formula_review
+import rule_reviews
+from lexicon import PAPER_EVIDENCE
 
-GROUPS = {"sentence": "正文句界", "display": "展示公式句界", "slot": "公式文字槽",
+GROUPS = {"relation":"公式关系与续行", "destination":"公式引用目标", "sentence": "正文句界", "display": "展示公式句界", "slot": "公式文字槽",
           "construction": "并置读法", "role": "公式角色", "names": "命令名称",
           "content": "保留内容", "conditional": "条件与执行", "human": "人工转交",
           "formula": "公式诊断", "check": "验收与警告", "unresolved": "其他未决项"}
@@ -80,11 +83,29 @@ def catalog(directory):
             item["files"].append(file)
         return item
 
+    evidence, numbers = formula_review.evidence(out, paper)
+    def source_text(value):
+        return re.sub(r"\bMATH\d+\b", lambda m: forms.get(m[0], {}).get("raw") or m[0], value or "")
+
+    for formula, kind, proposal, why, extra in formula_review.candidates(list(forms.values()), evidence, numbers):
+        anchor = formula_review.target_key(formula, kind, extra)
+        details = dict(latex=formula["raw"], rows=[r.get("expanded", "") for r in formula.get("rows", [])],
+                       proposal=proposal, **extra)
+        for label in extra.get("labels", []):
+            witness = evidence.get("labels", {}).get(label)
+            if witness:
+                details.setdefault("source_displays", {})[label] = evidence["selected"][witness["offset"]:witness["end"]]
+        item = add(kind, anchor, why, formula["id"], formula.get("context_before","") + " " +
+                   formula.get("context_after",""), options=["review"], detail=details, file="formulas.json")
+        item["has_candidate"] = bool(proposal) and not extra.get("incomplete") and (kind != "destination" or
+            set(extra["labels"]) == {v["label"] for v in proposal})
+
     for q in rows(read(out, "sentence_todo.json")):
         add("sentence", q["sig"], "这里是否另起一句？", q.get("sid_before") or q.get("unit"),
             q.get("before", "") + "  ¶  " + q.get("after", ""), current=q.get("answer") or q.get("default"),
             file="sentence_todo.json")
 
+    slot_questions = {q["anchor"]: q for q in rows(read(out, "slot_questions.json")) if q.get("anchor")}
     slot_records = {s["anchor"]: s for f in forms.values() for s in f.get("text_slots", []) if s.get("anchor")}
 
     def slot(q, fid, file):
@@ -92,10 +113,14 @@ def catalog(directory):
             return add("formula", M.digest(q), q.get("raw", "旧格式文字槽"), fid, q.get("context"),
                        detail=q, level="warning", file=file)
         record = slot_records.get(q["anchor"], q)
+        evidence = slot_questions.get(q["anchor"], q)
         current, suggestion = review_labels.label_values("slot", q, record)
         item = add("slot", q["anchor"], q.get("raw", "").strip() or q["id"], q["id"],
-                   q.get("sentence") or sentences.get(fid),
-                   detail={"latex": q.get("latex") or forms.get(fid, {}).get("raw", "")}, file=file)
+                   evidence.get("sentence") or source_text(sentences.get(fid)),
+                   detail={"latex": evidence.get("latex") or forms.get(fid, {}).get("raw", ""),
+                           "offset": evidence.get("offset"), "before": record.get("before"), "after": record.get("after")}, file=file)
+        if record.get("rule") and current:
+            item["rule"] = {"name": record["rule"], "answer": current}
         if current or suggestion or not item.get("suggestion"):
             item.update(current=current, suggestion=suggestion, label_source=record.get("source") or record.get("rule"))
         return item
@@ -117,13 +142,16 @@ def catalog(directory):
         anchor = keys.get(k) or q.get("anchor")
         if not anchor:
             return add("check", M.digest(q), k, loc, q.get("question"), detail=q, level="warning", file=file)
-        item = add("construction", anchor, e.get("shape") or k, loc, example.get("sentence") or sentences.get(fid),
+        item = add("construction", anchor, e.get("shape") or k, loc, example.get("sentence") or source_text(sentences.get(fid)),
                    detail={"latex": example.get("formula") or forms.get(fid, {}).get("raw", ""),
-                           "question": q.get("question", ""), "offset": e.get("offset")},
+                           "question": q.get("question", ""), "offset": e.get("offset"),
+                           "scope_definition": e.get("scope_definition")},
                    current=e.get("reading"), file=file)
         current, suggestion = review_labels.label_values("construction", q, e)
         if current:
             item.update(current=current, label_source=e.get("source"))
+            if (e.get("source") or "").partition(":")[0] in PAPER_EVIDENCE:
+                item["rule"] = {"name": e["source"], "answer": current}
         if suggestion and not item.get("conflict"):
             # Different spellings can share one editable occurrence.
             hints = item.setdefault("suggestions", [])
@@ -133,7 +161,6 @@ def catalog(directory):
         if e.get("conflict") or q.get("conflict"):
             item.update(conflict=e.get("conflict") or q["conflict"], current="", suggestion="", suggestions=[])
         return item
-        return item
     for q in rows(read(out, "construction_todo.json")):
         construction(q["key"], q, "construction_todo.json")
 
@@ -142,9 +169,11 @@ def catalog(directory):
             construction(k, {}, "paper_lexicon.json")
 
     def role(fid, row, file):
-        item = add("role", M.role_key(fid, row), row.get("formula") or fid, fid, row.get("sentence"),
-                   detail={"window": row.get("window", [])}, current=row.get("final"), file=file)
+        item = add("role", M.role_key(fid, row), row.get("formula") or fid, fid, source_text(row.get("sentence")),
+                   detail={"window": [source_text(s) for s in row.get("window", [])], "latex": forms.get(fid, {}).get("raw", "")}, current=row.get("final"), file=file)
         record = roles.get("roles", {}).get(fid, row)
+        if record.get("source") == "rule" and record.get("final"):
+            item["rule"] = {"name": record.get("rule") or "rule", "answer": record["final"]}
         current, suggestion = review_labels.label_values("role", row, record)
         item.update(current=current, suggestion=suggestion, label_source=record.get("source") if current else None)
         return item
@@ -198,7 +227,10 @@ def catalog(directory):
             item = construction(locations[(loc, warning.get("rule"))], {}, "rule_reviews.json")
         if item is None:
             item = add("check", M.digest(warning), loc, loc, "", file="rule_reviews.json")
-        item.update(current=warning.get("rule_answer"), comparison=warning)
+        item.update(current=warning.get("model_answer") if warning.get("applied_source") == "model"
+                    else warning.get("rule_answer"), comparison=warning)
+        if cat in ("slot", "role", "construction"):
+            item["rule"] = {"name": warning["rule"], "answer": warning["rule_answer"]}
         if warning.get("status") != "confirmed":
             item["level"] = "warning"
 
@@ -267,21 +299,32 @@ def catalog(directory):
 
     saved = M.records(out, paper)
     for key, (version, payload) in saved.items():
-        if payload and key not in items:
+        if payload and key not in items and key[0] not in formula_review.KINDS:
             items[key] = payload["item"]
         if key in items:
             item = items[key]
             item["version"] = version
             if payload:
                 item["decision"] = payload["decision"]
+                comparison = item["decision"].get("comparison")
+                if comparison:
+                    item["comparison"] = comparison
+                    if comparison["status"] == "disagreement":
+                        item["level"] = "warning"
+                else:
+                    item.pop("comparison", None)
     for item in items.values():
         item.setdefault("version", 0)
         kind = item["kind"]
+        item["model_eligible"] = (not item.get("decision") and item["options"] != ["ack"]
+                                  and item.get("label_source") != "manual")
         decision = item.get("decision", {}).get("answer")
         item["required"] = item["level"] in ("todo", "error")
         if kind in ("role", "slot", "construction"):
             labeled = decision or (not item.get("conflict") and (item.get("current") or item.get("suggestion")))
             item["required"] = not labeled
+        elif kind in formula_review.KINDS:
+            item["required"] = not (decision or item["has_candidate"])
         elif decision and decision != "ack":
             item["required"] = False
         elif kind == "names" and "names_todo.json" not in item["files"]:
@@ -296,7 +339,7 @@ def catalog(directory):
                 groups=GROUPS, sections=SECTIONS, classes=list(normalize.NAME_CLASSES), items=list(items.values()))
 
 
-def change(directory, request):
+def change(directory, request, *, model=None):
     state = catalog(directory)
     if request.get("paper") != state["paper"]:
         raise M.Changed("稿件版本已变更，请刷新。")
@@ -314,7 +357,21 @@ def change(directory, request):
         note = request.get("note", "")
         if not isinstance(note, str) or len(note) > 4000:
             raise ValueError("审核备注最多 4000 字。")
-        decision = {"source":"manual", "answer":answer, "note":note}
+        decision = {"source": "manual", "answer": answer, "note": note}
+        if model is not None:
+            if not item["model_eligible"]:
+                raise M.Changed("此条目已有决定或需要人工处理。")
+            decision.update(source="model", model=model)
+            rule = item.get("rule")
+            if rule:
+                decision["comparison"] = dict(rule_reviews.compare(rule["name"], rule["answer"], answer, model),
+                                              applied_source="model")
+        if item["kind"] in formula_review.KINDS:
+            forms = read(Path(directory), "formulas.json", [])
+            formula = next(f for f in forms if f["id"] == item["location"])
+            value = request.get("value")
+            formula_review.validate(item["kind"], value, forms, formula, item["detail"])
+            decision["value"] = value
         if item["kind"] == "names":
             decision["action"] = answer
             if answer in ("allow","font"):
@@ -331,5 +388,6 @@ def change(directory, request):
         snapshot = {k:v for k,v in item.items() if k not in ("version","decision","group","subgroup","required")}
         payload = {"decision":decision, "item":snapshot}
     elif request.get("op") != "undo" or "decision" not in item:
-        raise ValueError("没有可以撤销的人工确认。")
+        raise ValueError("没有可以撤销的审核决定。")
     M.save(directory, state["paper"], item["kind"], item["target"], item["version"], payload)
+    return payload["decision"] if payload else None

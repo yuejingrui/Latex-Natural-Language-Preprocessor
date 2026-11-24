@@ -1,5 +1,5 @@
 #!/bin/sh
-# run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]
+# run_pipeline.sh PAPER.tex [OUTDIR] [--ask|--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]
 #
 # One paper, whole chain: normalise -> split -> lexicon -> ask what is open
 # (constructions, slots, boundaries) -> apply -> names -> roles -> gate.
@@ -9,14 +9,15 @@ set -u
 ENGINE=""
 PAPER=""
 OUT=""
-ASK=1
+ASK=auto
 NAMES=1
 while [ "$#" -gt 0 ]; do
   arg=$1; shift
   case "$arg" in
-    --model-config) [ -n "${1:-}" ] || exit 2; NL_PREP_MODEL_CONFIG=$1; shift ;;
+    --model-config) [ -n "${1:-}" ] || exit 2; NL_PREP_MODEL_CONFIG=$1; shift; [ "$ASK" != auto ] || ASK=1 ;;
     --tex-engine) [ "$#" -gt 0 ] && [ -n "$1" ] || exit 2; ENGINE=$1; shift ;;
     --tex-engine=?*) ENGINE=${arg#*=} ;;
+    --ask)      ASK=1 ;;
     --no-ask)   ASK=0 ;;
     --no-names) NAMES=0 ;;
     -*)         echo "run_pipeline: unknown option $arg" >&2; exit 2 ;;
@@ -25,8 +26,9 @@ while [ "$#" -gt 0 ]; do
                 else echo "run_pipeline: too many arguments: $arg" >&2; exit 2; fi ;;
   esac
 done
-[ -n "$PAPER" ] || { echo "usage: run_pipeline.sh PAPER.tex [OUTDIR] [--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]" >&2; exit 2; }
+[ -n "$PAPER" ] || { echo "usage: run_pipeline.sh PAPER.tex [OUTDIR] [--ask|--no-ask] [--tex-engine ENGINE] [--model-config FILE] [--no-names]" >&2; exit 2; }
 
+[ "$ASK" != auto ] || ASK=0
 OUT="${OUT:-runs/$(basename "$PAPER" .tex)}"
 step() { printf '\n=== %s\n' "$*"; }
 need() { [ -f "$1" ] || { echo "  (no $1: skipped)"; return 1; }; return 0; }

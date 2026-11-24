@@ -350,7 +350,7 @@ def check_c13(doc, normalized: str) -> List[dict]:
                 # A literal residual test provides no evidence for either branch.
                 _, _, end = bounds(view, token.end())
                 skip = end or len(view)
-            elif name == "label":
+            elif name in ("label", "rowlabel"):
                 arg = re.match(r"\s*\{", view[token.end():])
                 if arg:
                     start = token.end() + arg.end() - 1
@@ -389,6 +389,11 @@ def formula_error(rec):
     if rec.get("kind") not in ("inline", "display"):
         return None
     import latex2nl as L
+    if "logical_relations" in rec:
+        from formula_review import projected_relation
+        if rec.get("top_relation") != projected_relation(rec["logical_relations"]):
+            return "top relation differs from the effective reading"
+        rec = dict(rec, top_relation=rec.get("extracted_top_relation"))
     core, _ = L.strip_trailing_punct(rec.get("raw") or "")
     expanded = rec.get("expanded") or ""
     slots = [dict(s, index=i) for i, s in enumerate(rec.get("text_slots") or [], 1)]
@@ -420,17 +425,83 @@ def formula_error(rec):
             expanded_pos += len(marker)
         else:
             operator = r"\operatorname{" + text + "}"
-            if not expanded.startswith(operator, expanded_pos):
+            if (re.match(r"\\text(?![A-Za-z@])", core[start:]) or
+                    not re.match(r"\s*(?:\\left\s*)?[(\[]", core[end:]) or
+                    not expanded.startswith(operator, expanded_pos)):
                 return "text command was rewritten"
             expanded_pos += len(operator)
         raw_pos = end
     if core[raw_pos:] != expanded[expanded_pos:] or slot_pos != len(slots):
         return "expanded formula differs from raw"
-    if rec.get("top_relation") is not None:
+    rows = L.aligned_relations(expanded, slots) if rec["kind"] == "display" else []
+    if rows:
+        actual = [{k: v for k, v in row.items() if k != "labels"} for row in rec.get("rows", [])]
+        if actual != rows:
+            return "alignment rows differ from expanded formula"
+        single = len(rows) == 1 and len(rows[0]["relations"]) == 1
+        top = rows[0]["relations"][0] if single else None
+        if rec.get("top_relation") != top or "relation_chain" in rec.get("flags", []):
+            return "top relation crosses alignment rows or columns"
+    elif rec.get("rows"):
+        return "unexpected alignment rows"
+    elif rec.get("top_relation") is not None:
         _, _, top = L.classify_role(expanded, rec["kind"], "", "", slots)
         if top != rec["top_relation"]:
             return "top_relation differs from expanded"
     return None
+
+
+def formula_anchor_errors(formulas, normalized):
+    import latex2nl as L
+    targets = L.formula_destinations(formulas)
+    by_id = {f["id"]: f for f in formulas}
+    errors = []
+    if normalized:
+        seen = set()
+        if any(marker in normalized for marker in (r"\label", r"\rowlabel", r"\tag")):
+            L.use_canonical_names()
+            spans = L.find_math_spans(L.lexical_view(normalized), inspect_arguments=True, report_unclosed=False)
+            expected_tags = []
+            for span in spans:
+                if span.display_tags:
+                    expected_tags.append((span.body.split(), span.display_tags))
+                if not span.labels:
+                    continue
+                rows = {name: n for n, names in enumerate(span.row_labels, 1) for name in names}
+                for key in span.labels:
+                    if key in seen:
+                        errors.append("duplicate formula label " + key)
+                    seen.add(key)
+                    dest = targets.get(key, {})
+                    rec = by_id.get(dest.get("formula"), {})
+                    source = span.body if rec.get("opaque") else re.sub(r"\\[()]", " ", span.body)
+                    if rec.get("raw", "").split() != source.strip().split() or rec.get("labels") != span.labels:
+                        errors.append("missing or misplaced formula label " + key)
+                    elif dest.get("row") != rows.get(key):
+                        errors.append("wrong alignment row for " + key)
+                    elif rec.get("label") != span.labels[0]:
+                        errors.append("wrong primary label for " + key)
+            actual_tags = [(f.get("raw","").split(),f["display_tags"]) for f in formulas if f.get("display_tags")]
+            if actual_tags != expected_tags:
+                errors.append("display tags differ from source positions")
+        for formula in formulas:
+            for key in formula.get("labels", []):
+                if targets.get(key, {}).get("formula") != formula["id"]:
+                    errors.append("formula label belongs to multiple records: " + key)
+            placed = [key for row in formula.get("rows", []) for key in row.get("labels", [])]
+            if len(placed) != len(set(placed)) or set(placed) - set(formula.get("labels", [])):
+                errors.append("unexpected or duplicate row label in " + formula["id"])
+        for key in targets.keys() - seen:
+            errors.append("unexpected formula label " + key)
+    for f in formulas:
+        if f.get("ref_kind") != "ref":
+            continue
+        key = f["ref_target"]
+        keys = [key] if key in targets else L.reference_keys(key)
+        expected = [dict(label=k, **targets[k]) for k in keys if k in targets]
+        if f.get("extracted_ref_destinations", f.get("ref_destinations", [])) != expected:
+            errors.append("wrong formula reference destination for " + f["id"])
+    return errors
 
 
 def check_links(doc, normalized):
@@ -439,6 +510,8 @@ def check_links(doc, normalized):
     sents, forms, blocks = doc['sentences'], doc['formulas'], doc['content_blocks']
     by_sid = {s['sid']: s for s in sents}
     by_id = {f['id']: f for f in forms}
+    for problem in formula_anchor_errors(forms, normalized):
+        hit(problem)
     for label, ids in [('sentence',[s['sid'] for s in sents]), ('formula',[f['id'] for f in forms]),
                        ('content',[b['id'] for b in blocks])]:
         for key, count in Counter(ids).items():
@@ -487,8 +560,9 @@ def check_links(doc, normalized):
         for sid in b.get('sentence_ids', []) + b.get('preview_sentence_ids', []):
             if sid not in by_sid or by_sid[sid].get('unit') != b['id']:
                 hit(b['id']+' invalid child sentence '+sid)
-        retained = (b.get('kind') == 'float' and b.get('source') == 'manual'
-                    and b.get('status') == 'retained' and manual_review.block_key(b) in doc.get('accepted_blocks', {}))
+        decision = doc.get('accepted_blocks', {}).get(manual_review.block_key(b))
+        retained = (b.get('kind') == 'float' and decision and decision.get('answer') == 'retain'
+                    and b.get('source') == decision.get('source', 'manual') and b.get('status') == 'retained')
         if ((not retained and b.get('status') not in ('parsed','pending'))
                 or (b.get('status') == 'parsed' and not b.get('sentence_ids'))):
             hit(b['id']+' invalid content status')
@@ -665,12 +739,22 @@ def _run(out: str, strict: bool) -> int:
     for kind, site, where, size in check_parses(out, doc["sentences"]):
         issues.record(kind, site, where, size)
 
+    structure_pending = []
+    if os.path.isfile(state):
+        with open(state, encoding="utf8") as stream:
+            manifest = json.load(stream)
+        if manifest.get("structure_schema"):
+            import formula_review
+            errors, structure_pending = formula_review.verify(out, doc["formulas"], normalized, paper,
+                manual_review.decisions(out, paper), doc["content_blocks"])
+            for error in errors:
+                issues.record("check:linkage", "verify_output.structure", where=error, size=1)
     for h in check_links(doc, normalized):
         issues.record('check:linkage', 'verify_output.links', where=h['where'], size=1)
     for sentence in doc['sentences']:
         if ''.join(sentence['tokens']) != ''.join(sentence['text'].split()):
             issues.record('check:tokens','verify_output.tokens',where=sentence['sid'],size=1)
-    pending = pending_items(out, doc)
+    pending = pending_items(out, doc) + structure_pending
     downstream = downstream_items(out, doc)
     for item in pending:
         issues.record('check:pending','verify_output.pending',where=item,size=1)

@@ -110,6 +110,10 @@ def build_prompt(items, allowed):
     lines = ["Allowed answers: " + ", ".join(allowed), ""]
     for n, it in enumerate(items, 1):
         lines.append("%d. %s" % (n, it.get("question")))
+        if it.get("scope_definition"):
+            definition = it["scope_definition"]
+            lines.append("   Active definition of %s: %s at %s (%s)" %
+                         (definition["symbol"], definition["kind"], definition["formula"], definition["sentence"]))
         if it.get("conflict"):
             lines.append("   Conflicting readings for the same occurrence: %s" % it["conflict"])
         for ex in (it.get("examples") or [])[:2]:
