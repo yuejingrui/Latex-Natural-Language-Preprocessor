@@ -91,6 +91,7 @@ if [ "$ASK" -eq 1 ] && [ "$NAMES" -eq 1 ]; then
   step "names: what neither TeX nor the paper defines"
   if "$PY" - "$OUT" "$NAME" <<'PY'
 import json, os, re, sys
+from scripts import manual_review
 out, paper = sys.argv[1], sys.argv[2]
 lex = json.load(open(os.path.join(out, "paper_lexicon.json"), encoding="utf-8"))
 doc = json.load(open(os.path.join(out, "formulas.json"), encoding="utf-8"))
@@ -135,6 +136,8 @@ if os.path.exists(unres_path):
         for name in m.group(1).split(","):
             add(name.strip(), 1, "math", line.split(":")[0])
 
+for name in manual_review.decisions(out, paper, "names"):
+    found.pop(name, None)
 if not found:
     print("  none")
     sys.exit(1)
@@ -228,7 +231,12 @@ tail -3 "$OUT/output_checks.txt"
     "$OUT/human_todo.json" || exit 1
 
 PEND=0
-pipeline_has_pending && PEND=1
+pipeline_queue_status
+case "$?" in
+  0) ;;
+  3) PEND=1 ;;
+  *) exit 1 ;;
+esac
 
 case "$VO" in
   0) ;;
@@ -260,15 +268,6 @@ def count(name):
         return "-"
     d = json.load(open(path, encoding="utf-8"))
     return len(d.get("items") or d.get("formulas") or [])
-open_total = 0
-for name in ("construction", "slot", "sentence", "role", "names"):
-    path = os.path.join(out, name + "_todo.json")
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as fh:
-            items = json.load(fh).get("items") or []
-        field = "action" if name == "names" else "answer"
-        open_total += sum(not it.get(field) for it in items)
-print("  open questions :", open_total, "(provisional readings below)")
 print("  sentences      :", sents)
 print("  formulas       :", len(recs))
 print("  constructions  :", len(cons),
@@ -285,9 +284,7 @@ if os.path.exists(human_path):
 unresolved = os.path.join(out, "unresolved.log")
 if os.path.exists(unresolved):
     print("  unresolved     :", sum(1 for _ in open(unresolved, encoding="utf-8")))
-for name in ("construction_todo.json", "slot_todo.json", "sentence_todo.json",
-             "role_todo.json", "names_todo.json", "human_todo.json"):
-    print("  %-22s %s" % (name, "pending" if os.path.exists(os.path.join(out, name)) else "-"))
+
 PY
 
 case "$STATUS" in

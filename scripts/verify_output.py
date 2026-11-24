@@ -26,6 +26,8 @@ from typing import Dict, List
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import issues  # noqa: E402
+import manual_review
+import review_labels
 
 PLACEHOLDER = re.compile(r"\b(?:MATH|REF|EQ|GRID|DIAGRAM)\d+\b")
 CONTROL = re.compile(r"\\[A-Za-z]+")
@@ -485,7 +487,10 @@ def check_links(doc, normalized):
         for sid in b.get('sentence_ids', []) + b.get('preview_sentence_ids', []):
             if sid not in by_sid or by_sid[sid].get('unit') != b['id']:
                 hit(b['id']+' invalid child sentence '+sid)
-        if b.get('status') not in ('parsed','pending') or (b.get('status')=='parsed' and not b.get('sentence_ids')):
+        retained = (b.get('kind') == 'float' and b.get('source') == 'manual'
+                    and b.get('status') == 'retained' and manual_review.block_key(b) in doc.get('accepted_blocks', {}))
+        if ((not retained and b.get('status') not in ('parsed','pending'))
+                or (b.get('status') == 'parsed' and not b.get('sentence_ids'))):
             hit(b['id']+' invalid content status')
         if not isinstance(b.get('raw'),str) or not b['raw']:
             hit(b['id']+' missing preserved source')
@@ -528,18 +533,13 @@ def pending_items(out, doc):
     pending = []
     for block in doc['content_blocks']:
         if block.get('status') == 'pending': pending.append('content '+block['id'])
-    for name in sorted(os.listdir(out)):
-        if not name.endswith('_todo.json'): continue
-        with open(os.path.join(out,name),encoding='utf-8') as fh: data=json.load(fh)
-        items = data.get('items') if isinstance(data,dict) else data
-        if not isinstance(items,list): raise ValueError('invalid todo: '+name)
-        if name == 'human_todo.json':
-            # These referrals are regenerated from the current ledger after this check.
-            items = [it for it in items if it.get('source') != 'issues.json']
-        if name == 'slot_todo.json':
-            continue  # Downstream role interpretation, not a sentence boundary.
-        # Filling an answer is not the same as rebuilding and checking output.
-        if items: pending.append(name+' ('+str(len(items))+')')
+    # Standalone splitting reports formula interpretation separately. Pipeline
+    # artifacts also include the lexicon and require a label or usable suggestion.
+    splitting_only = not os.path.isfile(os.path.join(out, 'paper_lexicon.json'))
+    counts = review_labels.queue_counts(out, before_ledger=True, splitting_only=splitting_only)
+    for name, (required, _) in counts.items():
+        if required:
+            pending.append(f'{name} ({required})')
     state_path = os.path.join(out,'split_status.json')
     if not os.path.exists(state_path) and any('content_kind' in s for s in doc['sentences']):
         raise ValueError('new-format output is missing split_status.json')
@@ -616,6 +616,11 @@ def run(out: str, strict: bool) -> int:
 
 def _run(out: str, strict: bool) -> int:
     doc = load(out)
+    state = os.path.join(out, "split_status.json")
+    if os.path.isfile(state):
+        with open(state, encoding="utf8") as stream:
+            paper = json.load(stream).get("paper_id")
+        doc["accepted_blocks"] = manual_review.decisions(out, paper, "content")
     norm_path = os.path.join(out, "normalized.tex")
     normalized = ""
     if os.path.exists(norm_path):

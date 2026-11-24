@@ -137,6 +137,8 @@ python3 scripts/latex2nl.py $RUN/normalized.tex -o $RUN --canonical \
 
 ---
 
+人工审核可在切分后于代码包根目录运行 `python -X utf8 pipeline/review.py "OUT" --open`。所有条目先分入「空白条目标签」（必办）或「条目标签确认」（可选），再按正文句界、并置读法、验收与警告等原有类别查看。有默认建议或正式标签的可选检查，完全空白与明确冲突的标签仍须处理。可在网页确认、修改、撤销并离线复验。详见[网页人工审核](pipeline/README.md#网页人工审核)。
+
 ## 3. 一个句子走一遍（danmark 的 s13）
 
 **源文件**（`danmark.tex:508`）：
@@ -683,7 +685,7 @@ names：收集没人认识的名字 → names_todo.json
 roles → role_questions.json → ask_roles（没答完的块再问一次）→ roles --merge-answers
   → 模型答 unsure 的 → human_todo.json
 保真门 verify_formulas → 输出检查 verify_output --strict
-状态：失败 → 退出码 1；还有任何题目文件 → 3（有待答题）；否则 0
+状态：失败 → 退出码 1；仍有必办项 → 3（待处理）；否则 0
 ```
 
 `--no-ask` 跳过所有提问（只用已有答案），`--no-names` 只跳过名字层。退出码 3 不算失败：
@@ -715,7 +717,7 @@ roles → role_questions.json → ask_roles（没答完的块再问一次）→ 
 | 名字 | 0 | 0 |
 | 人工表 | 224 | 10 |
 
-以上是旧版按短语和构造合并时的统计。当前文字槽按完整公式发请求，并置按出现位置判断；本篇的实际必答数见各待办文件。
+以上是旧版按短语和构造合并时的统计。当前文字槽按完整公式发请求，并置按出现位置判断；本篇的必办数见管线汇总的 required 列。
 
 ### 7.11 在本包里接模型
 

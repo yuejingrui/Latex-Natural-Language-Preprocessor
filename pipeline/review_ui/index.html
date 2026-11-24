@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="review-token" content="__REVIEW_TOKEN__"><title>切分审核台</title><link rel="stylesheet" href="/review.css">
+<script src="/review.js" defer></script></head><body>
+<header><div class="brand"><span class="mark" aria-hidden="true">∑</span><strong>切分审核台</strong></div><span id="paperName"></span><div class="actions"><button id="refresh">刷新</button><button id="recheck" class="primary">应用并复验</button></div></header>
+<main><aside><div class="navtitle"><h2>审核类别</h2><button id="allItems" aria-label="查看两部分的全部条目">查看全部</button></div><nav id="groups" aria-label="审核类别"></nav></aside>
+<section class="workspace"><div class="heading"><div><small>当前稿件</small><h1 id="title">审核清单</h1></div><span id="count"></span></div>
+<div id="message" role="status" aria-live="polite"></div>
+<div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input type="search" id="search" placeholder="搜索公式编号、原文或命令" aria-label="搜索条目"></label>
+<select id="filter" aria-label="筛选状态"><option value="all">全部状态</option><option value="todo">只看必办</option><option value="optional">只看可选</option><option value="warnings">警告与错误</option><option value="comparison">规则分歧与未判定</option><option value="manual">已确认</option></select></div>
+<div class="columns"><section class="listbox" aria-label="审核条目"><div id="list"></div><div class="pager"><button id="prev" aria-label="上一页">‹</button><span id="pages"></span><button id="next" aria-label="下一页">›</button></div></section>
+<article id="detail" aria-label="审核详情"></article></div></section></main>
+</body></html>

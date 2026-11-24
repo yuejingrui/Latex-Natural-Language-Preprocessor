@@ -3254,7 +3254,12 @@ def main(argv: List[str] = None) -> int:
             tex = preserved.pack("tex_execution", sources[main], status="pending",
                                  reason="file selection requires a TeX engine", file=main,
                                  input_sources={p: raw for p, raw in sources.items() if p != main})
-    n = Normalizer(paper=paper, switches=dict(args.switch))
+    import manual_review
+    manual_names = manual_review.decisions(os.path.dirname(args.out) or ".", paper, "names") if args.out else {}
+    table = NameTable(paper=paper)
+    for name, decision in manual_names.items():
+        table._add(name, decision, "manual", force=True)
+    n = Normalizer(names=table, paper=paper, switches=dict(args.switch))
     n.sources = sources
     out = n.normalize(tex, loaded_styles=loaded_styles)
     vocab = n.vocabulary(out)
@@ -3271,6 +3276,7 @@ def main(argv: List[str] = None) -> int:
         "kept_macros": dict(n.kept_macros),
         "input": args.tex,
         "paper_id": paper,
+        "manual_names": {name: dict(rec, source="manual") for name, rec in manual_names.items()},
         "input_chars": len(tex),
         "output_chars": len(out),
         "stats": dict(sorted(n.stats.items())),

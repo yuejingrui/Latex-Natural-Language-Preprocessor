@@ -606,6 +606,7 @@ def _paper_answered(paper):
 
 
 import rule_reviews
+import manual_review
 
 
 PAPER_EVIDENCE = {"arrow_decl", "tuple_arg", "product_decl", "function_value"}  # tuple_arg occurs in older caches
@@ -789,8 +790,9 @@ def build_paper_lexicon(formulas, lex, previous=None, paper="", sentences=()):
     # guess, and the disagreement is reported instead of being buried
     overridden = []
     for key, old in ((previous or {}).get("constructions") or {}).items():
+        old = manual_review.restore(old)
         new = constructions.get(key)
-        if new is None or not old.get("reading") or old.get("from_library"):
+        if not old or new is None or not old.get("reading") or old.get("from_library"):
             continue
         if old.get("count", 1) != 1 or (old.get("anchor") and new["anchor"] != old["anchor"]):
             continue
@@ -1371,6 +1373,21 @@ def main(argv=None):
               "unknown construction %d)"
               % (applied, skipped, len(rejected), len(unknown_key)))
 
+    manual = manual_review.decisions(os.path.dirname(out) or ".", PAPER_ID)
+    entries = result["constructions"]
+    keys = manual_review.construction_keys(entries)
+    for key, entry in entries.items():
+        choice = manual.get(("construction", keys[key]))
+        if choice:
+            entry["before_manual"] = dict(entry)
+            entry.update(reading=choice["answer"], source="manual", note=choice["note"])
+            for field in ("model_review", "conflict", "provisional_reading"):
+                entry.pop(field, None)
+    for name in list(result["unknown_commands"]):
+        if ("names", name.lstrip("\\")) in manual:
+            result["unknown_commands"].pop(name)
+    if os.path.isfile(os.path.join(os.path.dirname(out), manual_review.FILENAME)):
+        manual_review.refresh_names(os.path.dirname(out) or ".", PAPER_ID, result, stats_path)
     check_word_readings(result)
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=2)

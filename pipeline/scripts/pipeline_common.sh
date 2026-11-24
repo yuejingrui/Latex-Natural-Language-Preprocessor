@@ -53,13 +53,18 @@ PYTHON
     fi
 }
 
-pipeline_has_pending() {
-    for queue in construction slot sentence role names human content conditional; do
-        [ ! -f "$OUT/${queue}_todo.json" ] || return 0
-    done
-    return 1
+# Evaluate again after refreshing human referrals from the final ledger.
+pipeline_queue_status() {
+    "$PY" - "$OUT" <<'PYTHON'
+import sys
+sys.path.insert(0, "scripts")
+from review_labels import queue_counts
+counts = queue_counts(sys.argv[1])
+for name, (required, optional) in counts.items():
+    print(f"  {name}: {required} required, {optional} optional")
+sys.exit(3 if any(required for required, _ in counts.values()) else 0)
+PYTHON
 }
-
 
 check_model_config() {
     "$PY" pipeline/scripts/pending_names.py --check-config >"$OUT/backend.txt" 2>&1

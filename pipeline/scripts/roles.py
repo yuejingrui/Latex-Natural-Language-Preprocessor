@@ -41,6 +41,7 @@ for _p in (os.path.join(_PKG_ROOT, "scripts"),
 
 
 import rule_reviews
+import manual_review
 
 
 CANDIDATE_ACTS = ("definition", "assumption")
@@ -936,7 +937,8 @@ def main(argv=None):
             previous = json.load(fh)
         if previous.get("paper") == paper:
             for fid, rec in previous.get("roles", {}).items():
-                if fid in anchors and rec.get("anchor") == anchors[fid]:
+                rec = manual_review.restore(rec)
+                if rec and fid in anchors and rec.get("anchor") == anchors[fid]:
                     roles[fid] = rec
 
     # formula ids are paper-specific (MATH65 is a different formula in another
@@ -1008,6 +1010,16 @@ def main(argv=None):
             rec["model_review"] = rule_reviews.compare(rule["name"], rule["answer"],
                 review["model_answer"], review["model"])
         roles[fid] = rec
+    manual = manual_review.decisions(base, paper, "role")
+    for item in items:
+        fid = item["fid"]
+        anchor = anchors[fid]
+        decision = manual.get(manual_review.role_key(fid, anchor))
+        if decision:
+            roles[fid] = {"source": "manual", "final": decision["answer"], "formula": current[fid],
+                          "role_now": item["role_now"],
+                          "note": decision["note"],
+                          "before_manual": dict(roles[fid], anchor=anchor) if fid in roles else None}
     roles = {fid: dict(rec, anchor=anchors[fid]) for fid, rec in roles.items() if fid in anchors}
 
     summary, changed, unsure = summarise(items, roles, formulas)
@@ -1023,7 +1035,7 @@ def main(argv=None):
         fid = item["fid"]
         role = roles.get(fid, {})
         if role.get("final"):
-            if item["rule"] and not role.get("model_review"):
+            if item["rule"] and role.get("source") != "manual" and not role.get("model_review"):
                 questions.append(item)
             continue
         if role.get("unsure"):

@@ -224,14 +224,6 @@ if sents is None:
 print("  sentences      : %s" % sents)
 print("  formulas       : %s" % counts.get("formulas", "-"))
 print("  content blocks : %s" % counts.get("content_blocks", "-"))
-for name in ("construction_todo.json", "slot_todo.json", "sentence_todo.json",
-             "role_todo.json", "names_todo.json"):
-    data = load(name)
-    if not isinstance(data, dict):
-        continue
-    items = data.get("items") or []
-    done = sum(1 for i in items if i.get("answer"))
-    print("  %-22s %d answered, %d open" % (name, done, len(items) - done))
 issues = load("issues.json") or {}
 pending = issues.get("pending") or []
 print("  ledger         : status=%s hard=%s" % (issues.get("status"), issues.get("hard")))
@@ -247,7 +239,10 @@ if [ "$VF" -ne 0 ] || [ "$VO_BAD" -ne 0 ]; then
     echo "  status         : FAILED"
     exit 1
 fi
-if [ "$VO" -eq 3 ] || pipeline_has_pending; then
+pipeline_queue_status
+queue_status=$?
+case "$queue_status" in 0|3) ;; *) exit 1 ;; esac
+if [ "$VO" -eq 3 ] || [ "$queue_status" -eq 3 ]; then
     echo "  status         : questions pending"
     exit 3
 fi

@@ -60,6 +60,7 @@ import sys
 import tempfile
 import hashlib
 import rule_reviews
+import manual_review
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -2609,7 +2610,7 @@ class LatexToNL:
                  style_paths: Optional[Sequence[str]] = None,
                  base_dir: str = ".",
                  slot_roles: Optional[Dict[str, str]] = None, switches=None,
-                 slot_answers=None, paper="") -> None:
+                 slot_answers=None, paper="", reviewed=None) -> None:
         self.proposition_form = proposition_form
         self.max_words = max_words
         self.merge_display = merge_display
@@ -2632,6 +2633,8 @@ class LatexToNL:
         #: phrases still without a role; for the answer file
         self.slots_pending: List[dict] = []
         self.slot_questions: List[dict] = []
+        self.reviewed = reviewed or {}
+        self.applied_boundaries = []
         self.slot_answers = slot_answers or {}
         self.paper = paper
         #: environments unwrapped because they were not known
@@ -2785,6 +2788,7 @@ class LatexToNL:
             "operator_names": names,
             "sentence_boundaries": list(self.boundaries),
             "boundaries_joined": self._boundaries_joined,
+            "manual_boundaries": self.applied_boundaries,
             "answers_unused": sorted(set(self.sentence_answers)
                                      - self._answers_used),
             "styles": [os.path.basename(p) for p in self.styles],
@@ -3297,6 +3301,10 @@ class LatexToNL:
                 left = out[-1]
                 sig = boundary_sig(left, sent)
                 answer = self.sentence_answers.get(sig)
+                manual = self.reviewed.get(("sentence", sig))
+                if manual:
+                    answer = manual["answer"]
+                    self.applied_boundaries.append({"sig": sig, "answer": answer, "source": "manual"})
                 if answer is not None:
                     self._answers_used.add(sig)
                 # A single initial before a capitalized word is ambiguous:
@@ -3538,7 +3546,11 @@ class LatexToNL:
         role = slot["role"]
         record = {"id": ident, "anchor": anchor, "raw": slot["raw"],
                   "before": slot["before"].strip(), "after": slot["after"].strip()}
-        if role != "unclassified":
+        manual = self.reviewed.get(("slot", anchor))
+        if manual:
+            answer = role = manual["answer"]
+            record["source"] = "manual"
+        elif role != "unclassified":
             record["rule"] = slot["rule"]
             if answer and rule_reviews.from_model(row.get("source")):
                 record["model_review"] = rule_reviews.compare(slot["rule"], role, answer,
@@ -3569,6 +3581,20 @@ class LatexToNL:
     #: an enumerated item: "(b) Let ...", "(iv) The ...", "1. Let ..."
     ITEM_LABEL_AFTER_DISPLAY = re.compile(
         r"\s*[\[(]?\s*(?:[0-9]+|[a-zA-Z]|[ivxIVX]+)\s*[\]).:]\s")
+
+    def _display_decision(self, rec, message, split, drop):
+        key = manual_review.digest([rec.id, rec.raw, message])
+        decision = self.reviewed.get(("display", key))
+        if decision:
+            split = decision["answer"] == "split"
+            mark = rec.trailing_punct
+            drop = (mark in (",", ";") if split else mark in (".", "!", "?"))
+            self.applied_boundaries.append({"id": rec.id, "answer": decision["answer"], "source": "manual"})
+        else:
+            self._note(rec.id, message)
+        if drop:
+            rec.flags.append("mark_dropped")
+        return split, drop
 
     def _display_end(self, rest: str, trailing: str,
                      rec: FormulaRecord) -> Tuple[bool, bool]:
@@ -3611,18 +3637,14 @@ class LatexToNL:
             # a new sentence.  A comma here means the author joined two
             # sentences with the wrong mark.
             if trailing and trailing in ",;":
-                rec.flags.append("mark_dropped")
-                self._note(rec.id, "a new sentence follows but the display ends "
-                                   "with %r; the mark is dropped" % trailing)
-                return True, True
+                return self._display_decision(rec, "a new sentence follows but the display ends "
+                                              "with %r; the mark is dropped" % trailing, True, True)
             return True, False
         if nxt.islower():
             # the sentence goes on.  A full stop here was not the end of one.
             if trailing == ".":
-                rec.flags.append("mark_dropped")
-                self._note(rec.id, "the sentence continues in lower case but the "
-                                   "display ends with '.'; the mark is dropped")
-                return False, True
+                return self._display_decision(rec, "the sentence continues in lower case but the "
+                                              "display ends with '.'; the mark is dropped", False, True)
             return False, False
         # an inline formula, a number, a bracket, a reference: the character
         # says nothing, so the author's punctuation decides
@@ -3631,9 +3653,8 @@ class LatexToNL:
         if trailing and trailing in ",;":
             return False, False
         rec.flags.append("sentence_end_unclear")
-        self._note(rec.id, "display ends without punctuation and an inline "
-                           "formula follows; sentence boundary not decided")
-        return False, False
+        return self._display_decision(rec, "display ends without punctuation and an inline "
+                                      "formula follows; sentence boundary not decided", False, False)
 
     def _make_records(self, body: str, span: Span, before: str,
                       after: str) -> List[FormulaRecord]:
@@ -3910,7 +3931,8 @@ def write_outputs(result: Dict[str, object], out_dir: str,
     with open(os.path.join(out_dir, "content_blocks.json"), "w", encoding="utf-8") as f:
         json.dump(result.get("content_blocks", []), f, ensure_ascii=False, indent=2)
     with open(os.path.join(out_dir, "split_status.json"), "w", encoding="utf-8") as f:
-        json.dump({"version": 2,
+        json.dump({"version": 2, "paper_id": result.get("paper_id"),
+                   "manual_boundaries": result.get("manual_boundaries", []),
                    "counts": {key: len(result.get(key, [])) for key in ('sentences','formulas','content_blocks')},
                    "pending": {"content": sum(b.get('status') == 'pending' for b in result.get('content_blocks', [])),
                                "boundaries": sum(not b.get('answer') for b in result.get('sentence_boundaries', [])),
@@ -4723,11 +4745,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         base_dir=os.path.dirname(os.path.abspath(args.tex)),
         slot_roles=load_slot_roles(args.slot_table), slot_answers=slot_answers,
         paper=args.paper_id or "",
+        reviewed=manual_review.decisions(args.out, args.paper_id or hashlib.sha256(tex.encode()).hexdigest()),
     )
     conv.sources = sources
     conv.canonical = bool(args.canonical)
     use_paper_id(args.paper_id)
+    _PAPER_ANSWERED.update(key for kind, key in conv.reviewed if kind == "names")
     result = conv.convert(tex)
+    result["paper_id"] = conv.paper
+    for block in result["content_blocks"]:
+        if (block.get("kind") == "float" and block.get("status") == "pending"
+                and ("content", manual_review.block_key(block)) in conv.reviewed):
+            block.update(status="retained", source="manual")
     paths = write_outputs(result, args.out, write_tokens=not args.no_tok)
     # after the conversion: writing here used to produce an empty ledger,
     # because nothing had been recorded yet
@@ -4756,7 +4785,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         # I2, against what is on disk: the file must hold every break in memory,
         # or "no questions" would be indistinguishable from a lost write
         with open(todo_path, encoding="utf-8") as fh:
-            disk = {i["id"] for i in json.load(fh)["items"]}
+            disk = {i["sig"] for i in json.load(fh)["items"]}
         assert disk == {b["sig"] for b in result["sentence_boundaries"]}, (
             len(disk), len(result["sentence_boundaries"]))
         assert {b["sig"] for b in pending} <= disk

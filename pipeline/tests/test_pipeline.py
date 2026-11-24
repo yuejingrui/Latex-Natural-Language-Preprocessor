@@ -64,14 +64,14 @@ class Pipeline(unittest.TestCase):
         proc = subprocess.run(args, cwd=ROOT, capture_output=True, encoding="utf-8", timeout=120)
         return proc.returncode, proc.stdout + proc.stderr
 
-    def test_roles_pending_with_either_offline_runner(self):
+    def test_roles_with_priors_are_optional_with_either_offline_runner(self):
         source = self.out.parent / "role.tex"
         source.write_text(r"\documentclass{article}\begin{document}Let $a=b$.\end{document}", encoding="utf-8")
         for entry in ("run_pipeline.sh", "run_pipeline_llm.sh"):
             with self.subTest(entry=entry):
                 out = self.out / entry / "paper"
                 code, log = self.run_stage("sh", ROOT/"pipeline/scripts"/entry, source, out, "--no-ask")
-                self.assertEqual(code, 3, log)
+                self.assertEqual(code, 0, log)
                 self.assertTrue((out/"roles.json").is_file())
                 items = json.loads((out/"role_todo.json").read_text(encoding="utf-8"))["items"]
                 self.assertEqual([i["fid"] for i in items], ["MATH1"])
@@ -160,28 +160,28 @@ class Pipeline(unittest.TestCase):
             self.assertIn("part.tex", stats["source_sha256"])
             return stats["paper_id"]
 
-        first = run(a, 3)
+        first = run(a, 0)
         queue = self.out/"role_todo.json"
         data = json.loads(queue.read_text(encoding="utf-8"))
         data["items"][0]["answer"] = "unsure"
         queue.write_text(json.dumps(data))
-        self.assertEqual(run(a, 3), first)
+        self.assertEqual(run(a, 0), first)
         self.assertEqual(json.loads((self.out/"human_todo.json").read_text())["counts"], {"role_unsure": 1})
         data["items"][0]["answer"] = "constraint"
         queue.write_text(json.dumps(data))
         self.assertEqual(run(a, 0), first)
         self.assertFalse((self.out/"human_todo.json").exists())
-        second = run(b, 3)
+        second = run(b, 0)
         self.assertNotEqual(first, second)
         self.assertFalse(json.loads((self.out/"roles.json").read_text())["roles"])
         (b/"part.tex").write_text("Assume $a=b$.", encoding="utf-8")
-        self.assertNotEqual(run(b, 3), second)
+        self.assertNotEqual(run(b, 0), second)
 
     def test_conflicting_answers_are_reopened(self):
         source = self.out.parent/"letters.tex"
         source.write_text(r"\documentclass{article}\begin{document}We study $xy$.\end{document}")
         command = ["sh", ROOT/"pipeline/scripts/run_pipeline_llm.sh", source, self.out, "--no-ask"]
-        self.assertEqual(self.run_stage(*command)[0], 3)
+        self.assertEqual(self.run_stage(*command)[0], 0)
         queue = self.out/"construction_todo.json"
         answers = json.loads(queue.read_text(encoding="utf-8"))
         for item in answers["items"]:
