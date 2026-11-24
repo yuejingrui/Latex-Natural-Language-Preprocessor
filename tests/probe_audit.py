@@ -1,30 +1,15 @@
 #!/usr/bin/env python3
-"""Probes for the core defects that AUDIT.md section 2 used to list.
-
-Each one is the reproduction from that table; the ones still open (27, 34) are not
-asserted here, they stay listed in AUDIT.md.
-"""
-import os
+"""Splitter regressions for malformed input, retained content and notation."""
+import json
+from pathlib import Path
 import sys
+import tempfile
+from unittest.mock import patch
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-# the same file runs inside the repository (nlprep/tests) and inside the
-# standalone splitting package (tests/ + scripts/)
-SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
-if not os.path.isdir(SCRIPTS):
-    SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(HERE)),
-                           "nlprep", "scripts")
-sys.path.insert(0, SCRIPTS)
-import latex2nl as L  # noqa: E402
-import normalize as N  # noqa: E402
-
-import importlib.util
-
-SKIPPED = []
-
-def skip(reason):
-    SKIPPED.append(reason)
-    print("  SKIP " + reason)
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+import latex2nl as L
+import normalize as N
 
 RESULTS = []
 
@@ -158,99 +143,16 @@ check("a macro with an unknown expansion is kept",
       any(b["raw"] == r"\tsadi{x}" for b in doc["content_blocks"]) and "\\mathbb R" in norm and "$a\\lesssim b$" in norm,
       repr(norm))
 
-import normalize as _N
-_n = _N.Normalizer(paper="p")
+_n = N.Normalizer(paper="p")
 _n.normalize(pre + "We have \\tsadi{x} here.\n\\end{document}\n")
 check("the kept macro is recorded with its body",
       "tsadi" in _n.kept_macros and "pretsadi" in _n.kept_macros["tsadi"],
       repr(_n.kept_macros))
 
-_n2 = _N.Normalizer(paper="p")
+_n2 = N.Normalizer(paper="p")
 _n2.normalize("\\documentclass{article}\n\\newcommand{\\R}{\\mathbb R}\n"
               "\\begin{document}\nWe have \\R here.\n\\end{document}\n")
 check("a known macro is still expanded", _n2.kept_macros == {}, repr(_n2.kept_macros))
-
-# REVIEW.md 二.6: _find only guards against a preceding digit
-if importlib.util.find_spec("roles") is not None:
-    import roles as _R
-    check("_find finds a placeholder glued to letters",
-          _R._find("AFMATH207AFMATH208", "MATH207") is not None)
-    check("_find rejects a longer id", _R._find("MATH2071", "MATH207") is None)
-    _words = _R.preceding_words("in a CYMATH1733 triangulated", "MATH1733")
-    check("preceding_words splits a glued placeholder",
-          _words[-3:] == ["in", "a", "cy"], repr(_words))
-
-else:
-    skip('roles module is outside the splitting package (3 checks)')
-
-# REVIEW.md 三.1: fill_failures must not rewrite a paper that has its sources
-import os
-import json as _json
-import shutil as _shutil
-import subprocess as _sp
-import tempfile as _tf
-
-FILL = os.path.join(os.path.dirname(HERE), "..", "scripts", "fill_failures.py")
-FILL = os.path.abspath(FILL)
-SKIP_FILL = not os.path.isfile(FILL)
-if SKIP_FILL:
-    print("  SKIP: scripts/fill_failures.py is not shipped with this repository")
-if not SKIP_FILL:
-    _base = _tf.mkdtemp(prefix="fillfail.")
-    _work = os.path.join(_base, "work")
-    _out = os.path.join(_base, "newarticle")
-    os.makedirs(_work)
-    os.makedirs(os.path.join(_out, "good"))
-    open(os.path.join(_out, "good", "paper.tex"), "w").write("x\n")
-    open(os.path.join(_out, "good", "meta.json"), "w").write('{"has_tex": true}\n')
-    _shutil.copy(FILL,
-                 os.path.join(_work, "fill_failures.py"))
-    _rows = [{"arxiv_id": a, "doi": "", "title": a, "authors": "", "date": "",
-              "journal": "", "volume": "", "issue": "", "first_page": "", "last_page": ""}
-             for a in ("good", "gone404", "pipe")]
-    open(os.path.join(_work, "works.jsonl"), "w").write(
-        "".join(_json.dumps(r) + "\n" for r in _rows))
-    open(os.path.join(_work, "failures.txt"), "w").write(
-        "good\t[Errno 32] Broken pipe\ngone404\thttp 404\npipe\t[Errno 32] Broken pipe\n")
-    _env = dict(os.environ, GTED_NEWARTICLE=_out,
-                PYTHONPATH=os.path.dirname(FILL))
-    _r = _sp.run([sys.executable, os.path.join(_work, "fill_failures.py")],
-                 capture_output=True, text=True, env=_env)
-    _meta_good = open(os.path.join(_out, "good", "meta.json")).read().strip()
-    _meta_404 = _json.load(open(os.path.join(_out, "gone404", "meta.json")))
-    _meta_pipe = _json.load(open(os.path.join(_out, "pipe", "meta.json")))
-    check("fill_failures leaves a downloaded paper alone",
-          _meta_good == '{"has_tex": true}' and "skipped 1" in _r.stdout, _r.stdout.strip()[:80])
-    check("fill_failures writes a real 404 as 404",
-          "404" in _meta_404.get("status", "") and not _meta_404.get("retry"), str(_meta_404.get("status")))
-    check("fill_failures marks a network failure retryable",
-          _meta_pipe.get("retry") is True and _meta_pipe.get("status", "").startswith("download failed"),
-          str(_meta_pipe.get("status")))
-
-else:
-    skip('fill_failures upstream integration is unavailable (3 checks)')
-
-# OPEN.md 1.1: a name the paper defines is asked, not dropped
-import tempfile as _tfa
-
-if importlib.util.find_spec("pending_names") is not None:
-    _d = _tfa.mkdtemp(prefix="names.")
-    os.makedirs(os.path.join(_d, "p"))
-    open(os.path.join(_d, "p", "main.tex"), "w").write(
-        "\\documentclass{article}\n\\def\\R#1.#2{a#1b#2}\n"
-        "\\begin{document}\nWe have $\\R x.y$ and text.\n\\end{document}\n")
-    import pending_names as _PN
-    _PN.CORPUS, _PN.STEP = _d, 1
-    _pid, _rec = _PN.one(("p", "main.tex"))
-    check("a defined-but-unparsed name is a question",
-          "R" in _rec and _rec["R"].get("reason") == "definition_not_parsed",
-          str({k: v.get("reason") for k, v in _rec.items() if isinstance(v, dict)}))
-    check("the question carries its definition",
-          "def" in (_rec.get("R", {}).get("definition") or ""),
-          (_rec.get("R", {}).get("definition") or "")[:60])
-
-else:
-    skip('pending_names module is outside the splitting package (2 checks)')
 
 # OPEN.md 1.2: the declaration forms the macro table could not read
 for label, pre, body, want in (
@@ -285,22 +187,14 @@ check("a kept macro keeps a space before its argument",
       str([x["text"] for x in doc["sentences"]]))
 
 # GAPS M2: a manual override can correct what TeX reported
-import json as _j2
-_ov = os.path.join(os.path.dirname(SCRIPTS), "data", "name_overrides.json")
-with open(_ov, 'rb') as _fh:
-    _before_bytes = _fh.read()
-_before = _before_bytes.decode('utf-8')
-try:
-    _d = _j2.loads(_before)
-    _d["names"]["frenchspacing"] = {"action": "ignore"}
-    open(_ov, "w", encoding="utf-8").write(_j2.dumps(_d, indent=2))
-    _nt = _N.NameTable(paper="")
-    check("the override table beats a TeX decision",
-          "frenchspacing" in _nt.ignore and _nt.origin.get("frenchspacing") == "override",
-          _nt.origin.get("frenchspacing"))
-finally:
-    with open(_ov, 'wb') as _fh:
-        _fh.write(_before_bytes)
+with tempfile.TemporaryDirectory() as tmp:
+    overrides = Path(tmp) / "name_overrides.json"
+    overrides.write_text(json.dumps({"names": {"frenchspacing": {"action": "ignore"}}}), encoding="utf8")
+    with patch.object(N, "OVERRIDES_PATH", str(overrides)):
+        table = N.NameTable()
+        check("the override table beats a TeX decision",
+              "frenchspacing" in table.ignore and table.origin.get("frenchspacing") == "override",
+              table.origin.get("frenchspacing"))
 
 # OPEN.md 1.8: a nested macro call must expand once, not twice
 _m = L.MacroTable()
@@ -310,5 +204,5 @@ check("a nested macro invocation expands once",
       _exp == "$\\iota(\\pi,\\iota(\\eta,y))$", repr(_exp))
 
 bad = [x for x in RESULTS if not x[1]]
-print("\n%d green, %d red, %d unavailable groups" % (len(RESULTS) - len(bad), len(bad), len(SKIPPED)))
+print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))
 sys.exit(1 if bad else 0)

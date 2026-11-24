@@ -38,7 +38,7 @@ desktop.ini
 .env.*
 !.env.example
 
-# ---- Intermediate runs (only reference baselines are tracked) ----
+# ---- Generated run and audit outputs ----
 out/runs/
 out/baseline-runs/
 out/tmp/

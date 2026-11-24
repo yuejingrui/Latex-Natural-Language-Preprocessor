@@ -12,8 +12,7 @@ directories and writes a Markdown report that sorts every such sentence into
     heading                  a proof/step heading, not a sentence
     other                    needs a look
 
-    python3 split_audit.py --run /tmp/sp20/* --run test-danmark/danmark \\
-        -o nlprep/out/split-audit-baseline.md
+    python3 scripts/split_audit.py --run OUT -o OUT/split-audit.md
 """
 from __future__ import annotations
 

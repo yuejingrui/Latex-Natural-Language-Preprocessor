@@ -11,12 +11,19 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pipeline/scripts"))
 import lexicon
 import pending_names
+import roles
 import verify_formulas
 from paper_metadata import run_paper_id
 from verify_output import check_c13
 
 
 class ReviewRegressions(unittest.TestCase):
+    def test_formula_id_adjacent_to_letters(self):
+        self.assertIsNotNone(roles._find("AFMATH207AFMATH208", "MATH207"))
+        self.assertIsNone(roles._find("MATH2071", "MATH207"))
+        self.assertEqual(roles.preceding_words("in a CYMATH1733 triangulated", "MATH1733")[-3:],
+                         ["in", "a", "cy"])
+
     def test_empty_table_still_checks_anchors_and_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

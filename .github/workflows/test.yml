@@ -14,7 +14,7 @@ jobs:
       - name: probes and unit tests
         run: python tests/run_all.py
       - name: pipeline layer, offline
-        run: python -m unittest pipeline.tests.test_pipeline -v
+        run: python -m unittest discover -s pipeline/tests -v
 
   # --tex-engine is the one path the job above cannot reach.  This job installs a
   # TeX engine and pdftotext so those cases run too; it is allowed to fail, and a

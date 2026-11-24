@@ -1,5 +1,11 @@
 # 切分层：句子、环境、边界
 
+## 当前切分顺序
+
+两个 pipeline 入口优先使用实际 TeX 引擎确定有效输入。规范化时保存源码证据，随后为句子中的每个公式或引用建立锚点。外层展示的排版行、行标签及原始操作数分别保留；嵌套对齐环境内部的换行属于内部环境。对 `s&=a+b\\&+c+d`，同一公式的两行都在 `rows` 中，跨行关系的右侧为 `a+b +c+d`。原文中的 `\\` 是排版换行。
+
+结构解释有完整参考值时可选复核，未解析或只覆盖部分目标时进入待办。独立的源位置与编译编号用于发现缺式、调序和错误引用。网页确认、撤回及重跑方法见[管线与审核台](pipeline/README.md)。
+
 ## 11 月 23 日的切分顺序
 
 1. 对原始项目按源码顺序处理宏和条件。指定 `--tex-engine` 时，先从实际构建确定有效章节、条件分支、排除环境和钩子，在执行位置放回源码。静态模式遇到无法判定的调用或状态时保存待办。
@@ -32,8 +38,7 @@
 | 孤儿 display | 524 个里 49 个（9.3%），前一句无句末标点的只有 1 个 |
 | `verify_output` 硬检查 | 20 篇 + danmark **全 0** |
 
-复验：`python3 nlprep/scripts/verify_output.py OUT`，以及
-`out/split-audit-baseline.md`（324 句无句末标点的分类清单）。
+可在自己的输出目录执行 `python scripts/verify_output.py OUT --strict`，并用第 6 节的命令生成本次句末审计。
 
 ---
 
@@ -172,7 +177,7 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 
 ### 5.2 那 54 句的来源（逐条追到源码）
 
-`out/split-audit-baseline.md` 里"同时缺句末标点"的只有 14 句；C3（句中含裸花括号）全量是
+旧语料统计中"同时缺句末标点"的只有 14 句；C3（句中含裸花括号）全量是
 **54 句 / 7 篇**。按源码分类：
 
 | 真实来源 | 句数 | 例 |
@@ -211,7 +216,7 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 
 ### 6.3 基线清单
 
-`out/split-audit-baseline.md`：21 篇、13,300 句里 **324 句无句末标点**，按九类分组
+11 月 20–21 日抽样的 21 篇、13,300 句里 **324 句无句末标点**，按九类分组
 
 | 类 | 句数 | 性质 |
 |:--|--:|:--|
@@ -223,7 +228,7 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 | 疑似被切断 | **0** | 注释行修复后清零 |
 | 原文缺句末标点（需复核） | 27 | 人工看 |
 
-生成：`python3 nlprep/scripts/split_audit.py --run '/tmp/sp20/*' --run test-danmark/danmark -o nlprep/out/split-audit-baseline.md`。
+对本次交付生成清单可运行 `python scripts/split_audit.py --run OUT -o OUT/split-audit.md`。可重复使用 `--run` 汇总多篇。
 
 ---
 
@@ -237,4 +242,4 @@ display 前的空行只在**前文有句末标点**时才算段落边界；displ
 | `probe_part.py` | `\partmarker`、`part` 字段、`env` 不变 |
 | `probe_audit.py` | AUDIT §2 的 19 条复现（含未闭合环境、`\ifcase`、`\tag`、孤立反斜杠、`\end {env}`） |
 
-本包另附 `tests/probe_review.py`，检查括号后句点、列表标签、display 和图注等边界。可在代码包根目录运行六个 `probe_*.py`，再运行 `python -X utf8 -m unittest discover -s tests -v`。包含三个脚本自测的完整命令见 [README](README.md#8-测试)。
+另有 `tests/probe_review.py` 检查括号后句点、列表标签、展示公式和图注等边界。运行 `python -X utf8 tests/run_all.py` 执行以上探针与切分单元测试。管线回归命令见[测试说明](README.md#8-测试)。

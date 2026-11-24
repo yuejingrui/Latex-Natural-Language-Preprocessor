@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Probes for SPLITTING.md plan A: a declared class used bare is a part."""
-import json
-import subprocess
 import os
 import sys
 
@@ -67,21 +65,6 @@ norm2, doc2 = run(tex2)
 part2 = [s.get("part") for s in doc2["sentences"] if s.get("part")]
 check("6. a step outside a proof is still a part",
       bool(part2) and part2[0]["kind"] == "step", str(part2))
-
-# ---- the paper that motivated it ---------------------------------------
-run_dir = os.path.abspath(os.path.join(HERE, "..", "..", "test-danmark", "danmark"))
-try:
-    rows = [json.loads(l) for l in open(run_dir + "/sentences.jsonl",
-                                        encoding="utf-8")]
-    with_part = [r for r in rows if r.get("part")]
-    check("7. danmark: 16 steps, the sentences of each carry a part",
-          100 <= len(with_part) <= 150
-          and max(r["part"]["index"] for r in with_part) == 3,
-          "%d sentences" % len(with_part))
-    check("8. danmark: no sentence mentions the marker",
-          not any("partmarker" in r["text"] for r in rows))
-except OSError:
-    print("  SKIP danmark corpus fixture is not shipped (2 checks)")
 
 bad = [x for x in RESULTS if not x[1]]
 print("\n%d green, %d red" % (len(RESULTS) - len(bad), len(bad)))

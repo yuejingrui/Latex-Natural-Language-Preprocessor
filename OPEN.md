@@ -1,15 +1,16 @@
 # 切分层仍有的限制
 
-## 静态模式仍会误通过的两个已知输入
+## 当前交付中仍需复核的情况
 
-从已保存的早期原稿重跑静态归一化、规范化切分和严格验收，代码版本为 `e7a5553`。
+| 情况 | 当前行为 |
+|---|---|
+| 多文件工程依赖 `\includeonly` 或子文件的 `\endinput` | 两个 pipeline 入口默认选择真实引擎。已测两例的正文与 PDF 一致；缺引擎时，入口用 `--hash-paper` 归一化并将可识别的文件选择保存为待处理，返回 `3`。仅使用旧的低层静态命令、未启用这项保护时，仍可能得到包含错误章节或分支的自洽输出 |
+| 复杂宏生成标签、条件或局部定义 | 当前 TeX 观测只覆盖能定位的站点。未取得的执行证据、未完整对应的组引用仍需核对原稿 |
+| 正文靠语意暗示恢复旧记号 | 已识别的全篇、章节和局部定义有明确作用区间；缺少重定义或恢复信号的用例仍需复核 |
+| `\alpha_{\text{and}}` 明说是状态名 | 当前短语规则仍可初判为 `connective`。文字槽可在网页确认成 `label`，也可让模型结合完整公式判断。规则或模型都可能误判这一项 |
+| 公式解释已有参考值 | 退出 `0` 允许保留可选读法和分歧警告。解释是否符合作者意图需结合原式及上下文判断；公式丢失、错位和与已核实目标相冲突的引用仍受独立检查 |
 
-| 输入 | 静态路径实际输出 | 启用 `--tex-engine pdflatex` 的输出 |
-|---|---|---|
-| `\includeonly{first}` 后调用两章 | `Included result.Excluded result.`，严格返回 0 | `Included result.`，严格返回 0，与原稿 PDF 一致 |
-| 子文件先 `\drafttrue`，再 `\endinput`，下一行 `\draftfalse` | `Wrong.`，严格返回 0 | `Correct.`，严格返回 0，与原稿 PDF 一致 |
-
-静态读取在执行分支前内联子文件，丢失了 TeX 的章节选择和子文件结束位置。处理依赖这些指令的原稿时，在读取主文件的一步选择实际 TeX 引擎。这两个输入来自另测的 9 个早期反例，未计入下表的 46 例。
+已修复的计数器重编号、跨章声明冲突、续行和引用定位等反例见[11/24 修改汇总](REPAIR-2026-11-24.md)。
 
 ## 2026-11-23 实测仍待处理的输入
 
@@ -22,7 +23,7 @@
 | `\IfFileExists`，两例依赖实际文件查找 | 使用 TeX 实际命中的分支 | 保留测试和两支原文 |
 | `\globaldefs=\scopeval`，作用域由计数寄存器决定 | 读到实际整数，样例输出 `x` | 作用域无法确定，保存待办 |
 
-其他已知边界包括可执行命令构造的盒子、不受支持的钩子阶段、同一行 `\endinput` 后仍有正文，以及复杂展开后的原始位置映射。浮动体可保留原文和标题，其表格结构仍待下游解析。附带论文的归一化快照仍有脚注、浮动块的历史删除记录和 3 条未解决记录。
+其他已知边界包括可执行命令构造的盒子、不受支持的钩子阶段、同一行 `\endinput` 后仍有正文，以及复杂展开后的原始位置映射。浮动体可保留原文和标题，其表格结构仍待下游解析。该轮使用的旧归一化快照带有历史删除记录。现随包示例保存内容块和三条展示句界记录。
 
 完整的修复原因、处理范围和复现命令见 [11 月 23 日修复汇总](REPAIR-2026-11-23.md)。
 
@@ -178,14 +179,7 @@ $\R^2$               -> 修前：pending_names 输出 0 道题（\R 被 rec.pop�
 | 3 | 新接线四类：`display:orphan`、`math:unclosed`、`unresolved:line`、`env:unknown`；原有的 `drop:footnote`/`drop:float`/`drop:empty_sentence`/`conditional:unknown` 保留 | `latex2nl._note`/`_process_unit`/`find_math_spans`、`normalize._envs` |
 | 4 | `scripts/ledger_baseline.py`：扫 run 目录，按 kind 汇总成 markdown | 新脚本 |
 
-**22 篇基线**：`out/ledger-baseline.md`（`--step 280 --limit 22` 抽样 21 篇 + danmark = 22）。
-重跑：
-
-```sh
-python3 nlprep/scripts/run_corpus.py --step 280 --limit 22 --out out/baseline-runs
-sh nlprep/nlprep.sh paper danmark.tex out/baseline-runs/danmark --no-ask
-python3 nlprep/scripts/ledger_baseline.py 'out/baseline-runs/*' --verify -o out/ledger-baseline.md
-```
+本节统计来自 11 月 20 日的 22 篇上游抽样。当前每篇论文的账本随本次运行写入 `OUT/issues.json`。
 
 | kind | papers | total |
 |:--|--:|--:|
