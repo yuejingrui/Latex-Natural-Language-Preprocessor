@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probes for SPLITTING.md: no bare brace groups reach a sentence."""
+"""Probes for RULES.md: no bare brace groups reach a sentence."""
 import os
 import sys
 

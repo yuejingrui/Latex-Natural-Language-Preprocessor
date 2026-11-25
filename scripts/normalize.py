@@ -190,7 +190,7 @@ def _ensuremath_to_math(text: str) -> str:
     following dollar and put whole paragraphs inside displays (D10).  latex2nl
     knows whether it is already inside maths, so the decision belongs there: it
     turns the construct into an inline formula in text and leaves it alone inside
-    a formula (OPEN.md 1.3).
+    a formula (RULES.md).
     """
     return text
 
@@ -635,7 +635,7 @@ PROOF_END = re.compile(r"\\(?:qed|qedhere|square|blacksquare|Box)\b")
 
 #: a primitive dropped as "ignore" still owns its operand.  Dropping only the
 #: name left ``\penalty10000`` as ``10000`` and ``\setbox0=\hbox{..}`` as
-#: ``0=`` (GAPS.md M3).
+#: ``0=`` (audit M3, OPEN.md).
 PRIMITIVE_EAT = {
     "penalty": "number", "vskip": "dimen", "hskip": "dimen",
     "kern": "dimen", "vspace": "dimen", "hspace": "dimen",
@@ -969,7 +969,7 @@ class Normalizer:
             return True
         # the rule tables on the Normalizer itself: RULE_NAMES was built from
         # latex2nl's globals and missed BARE_ONE and friends, which is why \color
-        # looked unknown and its whole macro was kept (OPEN.md 1.0)
+        # looked unknown and its whole macro was kept (RULES.md)
         for attr in ("BARE_ONE", "BARE_DROP", "NO_ARG_DROP", "TITLE_CMDS",
                      "FORMAT_CMDS", "MATH_FONT_CMDS", "HEADING_CMDS",
                      "ENV_AS_COMMAND", "UNWRAP_ONE", "PLUMBING",
@@ -1249,7 +1249,7 @@ class Normalizer:
             gone = before - len(body)
             if gone and cmd == "footnote":
                 # content leaves the paper here: the amount has to be visible
-                # until a person decides whether to keep it (GAPS.md D1)
+                # until a person decides whether to keep it (audit D1, OPEN.md)
                 _issues.record("drop:footnote", "normalize._drop_bare",
                                where="", size=gone)
         for cmd in self.BARE_DROP:
@@ -1289,7 +1289,7 @@ class Normalizer:
         for cmd, limit in (("marginpar", 3),):
             body = self._drop_arg_cmd(body, cmd, limit=limit)
         # \proof{Of Lemma 2}: the title says what is being proved, so keep the
-        # words and drop only the command (GAPS.md D3)
+        # words and drop only the command (audit D3, OPEN.md)
         body = self._unwrap_first_arg(body, "proof")
         # a bare \proof (no group) is the end-of-proof mark
         body = re.sub(r"\\proof(?![A-Za-z@])\s*(?!\{)", " ", body)
@@ -1297,7 +1297,7 @@ class Normalizer:
         # as text, and {S_\bullet} then kept its braces in the sentence
         body = _ensuremath_to_math(body)
         # \textcolor{blue}{Let it be.} used to leave "blue" glued to the next
-        # word: the name is dropped but the colour argument stayed (OPEN.md 1.0)
+        # word: the name is dropped but the colour argument stayed (RULES.md)
         body = re.sub(r"\\textcolor\s*\{[^{}]*\}\s*", " ", body)
         # a bullet left in the text (\Sdot expands to {\ensuremath{S_\bullet}})
         # is a symbol, not a command name
@@ -2058,7 +2058,7 @@ class Normalizer:
     def _expand_bracket_display(self, body: str, tex: str) -> str:
         """A paper may redefine ``\\[`` as ``\\def\\[#1]#2{...}`` and write
         ``\\[equation]{...}``; without this the use looks like display maths and
-        the whole environment body leaked as prose (OPEN.md 1.2)."""
+        the whole environment body leaked as prose (RULES.md)."""
         if not re.search(r"\\def\s*\\\[\s*#1\s*\]\s*#2", tex):
             return body
         out, pos = [], 0
@@ -2089,7 +2089,7 @@ class Normalizer:
         """``\\intertext{X}`` interrupts a display: close it, write X, reopen.
 
         Left in place, the command and its prose stayed inside the formula body,
-        which is what C6 reported and what M7 listed (AUDIT.md / GAPS.md).
+        which is reported by C6 and recorded as audit M7 in OPEN.md.
         """
         pat = re.compile(r"\\intertext\s*\{")
         pos = 0
@@ -2735,7 +2735,7 @@ class Normalizer:
         r"""Turn a bare ``\X`` into a part marker when X is a declared class.
 
         ``\newtheorem{step}{Step}`` defines ``\step`` as the begin command, so a
-        paper that writes ``\step …`` starts a Step block (SPLITTING.md).
+        paper that writes ``\step …`` starts a Step block (RULES.md).
         The block is *not* made a nested unit -- latex2nl would flatten it -- it
         is marked as a part of the unit that contains it, so the sentence keeps
         "this is step 3" without changing env or unit.

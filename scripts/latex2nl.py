@@ -264,7 +264,7 @@ USE_PACKAGE_RE = re.compile(r"\\(?:usepackage|RequirePackage)\s*"
 IF_TOKEN_RE = re.compile(r"\\(if[A-Za-z@]*|else|or|fi)(?![A-Za-z])")
 
 #: ``\newif\ifX`` followed by ``\Xtrue`` or ``\Xfalse`` is a switch the
-#: pipeline can read, instead of taking the first branch (GAPS.md J1)
+#: pipeline can read, instead of taking the first branch (audit J1, OPEN.md)
 NEWIF_RE = re.compile(r"\\newif\s*\\if([A-Za-z@]+)")
 NEWIF_SET_RE = re.compile(r"\\([A-Za-z@]+)(true|false)(?![A-Za-z])")
 IF_OPENERS = {"ifdefined", "ifx", "ifnum", "ifdim", "ifcase", "iftrue",
@@ -390,14 +390,14 @@ class Span:
 
 
 #: ``\partmarker{step}`` comes from normalize when a paper writes a bare
-#: command TeX defined through ``\newtheorem`` (SPLITTING.md).  It becomes a
+#: command TeX defined through ``\newtheorem`` (RULES.md).  It becomes a
 #: sentinel here so no other pass sees it, and the sentence it starts carries the
 #: part number.
 #: a brace group whose content is plain text (no command, no nesting).  Such a
 #: group is left over from a format command or a macro expansion -- \z@'s
 #: arguments, {{\ensuremath{..}}}, \noindent{\emph{..}} -- and in the text it
 #: is only noise; math is already a placeholder by the time this is applied
-#: (SPLITTING.md §6 item 4).
+#: (RULES.md).
 TEXT_GROUP_RE = re.compile(r"(?<!\\)\{([^{}\\]*)\}")
 
 PART_MARKER_RE = re.compile(r"\\partmarker\{([^{}]*)\}")
@@ -447,7 +447,7 @@ def strip_comments(tex: str, line_origins=None) -> str:
             if j == -1:
                 break
             # count the backslashes: \\% is a line break then a comment,
-            # \\% inside a line is an escaped percent (GAPS.md M12)
+            # \\% inside a line is an escaped percent (audit M12, OPEN.md)
             k, slashes = j - 1, 0
             while k >= 0 and line[k] == "\\":
                 slashes += 1
@@ -462,7 +462,7 @@ def strip_comments(tex: str, line_origins=None) -> str:
             # the line holds nothing but a comment.  In TeX it produces no output
             # at all -- not even a newline, that is what % is for -- so dropping
             # the text but keeping the line would turn it into a blank line, and a
-            # blank line is a paragraph break downstream (SPLITTING.md §3).
+            # blank line is a paragraph break downstream (RULES.md).
             continue
         out.append(kept)
         if line_origins is not None:
@@ -857,7 +857,7 @@ def only_draws(body: str) -> bool:
 
 #: A paper that redefines one of these with \@startsection replaces the command
 #: with a pile of layout arguments, and the title ends up in the prose instead
-#: of the section field (SPLITTING.md §2).  The definition is not read, so the
+#: of the section field (RULES.md).  The definition is not read, so the
 #: standard meaning survives.
 STANDARD_SECTION_NAMES = {
 "part", "chapter", "section", "subsection", "subsubsection",
@@ -1041,7 +1041,7 @@ class MacroTable:
         self._parse_more_declarations(text, nested)
 
     def _parse_more_declarations(self, text: str, nested) -> None:
-        """The three declaration forms OPEN.md 1.2 lists."""
+        """Read additional macro and symbol declarations."""
         for m in PAIRED_DELIMX_RE.finditer(text):
             if nested(m):
                 continue
@@ -1302,7 +1302,7 @@ class MacroTable:
             if m.start() < pos:
                 # this invocation sits inside an argument list the previous
                 # substitution already consumed: expanding it again duplicated
-                # the text and left a stray brace (C7, OPEN.md 1.8)
+                # the text and left a stray brace (C7, RULES.md)
                 continue
             out.append(text[pos: m.start()])
             parsed = macro_arguments(text, m.end(), nargs, default)
@@ -1852,7 +1852,7 @@ def find_math_spans(text: str, clean: bool = True, inspect_arguments=False,
                 elif text[j] == "$" and depth == 0:
                     # a $ inside a group (\mbox{$x$}) is nested maths, not the
                     # end of this formula: closing there cut the span in half
-                    # (C7, OPEN.md 1.8)
+                    # (C7, RULES.md)
                     break
                 j += 1
             if j >= n:
@@ -2836,7 +2836,7 @@ class LatexToNL:
         tex = strip_comments(tex)
         self.macros.parse(tex)
         # the switches a paper declares live in its preamble, which is stripped
-        # before the body is read (GAPS.md J1)
+        # before the body is read (audit J1, OPEN.md)
         preamble, body = split_document(tex)
         import normalize
         keeper = normalize.Normalizer(switches=self.switch_defaults)
@@ -3211,7 +3211,7 @@ class LatexToNL:
         return [u for u in units if collapse_ws(u.body)]
 
     #: a blank line before a display; if the text before it does not end a
-    #: sentence, the display belongs to that sentence (GAPS.md M1)
+    #: sentence, the display belongs to that sentence (audit M1, OPEN.md)
     BEFORE_DISPLAY = re.compile(r"(?s)([^\n]*?)\n\s*\n(?=\s*\\begin\{display\})")
     AFTER_DISPLAY = re.compile(r"(?s)(\\end\{display\})\s*\n\s*\n(?=\s*[a-z(])")
 
@@ -3363,7 +3363,7 @@ class LatexToNL:
 
         When the group belongs to a command -- ``\\tsadi{x}`` -- the braces go but
         a space stays, or the name and the content fuse into ``\\tsadix``
-        (OPEN.md 1.0).
+        (RULES.md).
         """
         def repl(m) -> str:
             if re.search(r"\\[A-Za-z@]+\s*$", text[:m.start()]):
@@ -3575,7 +3575,7 @@ class LatexToNL:
         text = re.sub(r"\\([Cc]refrange)\s*\{([^}]*)\}\s*\{([^}]*)\}",
                       ref_repl, text)
         # a label may hold braces: \ref{a{b}} used to match up to the first
-        # "}" and leave the rest in the sentence (GAPS.md M5)
+        # "}" and leave the rest in the sentence (audit M5, OPEN.md)
         def scan_refs(text: str) -> str:
             pat = re.compile(r"\\(eqref|ref|autoref|[Cc]ref)(?![A-Za-z])")
             out, pos = [], 0

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The five boundary cases the 2005.01702 review found (SPLITTING.md 2.3)."""
+"""The five boundary cases the 2005.01702 review found (RULES.md)."""
 import os
 import sys
 

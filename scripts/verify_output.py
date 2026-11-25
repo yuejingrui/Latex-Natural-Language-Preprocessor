@@ -5,7 +5,7 @@
 ``verify_formulas.py`` asks "did a formula lose something"; this asks "does the
 output look like a paper".  It reads the artefacts of one run -- sentences.jsonl,
 formulas.json, normalized.tex, normalize-stats.json -- and records every hit in the
-ledger with the kind from GAPS.md section 5 (C1-C16).
+ledger with the kind described in RULES.md (C1-C16).
 
     python3 verify_output.py OUT            # report + write OUT/issues.json
     python3 verify_output.py OUT --strict   # exit 1 if a hard check hits
@@ -138,7 +138,7 @@ def check_c1(doc) -> List[dict]:
 
     The first half alone is not evidence -- a display can end a sentence without
     a full stop ("Define MATH81"), and that is a different note.  What marks a
-    cut (GAPS.md M1) is the continuation: the next sentence begins as if the
+    cut (audit M1, OPEN.md) is the continuation: the next sentence begins as if the
     sentence had not ended.  The record's ``context_before`` is the second
     signal for the same defect, for displays whose lead-in was kept.
     """
@@ -151,7 +151,7 @@ def check_c1(doc) -> List[dict]:
         if not text or text[-1] in TERMINAL:
             continue
         # a list item or a display that ends on a comma is split by design
-        # (SPLITTING.md section 4.1), not cut in the middle
+        # (RULES.md), not cut in the middle
         if text[-1] in ",;" or "/item" in (sent.get("unit") or ""):
             continue
         nxt = (sents[i + 1].get("text") or "").strip()

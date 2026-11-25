@@ -224,7 +224,7 @@ step "fidelity gate"
 VF=$?
 echo "  verify_formulas rc=$VF"
 
-step "output checks (GAPS.md C1-C14)"
+step "output checks (RULES.md)"
 "$PY" scripts/verify_output.py "$OUT" --strict >"$OUT/output_checks.txt" 2>&1
 VO=$?
 tail -3 "$OUT/output_checks.txt"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probes for SPLITTING.md plan A: a declared class used bare is a part."""
+"""Probes for RULES.md: a declared class used bare is a part."""
 import os
 import sys
 

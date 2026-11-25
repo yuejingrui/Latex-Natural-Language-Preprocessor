@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """OUT/human_todo.json: the things no machine should decide.
 
-GAPS.md section 6.  Three kinds of entry land here and nowhere else:
+Three kinds of entry land here and nowhere else:
 
   * a strategy question (keep or drop footnotes; whether to fail on pending work);
   * a source error (an unbalanced brace, an unclosed $$, a missing \\input);
@@ -55,7 +55,7 @@ def items() -> List[dict]:
 
 def write(path: str) -> dict:
     payload = {"_about": "Questions for a person: no right answer, a broken source, "
-                         "or an answer the model could not give (GAPS.md section 6).",
+                         "or an answer the model could not give.",
                "counts": {}, "items": _ITEMS}
     for it in _ITEMS:
         payload["counts"][it["reason"]] = payload["counts"].get(it["reason"], 0) + 1
@@ -136,7 +136,7 @@ def from_roles(role_todo: str, out_path: str) -> int:
 
 
 #: kinds from a ledger that need a person: a strategy is undecided, or the
-#: source itself is broken  (GAPS.md section 6)
+#: source itself is broken.
 #: Notes are preserved now (normalize packs every \footnote, braced or not,
 #: into a content block), so there is no footnote strategy left to decide.  A
 #: ledger entry that says otherwise is a stale file, not a question.

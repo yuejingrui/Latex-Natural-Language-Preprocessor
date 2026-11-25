@@ -1,5 +1,5 @@
 {
-  "_about": "Destination of every let-through recorded by scripts/issues.py. route: code / todo:<file> / human / check / ledger. gate: hard (must not happen), soft (report only), none (deliberate). A kind that is not here cannot be recorded: issues.record raises. See GAPS.md sections 3 and 4.",
+  "_about": "Destination of every let-through recorded by scripts/issues.py. route: code / todo:<file> / human / check / ledger. gate: hard (must not happen), soft (report only), none (deliberate). A kind that is not here cannot be recorded: issues.record raises. See the ledger rules in RULES.md.",
   "version": 1,
   "kinds": {
     "formula:diagnostic": {

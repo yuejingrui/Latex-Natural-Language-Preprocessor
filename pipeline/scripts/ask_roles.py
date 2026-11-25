@@ -163,7 +163,7 @@ def do_answer(a) -> int:
                      if isinstance(ans, dict)
                      and str(ans.get("fid") or "").strip() in want)))
     # a question the model answered nothing for is counted, not forgotten: two
-    # strikes send it to the human table (GAPS.md Q2)
+    # strikes send it to the human table (audit Q2, OPEN.md)
     for it in todo:
         if not it.get("answer"):
             it["asked"] = int(it.get("asked") or 0) + 1

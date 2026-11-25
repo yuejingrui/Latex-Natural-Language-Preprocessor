@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Classify the sentences that end without a terminal mark, per paper.
 
-SPLITTING.md section 5 asks for this list: after the comment-line fix, about 324
+In the historical corpus, after the comment-line fix, about 324
 of 13,300 sentences still end without . ! ? : ; and they are not one phenomenon.
 This script reads `sentences.jsonl` and `formulas.json` from one or more run
 directories and writes a Markdown report that sorts every such sentence into

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """The ledger: one entry per thing the pipeline let through, with its destination.
 
-GAPS.md is the audit; this is the mechanism it asks for.  Every site that drops
+RULES.md describes issue routing.  A site that drops
 content, misplaces it, guesses a default, or leaves a question unanswered calls
 ``record()``.  The destination of each kind is fixed in ``data/issue_kinds.json``:
 
@@ -13,7 +13,7 @@ content, misplaces it, guesses a default, or leaves a question unanswered calls
     ledger      deliberate, but the amount must be visible
 
 An unregistered kind raises, so a new gap cannot appear without being registered
-(GAPS.md section 4, rule 1).  Counts are written to ``OUT/issues.json``.
+(RULES.md).  Counts are written to ``OUT/issues.json``.
 """
 from __future__ import annotations
 

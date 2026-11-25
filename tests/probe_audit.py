@@ -154,7 +154,7 @@ _n2.normalize("\\documentclass{article}\n\\newcommand{\\R}{\\mathbb R}\n"
               "\\begin{document}\nWe have \\R here.\n\\end{document}\n")
 check("a known macro is still expanded", _n2.kept_macros == {}, repr(_n2.kept_macros))
 
-# OPEN.md 1.2: the declaration forms the macro table could not read
+# Declarations: the declaration forms the macro table could not read
 for label, pre, body, want in (
         ("paired delimiter", "\\DeclarePairedDelimiter\\norm{\\lVert}{\\rVert}\n",
          "We have $\\norm{x}$ here.", "x"),
@@ -170,7 +170,7 @@ for label, pre, body, want in (
     check("the macro table reads a %s" % label,
           any(want in e for e in exps), str(exps))
 
-# OPEN.md 1.0: colour and kept macros must not glue words into the sentence
+# Text boundaries: colour and kept macros must not glue words into the sentence
 norm, doc = run("\\begin{document}\n\\textcolor{blue}{Let it be.}\n\\end{document}\n")
 check("textcolor keeps only its content",
       [x["text"] for x in doc["sentences"]] == ["Let it be."],
@@ -196,7 +196,7 @@ with tempfile.TemporaryDirectory() as tmp:
               "frenchspacing" in table.ignore and table.origin.get("frenchspacing") == "override",
               table.origin.get("frenchspacing"))
 
-# OPEN.md 1.8: a nested macro call must expand once, not twice
+# Expansion: a nested macro call must expand once, not twice
 _m = L.MacroTable()
 _m.parse("\\newcommand{\\io}[2]{\\iota(#1,#2)}")
 _exp = _m.expand("$\\io{\\pi}{\\io{\\eta}{y}}$")

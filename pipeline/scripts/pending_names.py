@@ -682,7 +682,7 @@ def one(job):
                 continue
             if name in m.macros or name in m._cyclic_names():
                 # never silent: the question layer has to know the name exists
-                # and why it is still open (OPEN.md 1.1, step 1)
+                # and why it is still open (OPEN.md)
                 rec[name]["reason"] = ("kept_macro" if name in kept
                                        else "defined_but_unexpanded")
                 rec[name]["definition"] = (

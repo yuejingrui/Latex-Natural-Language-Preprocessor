@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The five acceptance probes of SPLITTING.md section 6."""
+"""Acceptance probes for the environment rules in RULES.md."""
 import os
 import sys
 

@@ -1,172 +1,94 @@
-# 处理规则总表
+# 切分、解释与验收规则
 
-## 钩子、分组与公式边界
+本文按一篇论文的处理顺序说明每个判断读什么、写到哪里、何时需要审核。启动命令见 [README](README.md)，已知误判和执行覆盖范围见 [OPEN](OPEN.md)。
 
-1. 文档开始、导言结束、文档结束、环境开始和环境结束的已支持钩子，在对应位置插入其生效内容。环境的持久钩子每次进入或退出时执行，一次性钩子执行一次。自定义环境的字面开始、结束文字及其参数都属于论文内容。按行处理 `comment` 宏包声明的排除与恢复区段，排除区段里的公式和文件调用都不参与切分。
-2. 普通宏跟随调用点的作用域。对支持的 `\edef` 和 `\xdef`，在定义点展开可静态求值的操作数，`\noexpand` 保护的标记留到调用时处理。`\aftergroup` 队列按登记顺序在当前分组结束后执行。`\globaldefs` 决定后续赋值的作用域。字面整数按源码处理，受支持的计数寄存器操作数可以从实际构建中读取，无法判定作用域时进入待办。
-3. `\begin{math}…\end{math}` 是行内公式。数学边界内的末尾感叹号保留在公式中，包括 `n!`、`n!!`；公式外的标点按正文规则切句。`\mathchoice` 连同四个分支完整保存。计数器出现在公式中时保留原操作数，执行模式可将单独放在花括号里的受支持计数器替换为当次观测到的数值。
-4. 固定参数数目的计数、长度和目录命令只消耗实际参数。例中 `\setcounter{section}{2}{Keep $x$.}` 的第三组生成正文和公式。`\IfFileExists` 可按 TeX 实际执行的分支切分，静态模式保留未定分支。
+## 有效源码与执行顺序
 
-## 真实构建中的正文选择
-
-1. 启用 `--tex-engine` 时，先对同一份项目分别进行原样构建和带执行标记的构建，再归一化。两次构建使用相同引擎、同名主文件、独立的辅助文件和关闭 shell escape 的参数。出现常见交叉引用重跑提示时各自最多运行三遍。最终两份 PDF 的提取文本、项目内输入文件列表和编译遍数必须一致。
-2. 在可定位的正文或导言区读取字面条件。支持已在扫描到的项目 TeX 源中声明的 `\newif` 开关、`\iftrue`、`\iffalse`、控制词操作数的 `\ifdefined` 和 `\ifx`，包括前置 `\unless`。每次执行分别读取所选分支的标记，回放该分支的原始源码。嵌套条件只回放实际选中的外层范围。
-3. 对字面 `\input{路径}` 和 `\include{路径}`，匹配调用、进入目标文件和返回事件。排除章节须收到内核的 `include/excluded` 事件。重复输入同一文件时按每次调用分别处理。`.fls` 的文件清单只用于核对依赖。生效的 `\endinput` 会截断当前输入文件，其后同一物理行有正文时保留待办。
-4. 文首和文末钩子按实际注册与执行次数核对，在对应位置放回回调原文。普通公式沿用既有切分规则。对于明确数学边界内可单独定位的字面条件，按每次执行的分支标记选择公式原文。条件位于公式参数组内或使用未支持的分支结构时，保留原式和待办。一次调用中无法配对的事件仍阻止验收通过。
-5. 能定位边界的未观测正文条件可整体保留为待处理块，前后句子继续切分。编译失败、执行事件不配对、观测改变 PDF 文本，以及无法局部隔离的控制流均保留主文件及已映射子文件源码，阻止严格验收通过。重新运行时从原稿重新构建并生成报告。支持范围与复现命令见 [修复说明](REPAIR-2026-11-23.md) 和 [README](README.md)。
-
-## 2026-11-23 更新：切分验收与公式理解分离
-
-正文起止识别跳过宏声明、注释和逐字材料中的文档标记。普通宏定义中保存的文末命令只有在调用展开后才影响静态切分；未调用的定义不得截断后文。
-
-以下规则优先于本文历史表格和先前修复说明中的“未知命令进入待办”要求。
-
-1. 切分负责确定文本/公式边界、保留内容、建立占位符和记录关联；不要求解释数学符号、公式角色或公式内部文字的逻辑作用。
-2. 命令表是已知转换与可选注释的依据，不是公式准入名单。明确数学边界内的未知命令不触发切分失败或 pending，不通过不断补白名单取得通过。
-3. 对含未知命令的公式，保留整个公式体及参数分组，作为 opaque 公式输出；不猜未知命令的参数个数，不拆其内部 qquad，不提取或改写其内部文字槽，不推断其数学角色。归一化阶段同样保护它，已完成的宏展开/条件处理不因此被声称无损。
-4. 未知命令清单、未定公式文字角色进入单独的下游诊断，不计入切分 pending。结构检查仍执行：公式边界不闭合、括号不平衡、占位符失联、token 丢失继续阻止通过。
-5. 正文中的未知命令、未知宏隐藏的数学环境、未定条件会影响边界或有效内容，仍保留原文并报警/待处理。不能将“公式内部未知命令可保留”推广成所有未知 TeX 都可忽略。
-6. strict=0 只表示切分检查通过；下游诊断可以非空。表格正文未切分、句界未定、条件未定、历史删除记录仍为 pending。旧版未分类 unresolved 保守保留，重新生成输出才应用新分类。
-
-普通正文宏按调用处生效的定义和参数展开，展开后再识别数学边界。缺少定义时，保存命令及相邻可选组和花括号组，用 REF 指向待处理块；相邻组仅表示保存范围，不推断宏的参数个数。补齐定义后从原始输入重跑。
-
-条件按源码顺序求值，普通分组和数学分组内的局部赋值均随分组退出。选支前须读完测试操作数，保留参与文字比较的空格，并计入条件前的取反指令。查询控制序列是否已定义时，优先使用执行到该处的赋值或声明。缺少定义状态、完整操作数或有效作用域时，保留整个条件和各分支，严格验收返回待处理。
-
-例：`$\mySpecialOperator{x}{y}$` 无需注册命令即可输出 MATH 占位符，完整保存 `\mySpecialOperator{x}{y}`。`$\accentset{\ast}{W}$` 也采用这一通用规则，不为星号补数学解释。
-
-当日各轮变更、严格退出码和反例对照见 [11 月 23 日修复汇总](REPAIR-2026-11-23.md)。
-
-
-这张表回答一个问题：**遇到一种 LaTeX 构造，管线怎么判**。
-它不按 TeX 的 atom 类（mathord/mathrel/…）判，按**它在论文里是内容还是排版**判。
-
-第 2 节的命令表取自本包 `Normalizer`。第 3、4 节列环境及答案库，上游历史抽样数字列在第 8 节。
-
----
-
-## 一、六个动作
-
-| # | 动作 | 判据 | 代表 | 代码 |
-|:--|:--|:--|:--|:--|
-| 1 | **读声明**：名字是寄存器/环境，不是词 | 论文自己声明过 | `\newlength\bshft`、`\newsavebox\myboxA`、`\newtheorem{rmk}{Remark}` | `normalize()` 里扫 `newlength/newdimen/newskip/newcount/newtoks/newsavebox/newbox/newif/chardef/mathchardef`；`read_theorem_decls()` |
-| 2 | **保内容、丢外壳** | 外壳只说明怎么画 | `\abs{x}`→`|x|`、`\scalerel*{(}{x}`→`(` | `_unwrap_one`、`_unwrap_last_arg`、`_unwrap_first_arg`、`_wrap_arg`、`UNWRAP_ONE` |
-| 3 | **清理排版** | 只消耗该命令的操作数 | 间距 `\medspace`、尺寸、计数器更新。`\marginpar` 等注释内容另存，`\tag` 可保留为公式标签 | `drop_metadata`、`_drop_bare`、`_preserve_notes` |
-| 4 | **改写为等价** | 同义，换个写法 | `\nicefrac`/`\mfrac`→`\frac`、`\colonequals`→`:=`、`\dots`→`…` | `_drop_bare` 里的 `re.sub` 段 |
-| 5 | **环境标记**：容器按十类处理 | 环境语义 | `display`/`grid`/`list`/`statement`/`diagram`/`drop`… | `_envs()`、`data/env_classes.json` |
-| 6 | **影响切分且未定 → 队列** | 正文命令、隐藏边界或条件分支未定；公式内部未知命令只保留并记录下游诊断 | 正文里的未定义宏；公式里的 `\vb` 等可原样保留 | `unresolved.log` / `content_todo.json`；公式信息见 `formula_diagnostics.json` |
-
-**先判 1，再判 2/3/4，最后才是 5**：声明过的名字在展开时就已经消失，轮不到后面几类。
-
-## 二、命令：各表里都有什么（11 月 23 日实现）
-
-| 表 | 条数 | 内容 |
-|:--|--:|:--|
-| `BARE_ONE`（最多一组参数） | 39 | `\vspace`, `\hspace`, `\rule`, `\phantom`, `\hphantom`, `\vphantom`, `\footnote`, `\thanks`, `\color`, `\index`, `\glossary`, `\thispagestyle`, `\pagestyle`, `\bibliography`, `\bibliographystyle`, `\refstepcounter`, `\stepcounter`, `\ytableausetup`, `\setunitscale`, `\usetikzlibrary`, `\hypersetup`, `\geometry`, `\definecolor`, `\ctikzset`, `\tikzset`, `\pgfplotsset`, `\xymatrixrowsep`, `\xymatrixcolsep`, `\symbolfootnote`, `\Needspace`, `\footnotetext`, `\dedicatory`, `\special`, `\selectlanguage`, `\originalleft`, `\originalright`, `\printbibliography`, `\bibliographystyle`, `\nocite` |
-| `BARE_DROP`（只丢名） | 80 | `\maketitle`, `\tableofcontents`, `\appendix`, `\frontmatter`, `\mainmatter`, `\printindex`, `\listoffigures`, `\listoftables`, `\linebreak`, `\nolinebreak`, `\null`, `\strut`, `\bigskip`, `\medskip`, `\smallskip`, `\noindent`, `\indent`, `\centering`, `\raggedright`, `\raggedleft`, `\selectfont`, `\normalsize`, `\small`, `\footnotesize`, `\scriptsize`, `\tiny`, `\large`, `\Large`, `\LARGE`, `\huge`, `\Huge`, `\bfseries`, `\itshape`, `\rmfamily`, `\sffamily`, `\ttfamily`, `\mdseries`, `\upshape`, `\scshape`, `\slshape`, `\rm`, `\it`, `\bf`, `\em`, `\sf`, `\tt`, `\sc`, `\sl`, `\cal`, `\bold`, `\hfil`, `\vfil`, `\normalfont`, `\global`, `\relax`, `\and`, `\quad`, `\qquad`, `\endgraf`, `\appendices`, `\newpage`, `\clearpage`, `\samepage`, `\protect`, `\nonumber`, `\notag`, `\allowbreak`, `\ignorespaces`, `\unskip`, `\qed`, `\qedhere`, `\endproof`, `\endproofqed`, `\boldmath`, `\unboldmath`, `\fussy`, `\sloppy`, `\raggedbottom`, `\flushbottom`, `\xspace` |
-| `UNWRAP_ONE`（保留参数） | 6 | `\enquote`, `\emph`, `\textnormal`, `\reflectbox`, `\ThisStyle`, `\ooalign` |
-| `PLUMBING`（内部命令） | 14 | `\m@th`, `\m@the`, `\if@compatibility`, `\if@tempswa`, `\tf@size`, `\sf@size`, `\ssf@size`, `\tagform@`, `\y@ng`, `\y@@optargI`, `\to@size`, `\p@`, `\ex@`, `\@tempskipa` |
-| `DEF_CMDS`（声明） | 38 | `\newcommand`, `\renewcommand`, `\providecommand`, `\DeclareMathOperator`, `\DeclareRobustCommand`, `\newtheorem`, `\newenvironment`, `\renewenvironment`, `\newif`, `\newlength`, `\newcount`, `\newcounter`, `\newdimen`, `\newbox`, `\newsavebox`, `\newtoks`, `\DeclareMathSymbol`, `\DeclareMathAlphabet`, `\DeclareSymbolFont`, `\DeclareSymbolFontAlphabet`, `\DeclareMathDelimiter`, `\DeclareMathAccent`, `\newfont`, `\NewDocumentCommand`, `\RenewDocumentCommand`, `\DeclareDocumentCommand`, `\ProvideDocumentCommand`, `\DeclarePairedDelimiter`, `\newtheoremstyle`, `\theoremstyle`, `\NewDocumentEnvironment`, `\RenewDocumentEnvironment`, `\newtcolorbox`, `\newmdenv`, `\lstnewenvironment`, `\newfloat`, `\newlist`, `\newcases` |
-| `TITLE_CMDS`（标题元数据） | 17 | `\title`, `\author`, `\date`, `\thanks`, `\address`, `\email`, `\affiliation`, `\affil`, `\orcid`, `\keywords`, `\subjclass`, `\subjectclass`, `\preprint`, `\dedication`, `\pacs`, `\msc`, `\AMSclass` |
-
-布局清理还会处理下列形式。执行条件和公式保护先于布局清理。
-
-| 规则 | 处理 |
-|:--|:--|
-| `\@… (not \@startsection)` | 见表头动作 |
-| `\SavedStyle* (mathstyle placeholder)` | 见表头动作 |
-| `\m@th glued to a letter (\m@thV)` | 见表头动作 |
-| `\ifnum\mathgroup` 字体条件 | 条件执行阶段处理，无法确定时保存各分支 |
-| `\the<counter>` | 数学边界内保留操作数，支持的独立花括号操作数可以读取实际数值 |
-| `declared register names` | 见表头动作 |
-| `\big/\Big/\bigg/\Bigg (+l/m/r)` | 见表头动作 |
-| `\ae` | 见表头动作 |
-| `\oe` | 见表头动作 |
-| `\aa` | 见表头动作 |
-| `\dots / \ldots / \cdots` | 见表头动作 |
-| `\vdots` | 见表头动作 |
-| `\ddots` | 见表头动作 |
-| `\nicefrac -> \frac` | 见表头动作 |
-| `\mfrac -> \frac` | 见表头动作 |
-| `\colonequals / \coloneqq` | 见表头动作 |
-| `\eqqcolon` | 见表头动作 |
-| `\SREF -> section sign` | 见表头动作 |
-| `brace group with a unit is a length` | 见表头动作 |
-
-## 三、环境：十类
-
-| 类 | 成员 |
-|:--|:--|
-| `display` | `\equation`, `\equation*`, `\align`, `\align*`, `\gather`, `\gather*`, `\multline`, `\multline*`, `\flalign`, `\flalign*`, `\eqnarray`, `\eqnarray*`, `\displaymath`, `\subequations`, `\alignat`, `\alignat*`, `\equ`, `\equs`, `\eqn`, `\eqs` |
-| `inner_display` | `\split`, `\aligned`, `\gathered`, `\multlined`, `\alignedat`, `\subarray` |
-| `grid` | `\cases`, `\dcases`, `\rcases`, `\array`, `\matrix`, `\pmatrix`, `\bmatrix`, `\vmatrix`, `\Vmatrix`, `\smallmatrix`, `\ytableau`, `\ytableaushort`, `\psmallmatrix`, `\psmallmatrix*`, `\pmatrix*`, `\bmatrix*`, `\vmatrix*`, `\Vmatrix*`, `\matrix*`, `\bsmallmatrix`, `\bsmallmatrix*`, `\Bmatrix*`, `\cases*`, `\dcases*`, `\rcases*` |
-| `list` | `\enumerate`, `\enumerate*`, `\itemize`, `\itemize*`, `\description`, `\trivlist` |
-| `text_block` | `\abstract`, `\center`, `\flushleft`, `\flushright`, `\quote`, `\quotation`, `\dedication`, `\verse`, `\NoHyper`, `\small`, `\smalltext`, `\footnotesize`, `\scriptsize`, `\tiny`, `\large`, `\Large`, `\LARGE`, `\huge`, `\Huge`, `\normalsize`, `\rm`, `\bf`, `\it`, `\tt`, `\sf`, `\sl`, `\sc`, `\em` |
-| `float` | `\figure`, `\figure*`, `\table`, `\table*`, `\tabular`, `\tabular*`, `\minipage`, `\longtable`, `\wrapfigure`, `\subfigure` |
-| `bibliography` | `\thebibliography`, `\bibdiv`, `\biblist`, `\bibliography` |
-| `diagram` | `\tikzpicture`, `\tikzcd`, `\xymatrix`, `\picture`, `\pspicture`, `\tikzcd*`, `\pspicture*`, `\xy`, `\xygraph`, `\pgfpicture`, `\pgfonlayer`, `\tikz`, `\feynman`, `\feynmp`, `\asy`, `\circuitikz`, `\CD`, `\CD*` |
-| `drop` | `\comment`, `\verbatim`, `\filecontents`, `\filecontents*`, `\tikzmath`, `\pgfmathparse` |
-| `document` | `\document` |
-
-命题的 kind（`statement_kinds`，共 25 种）：theorem(4)、lemma(2)、proposition(3)、corollary(3)、claim(1)、conjecture(3)、definition(3)、example(2)、remark(3)、question(1)、proof(3)、assumption(3)、observation(1)、fact(1)、notation(1)、construction(1)、warning(1)、thought(1)、plan(1)、guess(1)、algorithm(1)、counterexample(1)、exercise(1)、problem(1)、homework(2)
-
-## 四、答案库
-
-| 范围 | 动作 | 条数 | 例子 |
-|:--|:--|--:|:--|
-| 全局 | `allow` | 48 | A, Aut, B, C, End, F, Hom, IVN |
-| 全局 | `expand` | 1 | dif |
-| 全局 | `ignore` | 8 | citelist, citep, citet, clip, curraddr, draw, node, urladdr |
-| 全局 | `unwrap` | 5 | ensurestackMath, on, stackon, vb, young |
-| 按篇 | `allow` | 218 | 1507.06903:dashedrightarrow, 1606.05133:AGL, 1606.05133:Fr, 1606.05133:GL, 1606.05133:GO, 1606.05133:Id |
-| 按篇 | `expand` | 5 | 1706.00750:lfloorj, 1811.02461:lRa, 1811.02461:op, 2106.00631:bigcupdot, 2106.05334:lfloorZ |
-| 按篇 | `font` | 17 | 1701.08152:scriptscriptstyleaff, 1809.03803:delimsize, 1904.09434:mathfontb, 2102.08797:itshapeProof, 2103.10137:sffamilyH, 2103.10137:sffamilyIndCoh |
-| 按篇 | `ignore` | 48 | 1309.3267:needspace, 1405.2608:psfrag, 1409.0501:example, 1505.06548:boxrwidth, 1505.06548:boxwidth, 1505.06548:sembox |
-| 按篇 | `unwrap` | 8 | 1811.02461:setP, 1912.12721:cyrs, 2010.02884:stackinset, 2103.04368:widering, 2103.10137:sffamilyE, 2103.10137:sffamilyEis |
-
-## 五、公式里的三个结构性坑（已修，容易复发）
-
-| 坑 | 现象 | 规则 |
-|:--|:--|:--|
-| 只含数字的花括号组 | `x^{2}`→`x^`、`\Phi_d^{-1}`→`\Phi_d^` | **带单位**的组（`{2.5ex}`）才是长度；纯数字是内容 |
-| display 内的空行 | texdraw 图被切成两半，整块图变正文 | display/diagram 内部空行不当段落分隔（`_tighten_math_blocks`） |
-| 未闭合的 `$`/`\(`/`\[` | 后面整块当正文，字体命令进句子 | 一直延伸到块尾，作为公式 |
-
----
-
-## 六、当前审核规则
-
-| 对象 | 定位和处理 |
+| 对象 | 处理规则 |
 |---|---|
-| 公式文字槽、符号并置、公式角色 | 按本篇中的出现位置和上下文判断。函数或变量的显式重定义记录有效区间。同名 `operatorname` 与 `text` 按本处结构解释 |
-| 公式关系、引用目标 | 保留完整公式和排版行。可用解释写为参考值；缺少解释或目标不完整时进入必办 |
-| 正文和展示公式句界、已保留原块 | 保留相关原文与位置，提交对应的句界选择或完整保留决定 |
-| 缺源码、未执行的分支和硬错误 | 在审核台保留定位和原因；“已阅”只记录人工核对 |
+| 稿件身份 | 从调用目录解析主文件和输出目录的绝对路径。用主文件规范路径、本地输入的相对路径及各文件 SHA-256 生成 `paper_id`。同名主文件、修改过的子文件和移动过的原稿可得到不同身份。 |
+| TeX 观测 | 管线在两个隔离的临时项目副本中分别编译原稿和带标记的原稿。两次用相同引擎、同名主文件并关闭 shell escape，按交叉引用提示各自最多编译三遍。对照最终 PDF 提取文本、本地读入文件和遍数，再回放可配对的源码事件。 |
+| 输入文件 | 对字面 `\input`、`\include` 逐次匹配调用、进入和返回。排除章节看 `include/excluded` 事件，同一文件每次读入可有不同效果。`.fls` 用于核对依赖，生效的 `\endinput` 终止本次文件输入。 |
+| 正文与钩子 | 识别实际生效的 `\begin{document}`、`\end{document}`，跳过注释、逐字材料、未调用宏体里的同名标记。受支持的文首、导言末、文末及环境钩子按登记时机和执行次数放回原文，一次性钩子只执行一次。`comment` 宏包排除的区段不生成正文或文件调用。 |
+| 宏与分组 | 普通宏以调用处可见的定义展开。受支持的 `\edef`、`\xdef` 在定义点冻结可求值内容，`\noexpand` 保护的标记留到调用。离开普通组或数学组后恢复局部状态，`\aftergroup` 按登记顺序执行；`\globaldefs` 可改变随后赋值的作用域。 |
+| 条件与寄存器 | 静态处理按源码顺序读取开关、取反、比较操作数及有效定义。实际构建可观测字面 `\newif` 开关、`\iftrue`、`\iffalse`、受支持的 `\ifdefined`、`\ifx`、`\IfFileExists` 和计数器值。嵌套或重复执行时按当次所选分支回放。 |
+| 无法定位 | 局部条件能定位时，保存条件、测试和各分支，前后继续切分；公式内未定选支保存整式为 `conditional_formula`。编译失败、观测改变输出或事件无法配对且无法局部隔离时，保存整稿及已映射子文件，进入必办。 |
 
-正式标签或有效默认建议通常归入可选检查，完全空白、明确冲突的标签及阻塞项归入必办。网页判断以 `manual` 或 `model` 记录并绑定稿件与条目。网页模型给出有效答案时，最终标签取模型值，规则分歧另存警告。旧命令行问答按其兼容规则合并。来源、撤回和复验方法见[审核台说明](pipeline/README.md#审核台模型判断)。
+`source_evidence.json` 保存源文件信息、选定源码、展示标签位置和与规范化文本相配的校验值。`execution.json` 记录构建阶段、站点、逐次事件、标签、受支持的直接行内关系和观测失败原因。重跑从原稿采集证据。例：`\includeonly{first}` 的工程即使在 `.fls` 里出现 `second.tex`，也要按当次 `\include` 的执行事件决定是否交付第二章。
 
-## 七、源码选择和切分顺序
+## 声明、命令与环境
 
-1. 原始文件走静态 `read_source` 或 `tex_execution.observe`。后者在临时副本中独立构建，再按已验证事件放回源码。`--canonical` 直接读取已保存的规范化产物。
-2. `Normalizer.execute_document` 与 `conditionals.Execution` 维护正文起止、调用点定义、组作用域和延迟动作。局部无法判定的正文条件带原文保存，影响整个文档的未定状态可以保留整稿。
-3. 在清理布局、名称和环境前，先保存附属内容、未知正文调用和需原样保留的公式。元数据命令按参数数目消费。规范化结果可跨进程重读。
-4. `latex2nl` 按单元定位公式并建立占位符和记录，切句、分词、挂接附属内容。`verify_output` 检查双向关联、原文、词元、账本与待办，输出严格状态。
+先区分内容与排版，再按构造的功能归类。`\newtheorem{rmk}{Remark}` 可以直接归入 remark，论文自定义名称无需逐个加入基础词表。
 
-## 八、上游 1,123 篇历史抽样
+| 构造 | 归一化与切分行为 |
+|---|---|
+| 声明和别名 | 读取本篇宏、寄存器、定理及环境声明，支持常见位置参数、部分分隔参数、配对定界符和数学符号声明。定理的显示种类与共享计数器分别处理。自定义环境的可见起止文字和参数属于正文。 |
+| 名称表 | 基础词表、TeX 名称、本地更正及按篇答案支持 `allow`、`font`、`unwrap`、`ignore`、`expand`。历史答案按稿件归属匹配；论文的明确声明和本处结构参与判断。缺少定义的正文调用保存为内容块，以 `REFn` 关联相邻句，紧接的可选组和必需组随原文保存。 |
+| 文字与版式 | 字号、间距、尺寸、颜色或盒子命令按各自参数形式清理。`\textcolor{red}{word}` 保留 `word`，`\setcounter{section}{2}{Keep $x$.}` 保留第三组。盒子、缩放和超链接只消耗实际操作数；数值指数 `x^{2}` 保留。 |
+| 同形与异形 | 可合并 `\le` 和 `\leq` 等等价写法，区分 `\epsilon`／`\varepsilon`、`\subset`／`\subseteq` 及携带含义的字体或重音。`\mathchoice` 保留四个分支；布局间距本身可清理。 |
+| 展示和网格 | `equation`、`align` 等归入 `display`。`split`、`aligned` 是内层对齐结构；`array`、`cases`、`matrix`、`subarray` 归入 `grid`。按环境消费列格式或列对数，`split` 开头的 `[A,B]` 仍属公式。图形环境归入 `diagram`。 |
+| 正文和列表 | 定理、引理、证明等归入 `statement`，文本排版壳保留其正文。`list` 逐项切分，`\item[(ii)]` 保留 `(ii)`。受计数器改动影响的枚举使用可取得的 TeX 标签；取不到所需编号时整体保存待办。 |
+| 声明的环境与未知环境 | 根据论文声明识别证明、`restatable` 等容器，带星号的名字可回退到已知基名。已声明定理被当作裸命令使用时，`\step` 等产生 `part.kind` 和 `part.index`，保留外层 `unit`。仍未知的环境记入统计，切分器拆去可识别的环境壳，保留体及紧随的参数文字。 |
+| 附属内容 | 脚注、旁注、致谢类注释另成内容块。浮动体保存整块源码，图题可作为预览；完整保留可由审核台确认。参考文献区、声明、排除区段与纯布局按类别处理。`figure`、`table` 不按纯布局删除。 |
 
-| 指标 | 11 月 16 日起点 | 当轮修复后 |
-|:--|--:|--:|
-| 词表外命令 | 51,694 次 | **34,481** |
-| 未知环境 | 12,066 次 | **623** |
-| 句内残留 LaTeX | 44,847 次 | **32,607** |
-| 待答名字 | 627 名 | 292 名 |
+名称表先读 TeX 定义及人工更正，再读通用答案和按篇答案。按篇答案可替换通用答案，TeX 自身已确定的命令由专用更正表修订。自引用的展开答案会被拒绝。归一化的 `--check` 可检验再次归一化后文本是否稳定。
 
-起点是 2026-11-16 晚，修完 `{2}`、下划线、容器标记、mathstyle、寄存器、环境分类、
-包命令、四类散文命令之后。
+命令表位于 [归一化实现](scripts/normalize.py)，环境别名、功能类、定理种类见 [环境分类](data/env_classes.json)。名称动作和等价拼写见 [TeX 名称](data/tex_names.json)、[人工更正](data/name_overrides.json)、[按篇答案](data/name_answers.json)、[格式别名](data/format_aliases.json) 和 [基础词表](data/latex_lexicon.json)。
 
-## 展示环境、引用和可见分组
+## 单元、句界与词元
 
-- `quote`、`split` 的开头方括号属于内容。`alignat` 和 `alignedat` 的首个必需参数指定列对数。`\raisebox`、`\rotatebox`、`\scalebox`、`\resizebox` 和 `\hyperref` 按各自的参数形式取出可见内容，保留紧随其后的独立分组。
-- 每条展示记录保留完整公式及全部交叉引用标签。多行 `align` 等环境的 `\label` 随编号行保存，规范化中以 `\rowlabel` 转运；`equation` 包含 `split` 或 `aligned` 时，其标签落在整式。`\tag` 是显示编号。
-- 独立等式按行和列对提取左右侧。嵌套矩阵内部的换行属于矩阵。引用记录给出目标公式和适用的行号，严格验收核对目标位置、公式内容和关系记录。
+| 输入情形 | 输出规则 |
+|---|---|
+| 注释与段落 | 行尾注释保留该行前面的文字；纯注释行不制造空段，真正的空行可分段。连续反斜杠的奇偶决定 `%` 是否开始注释。展示、网格或图内换行按环境处理。 |
+| 单元边界 | 正文段、定理、证明、各列表条目分别成单元，句子止于单元边界。保留纯公式、纯引用和 Unicode 句子；空的标点片段可过滤。标准章节标题记入 `section`，可选定理标题记入 `title`。 |
+| 句号与标签 | 识别英文和中文句末标点。保护小数、常见缩写、连续首字母和条目标号；`(… MATH1.) Then` 可在右括号后断句，`1.` 或 `a.` 作为首标签时不单独断句。单个首字母如 `A. This …` 可断句，`S.N.` 保留缩写句点；普通句点后跟小写词可先拆开，并留下 `split`／`join` 题。 |
+| 展示公式前后 | 冒号引出的公式、未结束的引导句与公式连读。公式后跳过不可见命令；后接新区块或新条目时分开，普通大写起句、小写续写，字符无法提供证据时参考公式尾标点。标点与后文冲突或均不能判断时保留疑点，可在网页确认。 |
+| 保留块位置 | 正文的 `REFn` 通过 `ref_kind=content`、`ref_target` 指向内容块。`anchor_sids` 是父句，`sentence_ids` 是已解析子句。脚注或图题子句可以位于句流后部，下游按锚点还原位置。待处理块的预览与已解析子句分开记录。 |
+| 词元与文本 | 相邻词、公式与引用间必要时补空格，`flat\cite{x}` 中的 `REFn` 与 `flat` 分开。公式后的 `-module` 等词缀记在 `affix`。每句的词元按序拼接应等于该句去掉空白后的文本。`speech_act` 用句首动词或 `We` 后的动词给出 `definition`、`assumption` 或默认 `assertion`。 |
 
-规范化后仍保存本次输入和独立核验证据。实际编译的 `.aux` 提供标签显示编号，源文件中的嵌套展示提供外层行位置。支持的简单行内关系在观察编译中记录出现次序，验收检查相应公式是否仍在。续行和带修饰的关系给出可修改的参考值。人工或模型确认可更新解释，原公式、排版行及编译证据保留。使用方式见[管线审核说明](pipeline/README.md#公式关系续行和引用的人工复核)。
+`sentences.jsonl` 每行一条，含 `sid`、`text`、`tokens`、`words`、`unit`、`env`、`section`、`formulas`、`speech_act` 等字段。`content_kind` 区分正文、纯公式和纯引用。无句末标点时，`scripts/split_audit.py` 区分公式内标点、容器边界、标题、疑似误切及原文缺标点等情况。缩写表见 [abbreviations.json](data/abbreviations.json)。
+
+## 公式、引用与结构参考值
+
+| 对象 | 保留及提取规则 |
+|---|---|
+| 数学边界 | 识别 `$…$`、`\(…\)`、`math`、`\ensuremath{…}`、`$$…$$`、`\[…\]` 和已识别的数学环境。扫描美元符时考虑分组，避免 `\mbox{$x$}` 提前关闭外层。未闭合时保留可定位范围并报告。 |
+| 已知构造 | 每个 `MATHn` 都可定位公式记录。`raw` 为切分阶段取得的原式，源文件和选定源码另存。`expanded` 可抽取 `text_slots`、`side_conditions`、适用的末尾标点或顶层 `\qquad` 分隔的独立构造。`n!` 和 `n!!` 的感叹号属于数学内容。 |
+| 未知构造 | 已确定数学边界内，`\accentset{\ast}{W}` 等整式按需记为 `opaque`，保留命令、参数与分组，推迟内部拆解。未知名写入 `formula_diagnostics.json`；这项诊断本身不阻塞基础切分。若未知命令在正文中可能隐藏数学边界，或条件决定哪段数学生效，则保存原文并进入内容待办。 |
+| 多行公式 | `rows` 保存排版行，`logical_relations` 保存读出的关系及对应行号。`s&=a+b\\ &+c+d` 可读为 `s=a+b+c+d`，仍保留两行；嵌套矩阵的换行留在矩阵内。多列对齐可以有多组关系。独立关系只有一条时同步到 `top_relation`。 |
+| 标签与引用 | `labels` 保留可引用键，`display_tags` 记录显示编号，`\tag` 与 `\label` 分开。逐行编号环境按外层行定位，`equation` 套 `split` 或 `aligned` 可指向整式。正文及公式内引用用 `ref_destinations`／`resolved_references` 给出目标公式及适用的行。`\cite` 单独分类。 |
+| 参考值 | `structure_reviews` 区分自动建议 `proposal` 和当前有效值／来源。关系或引用解释完整时可选复核；缺解释、目标只覆盖部分组成员时必办。确认或修改左右侧、关系符、参与行或引用目标后复验，仍须符合原式、排版行与可用的独立证据。 |
+
+## 文字槽、记号作用域与角色
+
+| 判断对象 | 定位和取值 |
+|---|---|
+| 公式内文字 | 按稿件、完整公式及槽位置判断。`u\text{ outranks }v` 可为 `predicate`，`R_{\text{outranks}}` 可为 `label`。显式 `\operatorname{mix}(x)` 与别处 `R^{\text{mix}}` 分别处理，后者保留文字槽。网页模型一次判断一个目标，收到完整公式和上下文。允许值见 [文字槽角色表](data/slot_roles.json)。 |
+| 并置读法 | `paper_lexicon.json` 的 `constructions` 以公式 ID、位置和上下文区别相同写法，取 `multiply`、`apply`、`label` 或 `index`。明确的标量乘向量、函数逐点乘积和函数取值按各自声明处理；单有括号或参数个数只能给建议。 |
+| 定义与重用 | `notation_definitions` 记录定义公式、句子、章节、作用域路径和含首尾的 `ranges`。表明全篇有效的定义可跨章节，章节或例内定义只在对应范围遮蔽外层；作用域结束后可恢复外层定义。同名章节用出现序号区分。 |
+| 公式角色 | 切分层区分 `term`、`proposition`、`constraint`、`modifier`、`sequence`、`piecewise`、`opaque` 等初判。管线再读所在句、引导词、角色答案和本篇证据；例如明确限定成员关系时可标 `constraint`。历史角色答案按本篇、公式与上下文核对。 |
+
+兼容命令行用 `sentence_answers.json`、`slot_answers.json`、`construction_answers.json` 和 `role_questions.json` 传递相应判断。名称单独出题。`unsure`、名称 `unknown` 或重复未答可进入 `human_todo.json`。按篇历史并置和角色库在 [pipeline/data](pipeline/data/)。
+
+## 审核决定与复验
+
+- **必办与可选。** 完全空白或互斥的读法、未决句界、未处理内容、部分引用及硬错误列在必办。已有正式标签、有效默认建议、完整结构参考值或仅供查阅的诊断列在可选。跳过一个默认建议时，最终答案可保持空白。
+- **保存与撤回。** 网页确认按稿件、类别、锚点和条目版本写入 `manual_reviews.sqlite3`。人工为 `manual`，有效模型答案为 `model` 并记录模型名。已确认条目在匹配的重跑中沿用，模型批处理跳过已确认项。撤回并复验后恢复规则、历史值或待办。
+- **分歧与弃权。** 网页模型提交有效答案后以模型值交付，明确规则与其不同时记录 `disagreement`。旧命令行的规则核对在一致时记 `confirmed`，冲突时保留明确规则值并警告。模型弃权、无效、连接失败或条目已变更时不写新决定。停止批量任务保留已保存项。
+- **操作范围。** 句界确认参与重建句流；文字槽、并置、角色、名称按相应位置或本篇生效；完整原块可确认 `retained`。源码缺失、未定执行分支和硬错误可标记已阅，仍须补源码或修复后复验。
+
+低层入口的 `--switch ifNAME=true/false` 可设置静态开关初值，`--style FILE` 可补充样式，`--canonical` 用于重读已生成的规范化文本。切分器可用 `--no-merge-display`、`--no-split-qquad` 关闭对应默认拆并规则；`--tok-mode` 选择分词格式，`--max-words` 为过长句添加标记。各项完整参数可用相应脚本的 `--help` 查询。
+
+自动化客户端用 `GET /api/items` 取得稿件、条目和版本。`POST /api/model-review` 接受 `paper` 和 `scope`（`item`、`required`、`all`）；单条另传 `kind`、`target`、`version`。POST 通过 `X-Review-Token` 发送页面 `meta[name="review-token"]` 的值。`GET /api/status` 的 `model_job` 返回进度与未写入原因，`POST /api/model-stop` 停止本轮任务。常规入口默认离线，兼容命令行可传 `--ask`／`--model-config FILE`；`run_pipeline_llm.sh` 默认提问，可用 `--no-ask` 离线运行。
+
+## 独立验收与问题账本
+
+严格验收核对 ID 唯一性、句内占位符及反向关联、附属块原文和父子关系、词元保字符、公式符号与操作数的次序、作用位置和引用目标。结合 `source_evidence.json` 与可用的 TeX 编译证据，还会检查部分公式是否缺失、次序变化、行标签错位或证据与本次规范化不匹配。公式诊断、未定条件和缺失源码分别记录。完整管线另检查公式读法、角色和各类队列。
+
+| 检查 | 判据与等级 |
+|---|---|
+| C1、C2、C3、C14 | 硬。检测疑似被切断的引导句或小写续句、正文残留控制字、裸花括号、正文残留词表外命令。C1 对独立条目及枚举等边界有例外。 |
+| C6、C7、C9、C10、C12 | 硬。检测公式残留数学边界或 `\intertext`、花括号深度或次序失配、连续散文、非规范环境、悬空或括号失配的引用。C7 覆盖行内和展示式并跳过转义花括号；`opaque` 走完整性检查，跳过 C6/C9/C10。 |
+| C4、C5、C8、C11、C13、C16 | 软。分别提示无标点短句、占位符起句且前句无末标点、标题残留数学分隔符、分段函数角色异常、文内引用缺标签、展示式疑似含散文。C13 排除文献引用和内容锚点。 |
+
+`issues_normalize.json` 和 `issues_latex2nl.json` 合并到 `issues.json`。类别必须在 [问题登记表](data/issue_kinds.json) 中登记，记录发生位置、数量或长度以及去向（`code`、`todo:*`、`human`、`check`、`ledger`）。独立验收器带 `--strict` 时，硬错误返回 `1`、无效产物返回 `2`、待办返回 `3`、其余返回 `0`。旧版未分类记录或未恢复的内容删除仍须复核，手工删除待办文件不能消除其来源。

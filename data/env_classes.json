@@ -290,7 +290,7 @@
     "2026-11-18: the package environments that were most often unknown join their class -- tikz scope/overpic/pgfplots axis draw (diagram); multicols/mdframed/restatable/landscape/centering/spacing/keyword and the front/back matter wrappers keep their content (text_block); appendix and frontmatter are wrappers, not units.",
     "2026-11-18: the heads measured from unknown_envs after normalize (not from source counts): IEEEeqnarray/subeqn are displays, the nicematrix family is a grid, forest is a drawing.  math/title/author are not here -- they are handled as commands (\\begin{X} runs \\X).",
     "2026-11-18: the paralist family (compactitem/compactenum/compactdesc) is a list; it was the largest remaining unknown after the first five rules.",
-    "2026-11-18: restatable removed from text_block -- normalize has a branch for it that the table entry made unreachable (GAPS.md J6).",
-    "2026-11-20: subarray moved from inner_display to grid -- inside a math group the inner_display rewrite broke the braces (C7, OPEN.md 1.8)."
+    "2026-11-18: restatable removed from text_block -- normalize has a branch for it that the table entry made unreachable (audit J6, OPEN.md).",
+    "2026-11-20: subarray moved from inner_display to grid -- inside a math group the inner_display rewrite broke the braces (C7, RULES.md)."
   ]
 }
